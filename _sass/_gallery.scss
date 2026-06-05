@@ -95,6 +95,8 @@
     overflow: hidden;
     background: $bg-surface;
     line-height: 0;
+
+    picture { display: block; }
   }
 
   &__img {

@@ -22,13 +22,38 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Pages
+        id: pages
         uses: actions/configure-pages@v5
 
-      - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1
+      - name: Install image tools
+        run: sudo apt-get install -y imagemagick webp
+
+      - name: Optimise images
+        run: |
+          for src in assets/images/*.jpg; do
+            [[ "$src" == *-thumb.jpg ]] && continue
+            [ -f "$src" ] || continue
+            base="${src%.jpg}"
+            # Thumbnail JPEG + WebP (gallery grid)
+            convert "$src" -resize "800x800>" -quality 82 -strip "${base}-thumb.jpg"
+            cwebp -q 80 "${base}-thumb.jpg" -o "${base}-thumb.webp" -quiet
+            # Resize original in-place (lightbox + photo detail — fallback JPEG)
+            convert "$src" -resize "1920x1920>" -quality 85 -strip "${src}.opt" && mv "${src}.opt" "$src"
+            # Full-size WebP (lightbox + photo detail — modern browsers)
+            cwebp -q 82 "$src" -o "${base}.webp" -quiet
+            echo "  ✓ $(basename "$src")"
+          done
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
         with:
-          source: ./
-          destination: ./_site
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Build with Jekyll
+        run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+        env:
+          JEKYLL_ENV: production
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

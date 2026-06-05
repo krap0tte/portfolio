@@ -5,3 +5,7 @@ _site/
 vendor/
 Gemfile.lock
 .DS_Store
+
+# Generated image variants (produced by CI or bin/optimize-images.sh)
+assets/images/*.webp
+assets/images/*-thumb.jpg

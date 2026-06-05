@@ -5,11 +5,14 @@ layout: default
 <article class="photo-detail">
 
   <div class="photo-hero">
-    <img
-      src="{{ page.image | relative_url }}"
-      alt="{{ page.title }}"
-      class="photo-hero__img"
-    />
+    <picture>
+      <source srcset="{{ page.image | replace: '.jpg', '.webp' | relative_url }}" type="image/webp">
+      <img
+        src="{{ page.image | relative_url }}"
+        alt="{{ page.title }}"
+        class="photo-hero__img"
+      />
+    </picture>
   </div>
 
   <div class="photo-info container">

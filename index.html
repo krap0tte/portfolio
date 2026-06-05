@@ -42,12 +42,16 @@ title: "Galerie"
           data-index="{{ forloop.index0 }}"
         >
           <div class="gallery-card__img-wrap">
-            <img
-              src="{{ photo.image | relative_url }}"
-              alt="{{ photo.title }}"
-              class="gallery-card__img"
-              loading="lazy"
-            />
+            <picture>
+              <source srcset="{{ photo.image | replace: '.jpg', '-thumb.webp' | relative_url }}" type="image/webp">
+              <source srcset="{{ photo.image | replace: '.jpg', '-thumb.jpg' | relative_url }}">
+              <img
+                src="{{ photo.image | relative_url }}"
+                alt="{{ photo.title }}"
+                class="gallery-card__img"
+                loading="lazy"
+              />
+            </picture>
           </div>
           <div class="gallery-card__caption">
             <span class="gallery-card__title">{{ photo.title }}</span>
@@ -63,7 +67,7 @@ title: "Galerie"
 </section>
 
 <script type="application/json" id="photo-data">
-[{% for photo in photos %}{"src":{{ photo.image | relative_url | jsonify }},"title":{{ photo.title | jsonify }},"category":{{ photo.category | default: "" | jsonify }},"date":{{ photo.date | date: "%Y" | jsonify }},"location":{{ photo.location | default: "" | jsonify }},"description":{{ photo.description | default: "" | strip | jsonify }}}{% unless forloop.last %},{% endunless %}{% endfor %}]
+[{% for photo in photos %}{"src":{{ photo.image | relative_url | jsonify }},"webp":{{ photo.image | replace: '.jpg', '.webp' | relative_url | jsonify }},"title":{{ photo.title | jsonify }},"category":{{ photo.category | default: "" | jsonify }},"date":{{ photo.date | date: "%Y" | jsonify }},"location":{{ photo.location | default: "" | jsonify }},"description":{{ photo.description | default: "" | strip | jsonify }}}{% unless forloop.last %},{% endunless %}{% endfor %}]
 </script>
 
 <div class="lightbox" id="lightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Visionneuse photo">
