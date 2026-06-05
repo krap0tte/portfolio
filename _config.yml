@@ -1,0 +1,54 @@
+title: "Krapotte"
+description: "Photographe — Portrait · Paysage · Architecture"
+author: "Krapotte"
+email: contact@votrenom.com
+baseurl: ""       # laisser vide si déployé sur username.github.io
+url: "https://username.github.io"  # ← remplacer par votre URL
+
+# Thème
+lang: fr
+
+# Collections
+collections:
+  photos:
+    output: true
+    permalink: /photos/:name/
+
+defaults:
+  - scope:
+      path: ""
+      type: "photos"
+    values:
+      layout: "photo"
+
+# Build
+markdown: kramdown
+highlighter: rouge
+permalink: pretty
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - .gitignore
+  - README.md
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# Sass
+sass:
+  sass_dir: _sass
+  style: compressed
+
+# Navigation
+navigation:
+  - title: "Galerie"
+    url: "/"
+  - title: "À propos"
+    url: "/about/"
+  - title: "Contact"
+    url: "/contact/"

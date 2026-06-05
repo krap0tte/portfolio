@@ -1,0 +1,114 @@
+@use 'variables' as *;
+
+// ─── Header ─────────────────────────────────────────────────────────────────
+
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: $header-h;
+  background: $bg;
+
+  &__inner {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__logo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__logo-name {
+    font-family: $font-display;
+    font-size: $size-md;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 1;
+    color: $text;
+  }
+
+  &__logo-tag {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: $text-muted;
+    font-weight: 400;
+  }
+
+  &__burger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    padding: 6px;
+
+    span {
+      display: block;
+      width: 20px;
+      height: 1px;
+      background: $text;
+    }
+
+    @media (max-width: $bp-md) { display: flex; }
+  }
+}
+
+// ─── Nav desktop ────────────────────────────────────────────────────────────
+
+.site-nav {
+  @media (max-width: $bp-md) { display: none; }
+
+  &__list {
+    display: flex;
+    gap: 2.5rem;
+  }
+
+  &__link {
+    font-size: $size-xs;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: $text-muted;
+
+    &:hover,
+    &--active {
+      color: $text;
+    }
+
+    &--active {
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+  }
+}
+
+// ─── Nav mobile ─────────────────────────────────────────────────────────────
+
+.site-nav--mobile {
+  display: none;
+  position: fixed;
+  top: $header-h;
+  left: 0;
+  right: 0;
+  background: $bg;
+  border-bottom: 1px solid $border;
+  padding: 1.5rem $container-pad;
+  z-index: 99;
+
+  &.is-open { display: block; }
+
+  .site-nav__list {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .site-nav__link {
+    font-size: $size-base;
+    letter-spacing: 0.05em;
+    text-transform: none;
+  }
+}

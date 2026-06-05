@@ -1,0 +1,54 @@
+---
+layout: default
+---
+
+<article class="photo-detail">
+
+  <div class="photo-hero">
+    <img
+      src="{{ page.image | relative_url }}"
+      alt="{{ page.title }}"
+      class="photo-hero__img"
+    />
+  </div>
+
+  <div class="photo-info container">
+    <div class="photo-info__meta">
+      {% if page.category %}<span class="photo-info__category">{{ page.category }}</span>{% endif %}
+      {% if page.date %}<span class="photo-info__date">{{ page.date | date: "%Y" }}</span>{% endif %}
+    </div>
+
+    <h1 class="photo-info__title">{{ page.title }}</h1>
+
+    {% if page.location %}
+      <p class="photo-info__location">{{ page.location }}</p>
+    {% endif %}
+
+    {% if page.description %}
+      <div class="photo-info__description">{{ page.description | markdownify }}</div>
+    {% endif %}
+  </div>
+
+  <nav class="photo-nav container">
+    {% if page.previous %}
+      <a href="{{ page.previous.url | relative_url }}" class="photo-nav__btn">
+        <span class="photo-nav__label">← Précédent</span>
+        <span class="photo-nav__title">{{ page.previous.title }}</span>
+      </a>
+    {% else %}
+      <div></div>
+    {% endif %}
+
+    <a href="{{ '/' | relative_url }}" class="photo-nav__back">Galerie</a>
+
+    {% if page.next %}
+      <a href="{{ page.next.url | relative_url }}" class="photo-nav__btn photo-nav__btn--next">
+        <span class="photo-nav__label">Suivant →</span>
+        <span class="photo-nav__title">{{ page.next.title }}</span>
+      </a>
+    {% else %}
+      <div></div>
+    {% endif %}
+  </nav>
+
+</article>

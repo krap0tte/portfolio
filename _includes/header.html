@@ -1,0 +1,30 @@
+<header class="site-header">
+  <div class="site-header__inner container">
+
+    <a href="{{ '/' | relative_url }}" class="site-header__logo">
+      <span class="site-header__logo-name">{{ site.title }}</span>
+      <span class="site-header__logo-tag">Photographe</span>
+    </a>
+
+    <nav class="site-nav" aria-label="Navigation principale">
+      <ul class="site-nav__list">
+        {% for item in site.navigation %}
+          <li><a href="{{ item.url | relative_url }}" class="site-nav__link {% if page.url == item.url %}site-nav__link--active{% endif %}">{{ item.title }}</a></li>
+        {% endfor %}
+      </ul>
+    </nav>
+
+    <button class="site-header__burger" id="nav-toggle" aria-label="Menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+
+  </div>
+
+  <div class="site-nav--mobile" id="mobile-nav" aria-hidden="true">
+    <ul class="site-nav__list">
+      {% for item in site.navigation %}
+        <li><a href="{{ item.url | relative_url }}" class="site-nav__link">{{ item.title }}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+</header>
