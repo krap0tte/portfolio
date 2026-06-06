@@ -33,16 +33,12 @@ class MobileNav {
 class Gallery extends EventTarget {
   #cards;
   #filterBtns;
-  #headingTitle;
-  #headingDesc;
   #seriesData;
 
   constructor() {
     super();
-    this.#cards        = document.querySelectorAll('.gallery-card');
-    this.#filterBtns   = document.querySelectorAll('.gallery-filters__btn');
-    this.#headingTitle = document.getElementById('gallery-heading-title');
-    this.#headingDesc  = document.getElementById('gallery-heading-desc');
+    this.#cards      = document.querySelectorAll('.gallery-card');
+    this.#filterBtns = document.querySelectorAll('.gallery-filters__btn');
 
     const seriesEl   = document.getElementById('series-data');
     this.#seriesData = seriesEl ? JSON.parse(seriesEl.textContent) : {};
@@ -54,6 +50,9 @@ class Gallery extends EventTarget {
   get cards() { return this.#cards; }
 
   #bindFilters() {
+    const title = document.getElementById('gallery-heading-title');
+    const desc  = document.getElementById('gallery-heading-desc');
+
     this.#filterBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         this.#filterBtns.forEach(b => b.classList.remove('is-active'));
@@ -68,16 +67,12 @@ class Gallery extends EventTarget {
           if (show) visible.push(Number(card.dataset.index));
         });
 
-        this.#updateHeading(filter, btn.textContent.trim());
+        if (title) title.textContent = filter === 'all' ? 'Toutes les photos' : btn.textContent.trim();
+        if (desc)  desc.textContent  = filter === 'all' ? '' : (this.#seriesData[filter] || '');
+
         this.dispatchEvent(new CustomEvent('filterchange', { detail: { visible } }));
       });
     });
-  }
-
-  #updateHeading(filter, label) {
-    if (!this.#headingTitle || !this.#headingDesc) return;
-    this.#headingTitle.textContent = filter === 'all' ? 'Toutes les photos' : label;
-    this.#headingDesc.textContent  = filter === 'all' ? '' : (this.#seriesData[filter] || '');
   }
 
   #bindImageFadeIn() {
@@ -174,11 +169,10 @@ class Lightbox {
     this.#img.classList.add('is-loading');
     this.#loader.classList.add('is-visible');
 
-    const done = () => {
+    this.#img.onload = () => {
       this.#img.classList.remove('is-loading');
       this.#loader.classList.remove('is-visible');
     };
-    this.#img.onload = done;
 
     this.#img.alt = p.title;
     if (p.webp) {
@@ -187,7 +181,7 @@ class Lightbox {
     } else {
       this.#img.src = p.src;
     }
-    if (this.#img.complete && this.#img.naturalWidth) done();
+    if (this.#img.complete && this.#img.naturalWidth) this.#img.onload();
 
     this.#title.textContent    = p.title;
     this.#meta.textContent     = [p.category, p.date].filter(Boolean).join(' · ');
