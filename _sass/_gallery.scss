@@ -92,19 +92,42 @@
   display: block;
 
   &__img-wrap {
+    position: relative;
     overflow: hidden;
     background: $bg-surface;
-    line-height: 0;
+    aspect-ratio: 3 / 2;
 
-    picture { display: block; }
+    picture { display: block; height: 100%; }
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        transparent 100%
+      );
+      background-size: 200% 100%;
+      animation: card-shimmer 1.5s ease-in-out infinite;
+      transition: opacity 0.3s;
+    }
+
+    &.is-loaded::after { opacity: 0; }
   }
 
   &__img {
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: cover;
     display: block;
+    opacity: 0;
+    transition: opacity 0.35s ease;
 
-    &:hover { opacity: 0.88; }
+    &.is-loaded       { opacity: 1; }
+    &.is-loaded:hover { opacity: 0.88; }
   }
 
   &__caption {
@@ -194,6 +217,27 @@
     object-fit: contain;
     display: block;
     cursor: default;
+    transition: opacity 0.2s ease;
+
+    &.is-loading { opacity: 0; }
+  }
+
+  &__loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 22px;
+    height: 22px;
+    margin: -11px 0 0 -11px;
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    border-top-color: rgba(255, 255, 255, 0.55);
+    border-radius: 50%;
+    animation: lb-spin 0.7s linear infinite;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+
+    &.is-visible { opacity: 1; }
   }
 
   &__nav {
@@ -249,4 +293,13 @@
 
     @media (max-width: $bp-sm) { display: none; }
   }
+}
+
+@keyframes card-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes lb-spin {
+  to { transform: rotate(360deg); }
 }

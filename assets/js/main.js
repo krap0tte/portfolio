@@ -48,6 +48,20 @@ filterBtns.forEach(btn => {
   });
 });
 
+// ─── Gallery image fade-in ───────────────────────────────────────────────────
+
+galleryCards.forEach(card => {
+  const img  = card.querySelector('img');
+  const wrap = card.querySelector('.gallery-card__img-wrap');
+  if (!img) return;
+  const markLoaded = () => {
+    img.classList.add('is-loaded');
+    wrap?.classList.add('is-loaded');
+  };
+  if (img.complete && img.naturalWidth > 0) markLoaded();
+  else img.addEventListener('load', markLoaded);
+});
+
 // ─── Lightbox ────────────────────────────────────────────────────────────────
 
 (function () {
@@ -67,6 +81,7 @@ filterBtns.forEach(btn => {
   const lbPrev     = document.getElementById('lightbox-prev');
   const lbNext     = document.getElementById('lightbox-next');
   const lbStage    = document.getElementById('lightbox-stage');
+  const lbLoader   = document.getElementById('lightbox-loader');
 
   let current     = 0;
   let lastFocused = null;
@@ -80,6 +95,15 @@ filterBtns.forEach(btn => {
   function update() {
     const p = photos[current];
 
+    lbImg.classList.add('is-loading');
+    lbLoader.classList.add('is-visible');
+
+    const done = () => {
+      lbImg.classList.remove('is-loading');
+      lbLoader.classList.remove('is-visible');
+    };
+    lbImg.onload = done;
+
     lbImg.alt = p.title;
     if (p.webp) {
       lbImg.onerror = () => { lbImg.onerror = null; lbImg.src = p.src; };
@@ -87,6 +111,8 @@ filterBtns.forEach(btn => {
     } else {
       lbImg.src = p.src;
     }
+    if (lbImg.complete && lbImg.naturalWidth) done();
+
     lbTitle.textContent = p.title;
     lbMeta.textContent  = [p.category, p.date].filter(Boolean).join(' · ');
 
