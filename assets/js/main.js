@@ -1,33 +1,3 @@
-// ─── MobileNav ───────────────────────────────────────────────────────────────
-
-class MobileNav {
-  #toggle;
-  #nav;
-
-  constructor() {
-    this.#toggle = document.getElementById('nav-toggle');
-    this.#nav    = document.getElementById('mobile-nav');
-    if (!this.#toggle || !this.#nav) return;
-    this.#bind();
-  }
-
-  #bind() {
-    this.#toggle.addEventListener('click', () => {
-      const open = this.#nav.classList.toggle('is-open');
-      this.#toggle.setAttribute('aria-expanded', String(open));
-      document.body.style.overflow = open ? 'hidden' : '';
-    });
-
-    this.#nav.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        this.#nav.classList.remove('is-open');
-        this.#toggle.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
-      });
-    });
-  }
-}
-
 // ─── Gallery ─────────────────────────────────────────────────────────────────
 
 class Gallery extends EventTarget {
@@ -38,7 +8,7 @@ class Gallery extends EventTarget {
   constructor() {
     super();
     this.#cards      = document.querySelectorAll('.gallery-card');
-    this.#filterBtns = document.querySelectorAll('.gallery-filters__btn');
+    this.#filterBtns = document.querySelectorAll('.filter-pill__btn');
 
     const seriesEl   = document.getElementById('series-data');
     this.#seriesData = seriesEl ? JSON.parse(seriesEl.textContent) : {};
@@ -218,6 +188,5 @@ class Lightbox {
 
 // ─── Init ────────────────────────────────────────────────────────────────────
 
-new MobileNav();
 const gallery = new Gallery();
 new Lightbox(gallery);

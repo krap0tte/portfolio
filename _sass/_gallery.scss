@@ -1,48 +1,5 @@
 @use 'variables' as *;
 
-// ─── Filters ─────────────────────────────────────────────────────────────────
-
-.gallery-filters {
-  padding-top: 1rem;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid $border;
-
-  .container {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    flex-wrap: wrap;
-  }
-
-  &__label {
-    font-size: $size-xs;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: $text-faint;
-    margin-right: 0.75rem;
-  }
-
-  &__btn {
-    padding: 0.3rem 0.85rem;
-    border: 1px solid $border;
-    font-family: $font-body;
-    font-size: $size-xs;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: $text-muted;
-    background: transparent;
-    cursor: pointer;
-
-    &:hover { color: $text; border-color: $text; }
-
-    &.is-active {
-      background: $text;
-      border-color: $text;
-      color: $bg;
-    }
-  }
-}
-
 // ─── Heading ─────────────────────────────────────────────────────────────────
 
 .gallery-heading {
