@@ -12,13 +12,13 @@
     font-weight: 300;
     letter-spacing: -0.01em;
     line-height: 1.1;
-    color: $text;
+    color: var(--text);
     margin-bottom: 0.6rem;
   }
 
   &__desc {
     font-size: $size-base;
-    color: $text-muted;
+    color: var(--text-muted);
     max-width: 56ch;
     line-height: 1.7;
   }
@@ -27,32 +27,24 @@
 // ─── Grid ────────────────────────────────────────────────────────────────────
 
 .gallery-grid {
-  padding-block: clamp(2rem, 5vw, 3.5rem);
-
   &__container {
-    max-width: $container-max;
-    margin-inline: auto;
-    padding-inline: $container-pad;
-    columns: 3 260px;
-    column-gap: 1.25rem;
-
-    @media (max-width: $bp-sm)  { columns: 1; }
-    @media (min-width: $bp-sm) and (max-width: $bp-lg) { columns: 2; }
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
   }
 }
 
 // ─── Card ────────────────────────────────────────────────────────────────────
 
 .gallery-card {
-  break-inside: avoid;
-  margin-bottom: 1.25rem;
   display: block;
+  transition: opacity 0.2s ease;
 
   &__img-wrap {
     position: relative;
     overflow: hidden;
-    background: $bg-surface;
-    aspect-ratio: 3 / 2;
+    background: var(--bg-surface);
+    aspect-ratio: 1;
 
     picture { display: block; height: 100%; }
 
@@ -87,40 +79,18 @@
     &.is-loaded:hover { opacity: 0.88; }
   }
 
-  &__caption {
-    padding-top: 0.6rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 1rem;
-  }
-
-  &__title {
-    font-family: $font-display;
-    font-size: $size-base;
-    font-weight: 400;
-    color: $text;
-    line-height: 1.3;
-  }
-
-  &__meta {
-    font-size: $size-xs;
-    color: $text-faint;
-    white-space: nowrap;
-    letter-spacing: 0.05em;
-  }
 }
 
 // ─── Empty state ─────────────────────────────────────────────────────────────
 
 .gallery-empty {
   padding: 5rem 0;
-  color: $text-muted;
+  color: var(--text-muted);
   font-size: $size-base;
 
   code {
     font-family: monospace;
-    background: $bg-surface;
+    background: var(--bg-surface);
     padding: 0.1em 0.4em;
     font-size: 0.9em;
   }

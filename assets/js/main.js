@@ -28,19 +28,40 @@ class Gallery extends EventTarget {
         this.#filterBtns.forEach(b => b.classList.remove('is-active'));
         btn.classList.add('is-active');
 
-        const filter  = btn.dataset.filter;
-        const visible = [];
-
-        this.#cards.forEach(card => {
-          const show = filter === 'all' || card.dataset.category === filter;
-          card.style.display = show ? '' : 'none';
-          if (show) visible.push(Number(card.dataset.index));
-        });
+        const filter = btn.dataset.filter;
 
         if (title) title.textContent = filter === 'all' ? 'Toutes les photos' : btn.textContent.trim();
         if (desc)  desc.textContent  = filter === 'all' ? '' : (this.#seriesData[filter] || '');
 
-        this.dispatchEvent(new CustomEvent('filterchange', { detail: { visible } }));
+        // Phase 1 — fade out currently visible cards
+        this.#cards.forEach(card => {
+          if (card.style.display !== 'none') card.style.opacity = '0';
+        });
+
+        // Phase 2 — after fade-out, reflow and fade in
+        setTimeout(() => {
+          const visible = [];
+          this.#cards.forEach(card => {
+            const show = filter === 'all' || card.dataset.category === filter;
+            if (show) {
+              card.style.display = '';
+              card.style.opacity = '0';
+              visible.push(Number(card.dataset.index));
+            } else {
+              card.style.display = 'none';
+              card.style.opacity = '';
+            }
+          });
+
+          this.dispatchEvent(new CustomEvent('filterchange', { detail: { visible } }));
+
+          // Double rAF — let the browser register opacity:0 before transitioning to 1
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            this.#cards.forEach(card => {
+              if (card.style.display !== 'none') card.style.opacity = '';
+            });
+          }));
+        }, 200);
       });
     });
   }
@@ -186,7 +207,37 @@ class Lightbox {
   }
 }
 
+// ─── ThemeToggle ─────────────────────────────────────────────────────────────
+
+class ThemeToggle {
+  #btn;
+
+  constructor() {
+    this.#btn = document.getElementById('theme-toggle');
+    if (!this.#btn) return;
+    this.#updateLabel();
+    this.#btn.addEventListener('click', () => {
+      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem('theme', next);
+      this.#updateLabel();
+    });
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+      if (!localStorage.getItem('theme')) {
+        document.documentElement.dataset.theme = e.matches ? 'dark' : 'light';
+        this.#updateLabel();
+      }
+    });
+  }
+
+  #updateLabel() {
+    const isDark = document.documentElement.dataset.theme === 'dark';
+    this.#btn.setAttribute('aria-label', isDark ? 'Passer en thème clair' : 'Passer en thème sombre');
+  }
+}
+
 // ─── Init ────────────────────────────────────────────────────────────────────
 
 const gallery = new Gallery();
 new Lightbox(gallery);
+new ThemeToggle();

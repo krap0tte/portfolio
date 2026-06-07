@@ -7,7 +7,7 @@
 }
 
 .photo-hero {
-  background: $bg-surface;
+  background: var(--bg-surface);
   text-align: center;
   padding: 0;
   line-height: 0;
@@ -37,7 +37,7 @@
     font-size: $size-xs;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: $text-muted;
+    color: var(--text-muted);
   }
 
   &__title {
@@ -45,20 +45,20 @@
     font-size: clamp($size-xl, 3.5vw, $size-2xl);
     font-weight: 300;
     line-height: 1.1;
-    color: $text;
+    color: var(--text);
     margin-bottom: 0.75rem;
   }
 
   &__location {
     font-size: $size-sm;
-    color: $text-muted;
+    color: var(--text-muted);
     margin-bottom: 1.25rem;
   }
 
   &__description {
     font-size: $size-base;
     line-height: 1.8;
-    color: $text-muted;
+    color: var(--text-muted);
 
     p + p { margin-top: 0.9em; }
   }
@@ -67,7 +67,7 @@
 // ─── Navigation ───────────────────────────────────────────────────────────────
 
 .photo-nav {
-  border-top: 1px solid $border;
+  border-top: 1px solid var(--border);
   margin-top: 3rem;
   padding-top: 2rem;
   display: grid;
@@ -94,13 +94,13 @@
     font-size: $size-xs;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: $text-faint;
+    color: var(--text-faint);
   }
 
   &__title {
     font-family: $font-display;
     font-size: $size-md;
-    color: $text;
+    color: var(--text);
   }
 
   &__back {
@@ -108,10 +108,10 @@
     font-size: $size-xs;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: $text-muted;
-    border: 1px solid $border;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
     padding: 0.5rem 1.25rem;
 
-    &:hover { border-color: $text; color: $text; }
+    &:hover { border-color: var(--text); color: var(--text); }
   }
 }
