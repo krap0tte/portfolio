@@ -7,6 +7,7 @@ class Gallery extends EventTarget {
   #cards;
   #filterBtns;
   #seriesData;
+  #indicator;
 
   constructor() {
     super();
@@ -16,6 +17,15 @@ class Gallery extends EventTarget {
     const seriesEl   = document.getElementById('series-data');
     this.#seriesData = seriesEl ? JSON.parse(seriesEl.textContent) : {};
 
+    // Positionner l'indicateur sans transition au chargement initial
+    this.#indicator = document.querySelector('.filter-pill__indicator');
+    if (this.#indicator) {
+      this.#indicator.style.transition = 'none';
+      const initial = document.querySelector('.filter-pill .filter-pill__btn.is-active');
+      if (initial) this.#moveIndicator(initial);
+      requestAnimationFrame(() => { this.#indicator.style.transition = ''; });
+    }
+
     this.#bindFilters();
     this.#bindImageFadeIn();
   }
@@ -23,6 +33,18 @@ class Gallery extends EventTarget {
   // Exposé pour que Lightbox puisse attacher ses propres listeners de clic
   // sur les cards sans accéder directement au DOM global.
   get cards() { return this.#cards; }
+
+  // Déplace l'indicateur sous le bouton donné. Ignoré si le bouton est dans
+  // l'overlay mobile (hors .filter-pill) pour ne pas perturber la pill desktop.
+  #moveIndicator(btn) {
+    if (!this.#indicator) return;
+    const pill = btn.closest('.filter-pill');
+    if (!pill) return;
+    const pillRect = pill.getBoundingClientRect();
+    const btnRect  = btn.getBoundingClientRect();
+    this.#indicator.style.transform = `translateX(${btnRect.left - pillRect.left}px)`;
+    this.#indicator.style.width     = `${btnRect.width}px`;
+  }
 
   #bindFilters() {
     const title = document.getElementById('gallery-heading-title');
@@ -32,6 +54,7 @@ class Gallery extends EventTarget {
       btn.addEventListener('click', () => {
         this.#filterBtns.forEach(b => b.classList.remove('is-active'));
         btn.classList.add('is-active');
+        this.#moveIndicator(btn);
 
         const filter = btn.dataset.filter;
         const label  = btn.textContent.trim();
