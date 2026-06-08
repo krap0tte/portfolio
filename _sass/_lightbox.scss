@@ -88,46 +88,6 @@
     @media (max-width: $bp-sm) { padding: 1rem 0.75rem; }
   }
 
-  &__info {
-    flex-shrink: 0;
-    padding: 1rem clamp(1.25rem, 4vw, 2.5rem) 1.25rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.07);
-    text-align: center;
-    transition: opacity 0.2s ease;
-  }
-
-  &__meta {
-    font-size: $size-xs;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.3);
-    margin-bottom: 0.3rem;
-  }
-
-  &__title {
-    font-family: $font-display;
-    font-size: $size-lg;
-    font-weight: 400;
-    color: rgba(255, 255, 255, 0.9);
-    line-height: 1.2;
-  }
-
-  &__location {
-    font-size: $size-sm;
-    color: rgba(255, 255, 255, 0.4);
-    margin-top: 0.2rem;
-  }
-
-  &__description {
-    font-size: $size-sm;
-    color: rgba(255, 255, 255, 0.3);
-    line-height: 1.6;
-    margin-top: 0.35rem;
-    max-width: 70ch;
-    margin-inline: auto;
-
-    @media (max-width: $bp-sm) { display: none; }
-  }
 }
 
 @keyframes lb-spin {

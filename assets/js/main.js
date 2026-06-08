@@ -234,11 +234,6 @@ class Lightbox {
   #photos;
   #el;
   #img;
-  #info;
-  #title;
-  #meta;
-  #location;
-  #desc;
   #closeBtn;
   #prev;
   #next;
@@ -257,12 +252,7 @@ class Lightbox {
     this.#el     = document.getElementById('lightbox');
     if (!this.#el) return;
 
-    this.#img      = document.getElementById('lightbox-img');
-    this.#info     = document.getElementById('lightbox-info');
-    this.#title    = document.getElementById('lightbox-title');
-    this.#meta     = document.getElementById('lightbox-meta');
-    this.#location = document.getElementById('lightbox-location');
-    this.#desc     = document.getElementById('lightbox-description');
+    this.#img = document.getElementById('lightbox-img');
     this.#closeBtn = document.getElementById('lightbox-close');
     this.#prev     = document.getElementById('lightbox-prev');
     this.#next     = document.getElementById('lightbox-next');
@@ -327,12 +317,6 @@ class Lightbox {
     }
     if (this.#img.complete && this.#img.naturalWidth) onLoad();
 
-    this.#title.textContent    = p.title;
-    this.#meta.textContent     = [p.category, p.date].filter(Boolean).join(' · ');
-    this.#location.textContent = p.location;
-    this.#location.hidden      = !p.location;
-    this.#desc.textContent     = p.description;
-    this.#desc.hidden          = !p.description;
     this.#prev.hidden = this.#next.hidden = this.#visible.length < 2;
   }
 
@@ -359,17 +343,13 @@ class Lightbox {
     const pos  = this.#visible.indexOf(this.#current);
     const next = this.#visible[(pos + dir + this.#visible.length) % this.#visible.length];
 
-    this.#img.style.opacity  = '0';
-    if (this.#info) this.#info.style.opacity = '0';
+    this.#img.style.opacity = '0';
 
     this.#navTimeout = setTimeout(() => {
       this.#navTimeout        = null;
       this.#current           = next;
       this.#img.style.opacity = '';
       this.#update();
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        if (this.#info) this.#info.style.opacity = '';
-      }));
     }, 200);
   }
 }
