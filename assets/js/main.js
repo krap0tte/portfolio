@@ -1,27 +1,96 @@
+// ─── Cover ───────────────────────────────────────────────────────────────────
+
+class Cover {
+  #el;
+  #picture;
+  #img;
+  #name;
+  #btn;
+  #dismissed = false;
+
+  constructor() {
+    this.#el      = document.getElementById('cover');
+    this.#picture = document.getElementById('cover-picture');
+    this.#img     = document.getElementById('cover-img');
+    this.#name    = document.getElementById('cover-name');
+    this.#btn     = document.getElementById('cover-enter');
+    if (!this.#el || !this.#picture || !this.#img || !this.#btn) return;
+
+    document.body.style.overflow = 'hidden';
+
+    const reveal = () => {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        this.#picture.classList.add('is-visible');
+        setTimeout(() => {
+          this.#name?.classList.add('is-visible');
+          this.#btn.classList.add('is-visible');
+        }, 450);
+      }));
+    };
+
+    if (this.#img.complete && this.#img.naturalWidth > 0) {
+      reveal();
+    } else {
+      this.#img.addEventListener('load',  reveal, { once: true });
+      this.#img.addEventListener('error', reveal, { once: true });
+    }
+
+    this.#btn.addEventListener('click', () => this.#dismiss(), { once: true });
+
+    const onKey = e => {
+      if (e.key === 'Escape') { document.removeEventListener('keydown', onKey); this.#dismiss(); }
+    };
+    document.addEventListener('keydown', onKey);
+  }
+
+  #dismiss() {
+    if (this.#dismissed) return;
+    this.#dismissed = true;
+
+    document.body.style.overflow = '';
+    this.#name?.classList.remove('is-visible');
+    this.#btn.classList.remove('is-visible');
+
+    setTimeout(() => {
+      this.#el.classList.add('is-leaving');
+      const onEnd = e => {
+        if (e.target !== this.#el || e.propertyName !== 'opacity') return;
+        this.#el.removeEventListener('transitionend', onEnd);
+        this.#el.hidden = true;
+      };
+      this.#el.addEventListener('transitionend', onEnd);
+    }, 250);
+  }
+}
+
 // ─── Gallery ─────────────────────────────────────────────────────────────────
 
-// Gère la grille : filtrage par série avec animation, fondu des images
-// au chargement. Étend EventTarget pour émettre `filterchange` — Lightbox
-// et FilterMobileMenu s'abonnent sans que les classes se connaissent.
+// Étend EventTarget pour émettre `filterchange` — Lightbox et FilterMobileMenu
+// s'abonnent sans couplage direct.
 class Gallery extends EventTarget {
   #cards;
   #filterBtns;
   #seriesData;
   #indicator;
+  #pill;
+  #title;
+  #desc;
 
   constructor() {
     super();
     this.#cards      = document.querySelectorAll('.gallery-card');
     this.#filterBtns = document.querySelectorAll('.filter-pill__btn');
+    this.#pill       = document.querySelector('.filter-pill');
+    this.#title      = document.getElementById('gallery-heading-title');
+    this.#desc       = document.getElementById('gallery-heading-desc');
 
     const seriesEl   = document.getElementById('series-data');
     this.#seriesData = seriesEl ? JSON.parse(seriesEl.textContent) : {};
 
-    // Positionner l'indicateur sans transition au chargement initial
     this.#indicator = document.querySelector('.filter-pill__indicator');
     if (this.#indicator) {
       this.#indicator.style.transition = 'none';
-      const initial = document.querySelector('.filter-pill .filter-pill__btn.is-active');
+      const initial = this.#pill?.querySelector('.filter-pill__btn.is-active');
       if (initial) this.#moveIndicator(initial);
       requestAnimationFrame(() => { this.#indicator.style.transition = ''; });
     }
@@ -30,26 +99,20 @@ class Gallery extends EventTarget {
     this.#bindImageFadeIn();
   }
 
-  // Exposé pour que Lightbox puisse attacher ses propres listeners de clic
-  // sur les cards sans accéder directement au DOM global.
+  // Exposé pour que Lightbox attache ses listeners sur les cards.
   get cards() { return this.#cards; }
 
-  // Déplace l'indicateur sous le bouton donné. Ignoré si le bouton est dans
-  // l'overlay mobile (hors .filter-pill) pour ne pas perturber la pill desktop.
+  // Ignoré si le bouton est hors de .filter-pill (overlay mobile).
   #moveIndicator(btn) {
-    if (!this.#indicator) return;
-    const pill = btn.closest('.filter-pill');
-    if (!pill) return;
-    const pillRect = pill.getBoundingClientRect();
+    if (!this.#indicator || !this.#pill) return;
+    if (!this.#pill.contains(btn)) return;
+    const pillRect = this.#pill.getBoundingClientRect();
     const btnRect  = btn.getBoundingClientRect();
     this.#indicator.style.transform = `translateX(${btnRect.left - pillRect.left}px)`;
     this.#indicator.style.width     = `${btnRect.width}px`;
   }
 
   #bindFilters() {
-    const title = document.getElementById('gallery-heading-title');
-    const desc  = document.getElementById('gallery-heading-desc');
-
     this.#filterBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         this.#filterBtns.forEach(b => b.classList.remove('is-active'));
@@ -59,15 +122,16 @@ class Gallery extends EventTarget {
         const filter = btn.dataset.filter;
         const label  = btn.textContent.trim();
 
-        if (title) title.textContent = filter === 'all' ? 'Toutes les photos' : label;
-        if (desc)  desc.textContent  = filter === 'all' ? '' : (this.#seriesData[filter] || '');
-
-        // Fondu sortant des cards visibles (correspond à la transition CSS 0.2s).
+        if (this.#title) this.#title.style.opacity = '0';
+        if (this.#desc)  this.#desc.style.opacity  = '0';
         this.#cards.forEach(card => {
           if (card.style.display !== 'none') card.style.opacity = '0';
         });
 
         setTimeout(() => {
+          if (this.#title) this.#title.textContent = filter === 'all' ? 'Toutes les photos' : label;
+          if (this.#desc)  this.#desc.textContent  = filter === 'all' ? '' : (this.#seriesData[filter] || '');
+
           const visible = [];
           this.#cards.forEach(card => {
             const show = filter === 'all' || card.dataset.category === filter;
@@ -81,14 +145,13 @@ class Gallery extends EventTarget {
             }
           });
 
-          // filter et label sont inclus pour que les abonnés (ex. FilterMobileMenu)
-          // puissent mettre à jour leur UI sans interroger le DOM.
+          // Inclut filter et label pour que les abonnés mettent à jour leur UI sans interroger le DOM.
           this.dispatchEvent(new CustomEvent('filterchange', { detail: { visible, filter, label } }));
 
-          // Double rAF : le premier frame valide l'état opacity:0 dans le moteur
-          // de rendu ; le second retire le style inline pour déclencher la
-          // transition CSS vers l'opacité naturelle (1).
+          // Premier rAF : opacity:0 committée ; second : inline style retiré → transition CSS 0→1.
           requestAnimationFrame(() => requestAnimationFrame(() => {
+            if (this.#title) this.#title.style.opacity = '';
+            if (this.#desc)  this.#desc.style.opacity  = '';
             this.#cards.forEach(card => {
               if (card.style.display !== 'none') card.style.opacity = '';
             });
@@ -98,9 +161,6 @@ class Gallery extends EventTarget {
     });
   }
 
-  // Ajoute `is-loaded` sur l'<img> et son conteneur dès que l'image est
-  // disponible, ce qui déclenche la transition CSS opacity 0→1 et masque
-  // le shimmer. Gère le cas des images déjà en cache (img.complete).
   #bindImageFadeIn() {
     this.#cards.forEach(card => {
       const img  = card.querySelector('img');
@@ -111,31 +171,28 @@ class Gallery extends EventTarget {
         wrap?.classList.add('is-loaded');
       };
       if (img.complete && img.naturalWidth > 0) markLoaded();
-      else img.addEventListener('load', markLoaded);
+      else img.addEventListener('load', markLoaded, { once: true });
     });
   }
 }
 
 // ─── FilterMobileMenu ────────────────────────────────────────────────────────
 
-// Gère le bouton trigger et l'overlay plein écran du filtre sur mobile.
-// Écoute filterchange pour mettre à jour le label du trigger et fermer
-// l'overlay après sélection — sans couplage direct avec Gallery.
 class FilterMobileMenu {
   #trigger;
   #label;
   #menu;
+  #closeBtn;
 
   constructor(gallery) {
-    this.#trigger = document.getElementById('filter-mobile-trigger');
-    this.#label   = document.getElementById('filter-mobile-label');
-    this.#menu    = document.getElementById('filter-mobile-menu');
+    this.#trigger  = document.getElementById('filter-mobile-trigger');
+    this.#label    = document.getElementById('filter-mobile-label');
+    this.#menu     = document.getElementById('filter-mobile-menu');
+    this.#closeBtn = document.getElementById('filter-mobile-close');
     if (!this.#trigger || !this.#menu) return;
 
     this.#trigger.addEventListener('click', () => this.#toggle());
-
-    document.getElementById('filter-mobile-close')
-      ?.addEventListener('click', () => this.#close());
+    this.#closeBtn?.addEventListener('click', () => this.#close());
 
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && this.#menu.classList.contains('is-open')) this.#close();
@@ -157,7 +214,7 @@ class FilterMobileMenu {
     this.#menu.classList.add('is-open');
     this.#trigger.setAttribute('aria-expanded', 'true');
     this.#menu.setAttribute('aria-hidden', 'false');
-    document.getElementById('filter-mobile-close')?.focus();
+    this.#closeBtn?.focus();
   }
 
   #close() {
@@ -170,14 +227,13 @@ class FilterMobileMenu {
 
 // ─── Lightbox ────────────────────────────────────────────────────────────────
 
-// Visionneuse plein écran : ouverture au clic sur une card, navigation
-// clavier (←/→/Escape) et au clic sur les boutons, fermeture sur le fond.
 // Maintient #visible à jour via filterchange pour que la navigation
 // respecte le filtre actif sans interroger le DOM.
 class Lightbox {
   #photos;
   #el;
   #img;
+  #info;
   #title;
   #meta;
   #location;
@@ -190,6 +246,7 @@ class Lightbox {
   #current     = 0;
   #lastFocused = null;
   #visible     = [];
+  #navTimeout  = null;
 
   constructor(gallery) {
     const dataEl = document.getElementById('photo-data');
@@ -200,6 +257,7 @@ class Lightbox {
     if (!this.#el) return;
 
     this.#img      = document.getElementById('lightbox-img');
+    this.#info     = document.getElementById('lightbox-info');
     this.#title    = document.getElementById('lightbox-title');
     this.#meta     = document.getElementById('lightbox-meta');
     this.#location = document.getElementById('lightbox-location');
@@ -215,9 +273,8 @@ class Lightbox {
   }
 
   #bind(gallery) {
-    // Les listeners de clic sont ici plutôt que dans Gallery : e.preventDefault()
-    // n'est appliqué que si la lightbox est entièrement initialisée ; les cards
-    // restent des <a> fonctionnels si l'élément #lightbox est absent de la page.
+    // e.preventDefault() uniquement si la lightbox est initialisée — les cards
+    // restent des <a> fonctionnels si #lightbox est absent.
     gallery.cards.forEach(card => {
       card.addEventListener('click', e => {
         e.preventDefault();
@@ -248,10 +305,6 @@ class Lightbox {
     });
   }
 
-  // Met à jour le contenu de la lightbox pour la photo courante.
-  // Tente le WebP en priorité, bascule sur JPEG via onerror.
-  // Si l'image est déjà en cache (complete && naturalWidth > 0), le
-  // navigateur ne déclenche pas onload — on l'appelle manuellement.
   #update() {
     const p = this.#photos[this.#current];
 
@@ -298,20 +351,29 @@ class Lightbox {
     this.#lastFocused?.focus();
   }
 
-  // Navigation cyclique dans la liste des photos visibles (filtre actif).
   #navigate(dir) {
-    const pos     = this.#visible.indexOf(this.#current);
-    this.#current = this.#visible[(pos + dir + this.#visible.length) % this.#visible.length];
-    this.#update();
+    if (this.#navTimeout) clearTimeout(this.#navTimeout);
+
+    const pos  = this.#visible.indexOf(this.#current);
+    const next = this.#visible[(pos + dir + this.#visible.length) % this.#visible.length];
+
+    this.#img.style.opacity  = '0';
+    if (this.#info) this.#info.style.opacity = '0';
+
+    this.#navTimeout = setTimeout(() => {
+      this.#navTimeout        = null;
+      this.#current           = next;
+      this.#img.style.opacity = '';
+      this.#update();
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        if (this.#info) this.#info.style.opacity = '';
+      }));
+    }, 200);
   }
 }
 
 // ─── ThemeToggle ─────────────────────────────────────────────────────────────
 
-// Gère le bouton de bascule clair/sombre. Le thème initial est appliqué
-// par un script inline dans <head> (default.html) avant le premier rendu
-// pour éviter le flash de contenu non stylé — cette classe s'occupe
-// uniquement de l'interaction et des changements de préférence système.
 class ThemeToggle {
   #btn;
 
@@ -325,7 +387,7 @@ class ThemeToggle {
       localStorage.setItem('theme', next);
       this.#updateLabel();
     });
-    // Si aucun override manuel, suit les changements de préférence système en direct.
+    // Suit la préférence système si aucun override manuel n'est actif.
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
       if (!localStorage.getItem('theme')) {
         document.documentElement.dataset.theme = e.matches ? 'dark' : 'light';
@@ -342,6 +404,7 @@ class ThemeToggle {
 
 // ─── Init ────────────────────────────────────────────────────────────────────
 
+new Cover();
 const gallery = new Gallery();
 new FilterMobileMenu(gallery);
 new Lightbox(gallery);

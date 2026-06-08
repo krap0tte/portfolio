@@ -55,6 +55,9 @@ jobs:
         env:
           JEKYLL_ENV: production
 
+      - name: Minify JavaScript
+        run: npx --yes terser _site/assets/js/main.js --compress "passes=2" --mangle --comments false --ecma 2022 --output _site/assets/js/main.js
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
 

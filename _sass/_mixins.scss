@@ -1,0 +1,28 @@
+// ─── Liquid glass ────────────────────────────────────────────────────────────
+
+@mixin glass {
+  background:              var(--glass-bg);
+  backdrop-filter:         blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border:                  1px solid var(--glass-border);
+  box-shadow:              var(--glass-shadow);
+}
+
+// ─── Dark theme ───────────────────────────────────────────────────────────────
+
+@mixin dark-theme {
+  --bg:               #111110;
+  --bg-surface:       #1c1c1a;
+  --border:           #2e2e2b;
+  --text:             #efefed;
+  --text-muted:       #8a8a87;
+  --text-faint:       #525250;
+  --glass-bg:         linear-gradient(145deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%);
+  --glass-border:     rgba(255, 255, 255, 0.10);
+  --glass-shadow:
+    0 2px 8px  rgba(0, 0, 0, 0.25),
+    0 10px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.40);
+  --glass-overlay-bg: rgba(10, 10, 9, 0.80);
+}

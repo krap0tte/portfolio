@@ -2,7 +2,9 @@
 ---
 
 @use "variables";
+@use "mixins";
 @use "base";
+@use "cover";
 @use "header";
 @use "gallery";
 @use "lightbox";

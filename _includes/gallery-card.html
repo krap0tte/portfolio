@@ -7,9 +7,9 @@
   <div class="gallery-card__img-wrap">
     <picture>
       <source srcset="{{ include.photo.image | replace: '.jpg', '-thumb.webp' | relative_url }}" type="image/webp">
-      <source srcset="{{ include.photo.image | replace: '.jpg', '-thumb.jpg' | relative_url }}">
+      <source srcset="{{ include.photo.image | replace: '.jpg', '-thumb.jpg' | relative_url }}" type="image/jpeg">
       <img
-        src="{{ include.photo.image | relative_url }}"
+        src="{{ include.photo.image | replace: '.jpg', '-thumb.jpg' | relative_url }}"
         alt="{{ include.photo.title }}"
         class="gallery-card__img"
         loading="lazy"

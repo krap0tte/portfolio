@@ -3,6 +3,7 @@ layout: default
 title: "Galerie"
 ---
 {% assign photos = site.photos | sort: "date" | reverse %}
+{% include cover.html %}
 {% include gallery-heading.html %}
 {% include gallery-grid.html photos=photos %}
 {% include lightbox.html %}

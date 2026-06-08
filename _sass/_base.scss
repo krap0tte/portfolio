@@ -1,4 +1,5 @@
 @use 'variables' as *;
+@use 'mixins' as *;
 
 // ─── Theme ───────────────────────────────────────────────────────────────────
 
@@ -22,42 +23,10 @@
   --glass-overlay-bg: rgba(249, 249, 247, 0.76);
 }
 
-[data-theme="dark"] {
-  --bg:         #111110;
-  --bg-surface: #1c1c1a;
-  --border:     #2e2e2b;
-  --text:       #efefed;
-  --text-muted: #8a8a87;
-  --text-faint: #525250;
-
-  --glass-bg:         linear-gradient(145deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%);
-  --glass-border:     rgba(255, 255, 255, 0.10);
-  --glass-shadow:
-    0 2px 8px  rgba(0, 0, 0, 0.25),
-    0 10px 40px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.40);
-  --glass-overlay-bg: rgba(10, 10, 9, 0.80);
-}
+[data-theme="dark"]                        { @include dark-theme; }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg:         #111110;
-    --bg-surface: #1c1c1a;
-    --border:     #2e2e2b;
-    --text:       #efefed;
-    --text-muted: #8a8a87;
-    --text-faint: #525250;
-
-    --glass-bg:         linear-gradient(145deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%);
-    --glass-border:     rgba(255, 255, 255, 0.10);
-    --glass-shadow:
-      0 2px 8px  rgba(0, 0, 0, 0.25),
-      0 10px 40px rgba(0, 0, 0, 0.35),
-      inset 0 1px 0 rgba(255, 255, 255, 0.07),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.40);
-    --glass-overlay-bg: rgba(10, 10, 9, 0.80);
-  }
+  :root:not([data-theme="light"])          { @include dark-theme; }
 }
 
 // ─── Reset ───────────────────────────────────────────────────────────────────
