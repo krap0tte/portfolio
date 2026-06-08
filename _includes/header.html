@@ -1,11 +1,44 @@
 {% if page.url == '/' %}
   {% assign all_categories = site.photos | map: "category" | compact | uniq | sort %}
   {% if all_categories.size > 0 %}
+
+  <!-- Desktop pill (≥ 600px) -->
   <nav class="filter-pill" aria-label="Filtrer par série">
     <button class="filter-pill__btn is-active" data-filter="all">Tout</button>
     {% for cat in all_categories %}
       <button class="filter-pill__btn" data-filter="{{ cat | slugify }}">{{ cat }}</button>
     {% endfor %}
   </nav>
+
+  <!-- Mobile trigger (< 600px) -->
+  <button class="filter-mobile-trigger" id="filter-mobile-trigger"
+          aria-haspopup="dialog" aria-expanded="false" aria-controls="filter-mobile-menu">
+    <span id="filter-mobile-label">Séries</span>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  </button>
+
+  <!-- Mobile overlay (< 600px) -->
+  <div class="filter-mobile-menu" id="filter-mobile-menu"
+       role="dialog" aria-modal="true" aria-label="Filtrer par série" aria-hidden="true">
+    <div class="filter-mobile-menu__header">
+      <span class="filter-mobile-menu__title">Séries</span>
+      <button class="filter-mobile-menu__close" id="filter-mobile-close" aria-label="Fermer">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <nav class="filter-mobile-menu__list">
+      <button class="filter-pill__btn is-active" data-filter="all">Tout</button>
+      {% for cat in all_categories %}
+        <button class="filter-pill__btn" data-filter="{{ cat | slugify }}">{{ cat }}</button>
+      {% endfor %}
+    </nav>
+  </div>
+
   {% endif %}
 {% endif %}

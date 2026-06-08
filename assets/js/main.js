@@ -2,7 +2,7 @@
 
 // Gère la grille : filtrage par série avec animation, fondu des images
 // au chargement. Étend EventTarget pour émettre `filterchange` — Lightbox
-// s'abonne à cet événement sans que les deux classes se connaissent.
+// et FilterMobileMenu s'abonnent sans que les classes se connaissent.
 class Gallery extends EventTarget {
   #cards;
   #filterBtns;
@@ -34,8 +34,9 @@ class Gallery extends EventTarget {
         btn.classList.add('is-active');
 
         const filter = btn.dataset.filter;
+        const label  = btn.textContent.trim();
 
-        if (title) title.textContent = filter === 'all' ? 'Toutes les photos' : btn.textContent.trim();
+        if (title) title.textContent = filter === 'all' ? 'Toutes les photos' : label;
         if (desc)  desc.textContent  = filter === 'all' ? '' : (this.#seriesData[filter] || '');
 
         // Fondu sortant des cards visibles (correspond à la transition CSS 0.2s).
@@ -57,7 +58,9 @@ class Gallery extends EventTarget {
             }
           });
 
-          this.dispatchEvent(new CustomEvent('filterchange', { detail: { visible } }));
+          // filter et label sont inclus pour que les abonnés (ex. FilterMobileMenu)
+          // puissent mettre à jour leur UI sans interroger le DOM.
+          this.dispatchEvent(new CustomEvent('filterchange', { detail: { visible, filter, label } }));
 
           // Double rAF : le premier frame valide l'état opacity:0 dans le moteur
           // de rendu ; le second retire le style inline pour déclencher la
@@ -87,6 +90,58 @@ class Gallery extends EventTarget {
       if (img.complete && img.naturalWidth > 0) markLoaded();
       else img.addEventListener('load', markLoaded);
     });
+  }
+}
+
+// ─── FilterMobileMenu ────────────────────────────────────────────────────────
+
+// Gère le bouton trigger et l'overlay plein écran du filtre sur mobile.
+// Écoute filterchange pour mettre à jour le label du trigger et fermer
+// l'overlay après sélection — sans couplage direct avec Gallery.
+class FilterMobileMenu {
+  #trigger;
+  #label;
+  #menu;
+
+  constructor(gallery) {
+    this.#trigger = document.getElementById('filter-mobile-trigger');
+    this.#label   = document.getElementById('filter-mobile-label');
+    this.#menu    = document.getElementById('filter-mobile-menu');
+    if (!this.#trigger || !this.#menu) return;
+
+    this.#trigger.addEventListener('click', () => this.#toggle());
+
+    document.getElementById('filter-mobile-close')
+      ?.addEventListener('click', () => this.#close());
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && this.#menu.classList.contains('is-open')) this.#close();
+    });
+
+    gallery.addEventListener('filterchange', e => {
+      if (this.#label) {
+        this.#label.textContent = e.detail.filter === 'all' ? 'Séries' : e.detail.label;
+      }
+      if (this.#menu.classList.contains('is-open')) this.#close();
+    });
+  }
+
+  #toggle() {
+    this.#menu.classList.contains('is-open') ? this.#close() : this.#open();
+  }
+
+  #open() {
+    this.#menu.classList.add('is-open');
+    this.#trigger.setAttribute('aria-expanded', 'true');
+    this.#menu.setAttribute('aria-hidden', 'false');
+    document.getElementById('filter-mobile-close')?.focus();
+  }
+
+  #close() {
+    this.#menu.classList.remove('is-open');
+    this.#trigger.setAttribute('aria-expanded', 'false');
+    this.#menu.setAttribute('aria-hidden', 'true');
+    this.#trigger.focus();
   }
 }
 
@@ -265,5 +320,6 @@ class ThemeToggle {
 // ─── Init ────────────────────────────────────────────────────────────────────
 
 const gallery = new Gallery();
+new FilterMobileMenu(gallery);
 new Lightbox(gallery);
 new ThemeToggle();
