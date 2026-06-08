@@ -22,8 +22,8 @@ for src in "$SRC_DIR"/*.jpg; do
   base="${src%.jpg}"
   name="$(basename "$src")"
 
-  if [[ "$name" == "cover.jpg" ]]; then
-    # Cover : WebP pleine résolution uniquement, pas de miniature
+  if [[ "$name" == "cover.jpg" || "$name" == "cover_phone.jpg" ]]; then
+    # Covers : WebP pleine résolution uniquement, pas de miniature
     if [ -f "${base}.webp" ] && [ "${base}.webp" -nt "$src" ]; then
       ((skipped++)) || true
       continue
