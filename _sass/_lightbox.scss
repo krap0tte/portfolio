@@ -1,4 +1,5 @@
 @use 'variables' as *;
+@use 'mixins' as *;
 
 .lightbox {
   position: fixed;
@@ -24,12 +25,14 @@
     top: 1rem;
     right: 1.25rem;
     z-index: 10;
-    color: rgba(255, 255, 255, 0.4);
-    padding: 0.5rem;
+    @include glass;
+    color: var(--text-muted);
+    padding: 0.65rem;
     line-height: 0;
+    border-radius: 50%;
     transition: color 0.15s;
 
-    &:hover { color: #fff; }
+    &:hover { color: var(--text); }
   }
 
   &__stage {
@@ -71,14 +74,16 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    color: rgba(255, 255, 255, 0.3);
-    padding: 1.5rem 1.25rem;
+    @include glass;
+    color: var(--text-muted);
+    padding: 0.65rem;
     line-height: 0;
+    border-radius: 50%;
     transition: color 0.15s;
 
-    &:hover { color: rgba(255, 255, 255, 0.85); }
-    &--prev { left: 0; }
-    &--next { right: 0; }
+    &:hover { color: var(--text); }
+    &--prev { left: 1rem; }
+    &--next { right: 1rem; }
 
     @media (max-width: $bp-sm) { display: none; }
   }
