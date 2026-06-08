@@ -1,7 +1,6 @@
 title: "Demo"
 description: "Photographe — Portrait · Paysage · Architecture"
 author: "Demo"
-email: contact@votrenom.com
 baseurl: ""       # laisser vide si déployé sur username.github.io
 url: "https://username.github.io"  # ← remplacer par votre URL
 
@@ -44,11 +43,3 @@ sass:
   sass_dir: _sass
   style: compressed
 
-# Navigation
-navigation:
-  - title: "Galerie"
-    url: "/"
-  - title: "À propos"
-    url: "/about/"
-  - title: "Contact"
-    url: "/contact/"

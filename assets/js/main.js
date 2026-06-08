@@ -33,12 +33,10 @@ class Gallery extends EventTarget {
         if (title) title.textContent = filter === 'all' ? 'Toutes les photos' : btn.textContent.trim();
         if (desc)  desc.textContent  = filter === 'all' ? '' : (this.#seriesData[filter] || '');
 
-        // Phase 1 — fade out currently visible cards
         this.#cards.forEach(card => {
           if (card.style.display !== 'none') card.style.opacity = '0';
         });
 
-        // Phase 2 — after fade-out, reflow and fade in
         setTimeout(() => {
           const visible = [];
           this.#cards.forEach(card => {
@@ -55,7 +53,6 @@ class Gallery extends EventTarget {
 
           this.dispatchEvent(new CustomEvent('filterchange', { detail: { visible } }));
 
-          // Double rAF — let the browser register opacity:0 before transitioning to 1
           requestAnimationFrame(() => requestAnimationFrame(() => {
             this.#cards.forEach(card => {
               if (card.style.display !== 'none') card.style.opacity = '';
