@@ -1,6 +1,7 @@
 <section class="gallery-heading">
   <div class="container">
-    <h1 class="gallery-heading__title" id="gallery-heading-title">Toutes les photos</h1>
+    {% assign default_cat = site.photos | map: "category" | compact | uniq | sort | first %}
+    <h1 class="gallery-heading__title" id="gallery-heading-title">{{ default_cat }}</h1>
     <p class="gallery-heading__desc" id="gallery-heading-desc"></p>
   </div>
 </section>

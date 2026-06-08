@@ -98,6 +98,11 @@ class Gallery extends EventTarget {
 
     this.#bindFilters();
     this.#bindImageFadeIn();
+    // Déclenche après que Lightbox et FilterMobileMenu ont souscrit à filterchange
+    queueMicrotask(() => {
+      const btn = this.#pill?.querySelector('.filter-pill__btn.is-active');
+      if (btn) this.#filter(btn.dataset.filter, btn.textContent.trim(), false);
+    });
   }
 
   // Exposé pour que Lightbox attache ses listeners sur les cards.
@@ -119,47 +124,52 @@ class Gallery extends EventTarget {
         this.#filterBtns.forEach(b => b.classList.remove('is-active'));
         btn.classList.add('is-active');
         this.#moveIndicator(btn);
-
-        const filter = btn.dataset.filter;
-        const label  = btn.textContent.trim();
-
-        if (this.#title) this.#title.style.opacity = '0';
-        if (this.#desc)  this.#desc.style.opacity  = '0';
-        this.#cards.forEach(card => {
-          if (card.style.display !== 'none') card.style.opacity = '0';
-        });
-
-        setTimeout(() => {
-          if (this.#title) this.#title.textContent = filter === 'all' ? 'Toutes les photos' : label;
-          if (this.#desc)  this.#desc.textContent  = filter === 'all' ? '' : (this.#seriesData[filter] || '');
-
-          const visible = [];
-          this.#cards.forEach(card => {
-            const show = filter === 'all' || card.dataset.category === filter;
-            if (show) {
-              card.style.display = '';
-              card.style.opacity = '0';
-              visible.push(Number(card.dataset.index));
-            } else {
-              card.style.display = 'none';
-              card.style.opacity = '';
-            }
-          });
-
-          // Inclut filter et label pour que les abonnés mettent à jour leur UI sans interroger le DOM.
-          this.dispatchEvent(new CustomEvent('filterchange', { detail: { visible, filter, label } }));
-
-          // Premier rAF : opacity:0 committée ; second : inline style retiré → transition CSS 0→1.
-          requestAnimationFrame(() => requestAnimationFrame(() => {
-            if (this.#title) this.#title.style.opacity = '';
-            if (this.#desc)  this.#desc.style.opacity  = '';
-            this.#cards.forEach(card => {
-              if (card.style.display !== 'none') card.style.opacity = '';
-            });
-          }));
-        }, 200);
+        this.#filter(btn.dataset.filter, btn.textContent.trim(), true);
       });
     });
+  }
+
+  #filter(filter, label, animate) {
+    if (animate) {
+      if (this.#title) this.#title.style.opacity = '0';
+      if (this.#desc)  this.#desc.style.opacity  = '0';
+      this.#cards.forEach(card => {
+        if (card.style.display !== 'none') card.style.opacity = '0';
+      });
+    }
+
+    const apply = () => {
+      if (this.#title) this.#title.textContent = label;
+      if (this.#desc)  this.#desc.textContent  = this.#seriesData[filter] || '';
+
+      const visible = [];
+      this.#cards.forEach(card => {
+        const show = card.dataset.category === filter;
+        if (show) {
+          card.style.display = '';
+          if (animate) card.style.opacity = '0';
+          visible.push(Number(card.dataset.index));
+        } else {
+          card.style.display = 'none';
+          card.style.opacity = '';
+        }
+      });
+
+      this.dispatchEvent(new CustomEvent('filterchange', { detail: { visible, filter, label } }));
+
+      if (animate) {
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          if (this.#title) this.#title.style.opacity = '';
+          if (this.#desc)  this.#desc.style.opacity  = '';
+          this.#cards.forEach(card => {
+            if (card.style.display !== 'none') card.style.opacity = '';
+          });
+        }));
+      }
+    };
+
+    if (animate) setTimeout(apply, 200);
+    else apply();
   }
 
   #bindImageFadeIn() {
@@ -200,9 +210,7 @@ class FilterMobileMenu {
     });
 
     gallery.addEventListener('filterchange', e => {
-      if (this.#label) {
-        this.#label.textContent = e.detail.filter === 'all' ? 'Séries' : e.detail.label;
-      }
+      if (this.#label) this.#label.textContent = e.detail.label;
       if (this.#menu.classList.contains('is-open')) this.#close();
     });
   }
@@ -287,6 +295,63 @@ class Lightbox {
     this.#stage.addEventListener('click', e => {
       if (e.target === this.#stage) this.#close();
     });
+
+    let swipeStartX   = 0;
+    let swipeDragging = false;
+
+    const snapBack = () => {
+      this.#img.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+      this.#img.style.transform  = '';
+      this.#img.style.opacity    = '';
+      setTimeout(() => { this.#img.style.transition = ''; }, 300);
+    };
+
+    this.#stage.addEventListener('touchstart', e => {
+      if (this.#navTimeout) { clearTimeout(this.#navTimeout); this.#navTimeout = null; }
+      swipeStartX   = e.touches[0].clientX;
+      swipeDragging = false;
+      this.#img.style.transition = 'none';
+    }, { passive: true });
+
+    this.#stage.addEventListener('touchmove', e => {
+      const delta = e.touches[0].clientX - swipeStartX;
+      if (!swipeDragging && Math.abs(delta) > 6) swipeDragging = true;
+      if (swipeDragging && this.#visible.length > 1) {
+        this.#img.style.transform = `translateX(${delta}px)`;
+        this.#img.style.opacity   = String(Math.max(0, 1 - Math.abs(delta) / (window.innerWidth * 0.6)));
+      }
+    }, { passive: true });
+
+    this.#stage.addEventListener('touchend', e => {
+      if (!swipeDragging) { this.#img.style.transition = ''; swipeDragging = false; return; }
+      const delta     = e.changedTouches[0].clientX - swipeStartX;
+      const threshold = window.innerWidth * 0.25;
+
+      if (this.#visible.length > 1 && Math.abs(delta) > threshold) {
+        const dir  = delta < 0 ? 1 : -1;
+        const exit = delta < 0 ? '-110%' : '110%';
+        this.#img.style.transition = 'transform 0.22s ease-out, opacity 0.22s ease-out';
+        this.#img.style.transform  = `translateX(${exit})`;
+        this.#img.style.opacity    = '0';
+        setTimeout(() => {
+          const pos = this.#visible.indexOf(this.#current);
+          this.#current = this.#visible[(pos + dir + this.#visible.length) % this.#visible.length];
+          this.#img.style.transition = 'none';
+          this.#img.style.transform  = '';
+          this.#img.style.opacity    = '';
+          this.#update();
+          requestAnimationFrame(() => { this.#img.style.transition = ''; });
+        }, 220);
+      } else {
+        snapBack();
+      }
+      swipeDragging = false;
+    }, { passive: true });
+
+    this.#stage.addEventListener('touchcancel', () => {
+      if (swipeDragging) snapBack();
+      swipeDragging = false;
+    }, { passive: true });
 
     document.addEventListener('keydown', e => {
       if (!this.#el.classList.contains('is-open')) return;
