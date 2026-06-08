@@ -1,5 +1,8 @@
 // ─── Gallery ─────────────────────────────────────────────────────────────────
 
+// Gère la grille : filtrage par série avec animation, fondu des images
+// au chargement. Étend EventTarget pour émettre `filterchange` — Lightbox
+// s'abonne à cet événement sans que les deux classes se connaissent.
 class Gallery extends EventTarget {
   #cards;
   #filterBtns;
@@ -17,6 +20,8 @@ class Gallery extends EventTarget {
     this.#bindImageFadeIn();
   }
 
+  // Exposé pour que Lightbox puisse attacher ses propres listeners de clic
+  // sur les cards sans accéder directement au DOM global.
   get cards() { return this.#cards; }
 
   #bindFilters() {
@@ -33,6 +38,7 @@ class Gallery extends EventTarget {
         if (title) title.textContent = filter === 'all' ? 'Toutes les photos' : btn.textContent.trim();
         if (desc)  desc.textContent  = filter === 'all' ? '' : (this.#seriesData[filter] || '');
 
+        // Fondu sortant des cards visibles (correspond à la transition CSS 0.2s).
         this.#cards.forEach(card => {
           if (card.style.display !== 'none') card.style.opacity = '0';
         });
@@ -53,6 +59,9 @@ class Gallery extends EventTarget {
 
           this.dispatchEvent(new CustomEvent('filterchange', { detail: { visible } }));
 
+          // Double rAF : le premier frame valide l'état opacity:0 dans le moteur
+          // de rendu ; le second retire le style inline pour déclencher la
+          // transition CSS vers l'opacité naturelle (1).
           requestAnimationFrame(() => requestAnimationFrame(() => {
             this.#cards.forEach(card => {
               if (card.style.display !== 'none') card.style.opacity = '';
@@ -63,6 +72,9 @@ class Gallery extends EventTarget {
     });
   }
 
+  // Ajoute `is-loaded` sur l'<img> et son conteneur dès que l'image est
+  // disponible, ce qui déclenche la transition CSS opacity 0→1 et masque
+  // le shimmer. Gère le cas des images déjà en cache (img.complete).
   #bindImageFadeIn() {
     this.#cards.forEach(card => {
       const img  = card.querySelector('img');
@@ -80,6 +92,10 @@ class Gallery extends EventTarget {
 
 // ─── Lightbox ────────────────────────────────────────────────────────────────
 
+// Visionneuse plein écran : ouverture au clic sur une card, navigation
+// clavier (←/→/Escape) et au clic sur les boutons, fermeture sur le fond.
+// Maintient #visible à jour via filterchange pour que la navigation
+// respecte le filtre actif sans interroger le DOM.
 class Lightbox {
   #photos;
   #el;
@@ -121,6 +137,9 @@ class Lightbox {
   }
 
   #bind(gallery) {
+    // Les listeners de clic sont ici plutôt que dans Gallery : e.preventDefault()
+    // n'est appliqué que si la lightbox est entièrement initialisée ; les cards
+    // restent des <a> fonctionnels si l'élément #lightbox est absent de la page.
     gallery.cards.forEach(card => {
       card.addEventListener('click', e => {
         e.preventDefault();
@@ -151,6 +170,10 @@ class Lightbox {
     });
   }
 
+  // Met à jour le contenu de la lightbox pour la photo courante.
+  // Tente le WebP en priorité, bascule sur JPEG via onerror.
+  // Si l'image est déjà en cache (complete && naturalWidth > 0), le
+  // navigateur ne déclenche pas onload — on l'appelle manuellement.
   #update() {
     const p = this.#photos[this.#current];
 
@@ -197,6 +220,7 @@ class Lightbox {
     this.#lastFocused?.focus();
   }
 
+  // Navigation cyclique dans la liste des photos visibles (filtre actif).
   #navigate(dir) {
     const pos     = this.#visible.indexOf(this.#current);
     this.#current = this.#visible[(pos + dir + this.#visible.length) % this.#visible.length];
@@ -206,6 +230,10 @@ class Lightbox {
 
 // ─── ThemeToggle ─────────────────────────────────────────────────────────────
 
+// Gère le bouton de bascule clair/sombre. Le thème initial est appliqué
+// par un script inline dans <head> (default.html) avant le premier rendu
+// pour éviter le flash de contenu non stylé — cette classe s'occupe
+// uniquement de l'interaction et des changements de préférence système.
 class ThemeToggle {
   #btn;
 
@@ -219,6 +247,7 @@ class ThemeToggle {
       localStorage.setItem('theme', next);
       this.#updateLabel();
     });
+    // Si aucun override manuel, suit les changements de préférence système en direct.
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
       if (!localStorage.getItem('theme')) {
         document.documentElement.dataset.theme = e.matches ? 'dark' : 'light';

@@ -1,6 +1,6 @@
 # Portfolio Photographique — Jekyll
 
-Portfolio minimaliste hébergeable gratuitement sur GitHub Pages. Galerie filtrée par série, visionneuse lightbox au clavier, images optimisées automatiquement au build.
+Portfolio minimaliste hébergeable sur GitHub Pages. Grille plein-écran façon Instagram, visionneuse lightbox au clavier, pill de filtre par série, thème sombre synchronisé avec le système, images optimisées automatiquement au build.
 
 ---
 
@@ -64,34 +64,35 @@ Le site est accessible sur [http://localhost:4000](http://localhost:4000).
 ```
 portfolio/
 │
-├── _config.yml              ← Configuration principale (titre, URL, navigation)
+├── _config.yml              ← Configuration principale (titre, URL)
 ├── Gemfile                  ← Dépendances Ruby (Jekyll + plugins)
 │
 ├── _layouts/
-│   ├── default.html         ← Gabarit de base (header + footer)
+│   ├── default.html         ← Gabarit de base (script anti-FOUC, bouton thème)
 │   └── photo.html           ← Page détail d'une photo
 │
 ├── _includes/
-│   ├── header.html          ← En-tête et navigation (desktop + mobile)
-│   └── footer.html          ← Pied de page
+│   ├── header.html          ← Pill de filtre par série (rendue uniquement sur la galerie)
+│   ├── gallery-heading.html ← En-tête de galerie + JSON des descriptions de séries
+│   ├── gallery-grid.html    ← Grille des cards + JSON des données photos
+│   └── lightbox.html        ← Visionneuse plein écran
 │
-├── _sass/                   ← Styles SCSS (Dart Sass, @use/@forward)
-│   ├── _variables.scss      ← Tokens : couleurs, typographie, breakpoints
-│   ├── _base.scss           ← Reset CSS et utilitaires globaux
-│   ├── _header.scss         ← Styles de l'en-tête
-│   ├── _gallery.scss        ← Galerie, filtres, lightbox
-│   ├── _photo.scss          ← Page détail photo
-│   └── _pages.scss          ← Pages statiques (À propos, Contact)
+├── _sass/                   ← Styles SCSS (Dart Sass, @use)
+│   ├── _variables.scss      ← Tokens Sass : typographie, espacements, breakpoints
+│   ├── _base.scss           ← Reset CSS, CSS custom properties (thème clair/sombre)
+│   ├── _header.scss         ← Pill de filtre et bouton de bascule de thème
+│   ├── _gallery.scss        ← Grille, cards, shimmer, lightbox
+│   └── _photo.scss          ← Page détail photo
 │
 ├── _photos/                 ← Une fiche .md par photo
 │   └── nom-de-la-photo.md
 │
 ├── _data/
-│   └── series.yml           ← Descriptions des séries (utilisées sous les filtres)
+│   └── series.yml           ← Descriptions des séries affichées dans le heading
 │
 ├── assets/
 │   ├── css/main.scss        ← Point d'entrée SCSS (front matter Jekyll requis)
-│   ├── js/main.js           ← Navigation mobile, filtre galerie, lightbox
+│   ├── js/main.js           ← Gallery, Lightbox, ThemeToggle (3 classes ES2022)
 │   └── images/              ← Photos originales (JPG)
 │       ├── photo-01.jpg          ← Original commité dans git
 │       ├── photo-01.webp         ← Généré — gitignored
@@ -104,9 +105,7 @@ portfolio/
 ├── .github/
 │   └── workflows/deploy.yml ← CI/CD : optimisation images + build + déploiement
 │
-├── index.html               ← Galerie principale
-├── about.md                 ← Page À propos
-└── contact.md               ← Page Contact
+└── index.html               ← Page unique — assemble les quatre includes de la galerie
 ```
 
 ---
@@ -115,7 +114,7 @@ portfolio/
 
 ### Ajouter une photo
 
-1. Placez le fichier image dans `assets/images/` (JPG, recommandé ≥ 2000px de large)
+1. Placez le fichier image dans `assets/images/` (JPG, recommandé ≥ 2000 px de large)
 2. Créez une fiche dans `_photos/` :
 
 ```yaml
@@ -137,7 +136,7 @@ description: |               # optionnel — supporte le Markdown
 
 ### Ajouter ou modifier une série
 
-Les séries correspondent aux catégories assignées aux photos. Pour ajouter la description qui s'affiche sous les filtres, éditez `_data/series.yml` :
+Les séries correspondent aux catégories assignées aux photos. Éditez `_data/series.yml` pour ajouter la description qui s'affiche sous le titre lors du filtrage :
 
 ```yaml
 # Clé = valeur de `category` dans les fiches _photos/, slugifiée (minuscules, tirets)
@@ -147,7 +146,9 @@ architecture: "Description de la série Architecture."
 ma-serie: "Description de votre nouvelle série."
 ```
 
-> La clé doit être la version slugifiée du nom de catégorie tel que défini dans `_photos/*.md` (filtre Liquid `| slugify` : espaces → tirets, majuscules → minuscules).
+> La clé doit être la version slugifiée du nom de catégorie (filtre Liquid `| slugify` : espaces → tirets, majuscules → minuscules).
+
+Les boutons de la pill de filtre sont générés automatiquement à partir des catégories présentes dans `_photos/` — aucune configuration supplémentaire n'est requise.
 
 ---
 
@@ -190,48 +191,55 @@ Les originaux dans le dépôt git ne sont jamais modifiés.
 title: "Votre Nom"
 description: "Photographe — Portrait · Paysage · Architecture"
 author: "Votre Nom"
-email: contact@votrenom.com
 url: "https://username.github.io"  # URL racine du site déployé
 baseurl: ""                        # Laisser vide pour username.github.io
                                    # Mettre "/nom-du-repo" pour un dépôt projet
 lang: fr
-
-navigation:
-  - title: "Galerie"
-    url: "/"
-  - title: "À propos"
-    url: "/about/"
-  - title: "Contact"
-    url: "/contact/"
 ```
-
-### Navigation
-
-Les entrées de `navigation` sont rendues automatiquement dans `_includes/header.html`.
-
-### Page de contact
-
-`contact.md` utilise [Formspree](https://formspree.io) (plan gratuit disponible). Remplacez l'action du formulaire par votre URL Formspree.
 
 ---
 
 ## Architecture CSS
 
-Les styles utilisent **Dart Sass** avec la syntaxe moderne `@use`/`@forward` (pas de `@import` déprécié).
+Les styles utilisent **Dart Sass** avec la syntaxe `@use` (pas de `@import` déprécié).
 
 ```
 assets/css/main.scss   ← Point d'entrée (front matter Jekyll obligatoire)
-  @use "variables"     ← Tokens centralisés
-  @use "base"
-  @use "header"
-  @use "gallery"       ← Inclut la grille, les filtres et la lightbox
-  @use "photo"
-  @use "pages"
+  @use "variables"     ← Tokens Sass : typo, tailles, breakpoints
+  @use "base"          ← Reset, CSS custom properties, utilitaires
+  @use "header"        ← Pill de filtre, bouton thème
+  @use "gallery"       ← Grille, cards, shimmer, lightbox
+  @use "photo"         ← Page détail
 ```
 
 Chaque partiel commence par `@use 'variables' as *;` pour accéder aux tokens sans préfixe.
 
 Les composants suivent la convention **BEM** (`.gallery-card__img-wrap`, `.lightbox__nav--prev`, etc.).
+
+### Thème clair / sombre
+
+Les couleurs sont exposées comme **CSS custom properties** dans `_base.scss`, ce qui permet de les modifier à l'exécution sans recompiler le SCSS :
+
+```
+:root                              ← thème clair (défaut)
+[data-theme="dark"]                ← override manuel (localStorage)
+@media (prefers-color-scheme: dark)
+  :root:not([data-theme="light"])  ← thème système (sans override)
+```
+
+La propriété `data-theme` est écrite sur `<html>` par un script inline dans `<head>` avant le premier rendu, ce qui évite le flash de contenu non stylé (FOUC). Le bouton de bascule (`.theme-toggle`) en bas à droite permet un override manuel persistent via `localStorage`.
+
+**Variables disponibles :**
+
+| Variable | Rôle |
+|---|---|
+| `--bg` | Fond de page |
+| `--bg-surface` | Fond de surface (placeholder images) |
+| `--border` | Couleur des bordures |
+| `--text` | Texte principal |
+| `--text-muted` | Texte secondaire |
+| `--text-faint` | Texte tertiaire |
+| `--pill-bg` | Fond semi-transparent des pills flottantes |
 
 ---
 
