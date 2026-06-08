@@ -30,16 +30,21 @@ jobs:
 
       - name: Optimise images
         run: |
-          for src in assets/images/*.jpg; do
+          # Covers : WebP pleine résolution uniquement, pas de miniature
+          for src in assets/images/cover/*.jpg; do
+            [ -f "$src" ] || continue
+            base="${src%.jpg}"
+            cwebp -q 82 "$src" -o "${base}.webp" -quiet
+            echo "  ✓ $(basename "$src")"
+          done
+          # Photos de galerie : miniature JPEG + miniature WebP + WebP pleine résolution
+          for src in assets/images/photos/**/*.jpg; do
             [[ "$src" == *-thumb.jpg ]] && continue
             [ -f "$src" ] || continue
             base="${src%.jpg}"
-            # Thumbnail JPEG + WebP (gallery grid)
             convert "$src" -resize "800x800>" -quality 82 -strip "${base}-thumb.jpg"
             cwebp -q 80 "${base}-thumb.jpg" -o "${base}-thumb.webp" -quiet
-            # Resize original in-place (lightbox + photo detail — fallback JPEG)
             convert "$src" -resize "1920x1920>" -quality 85 -strip "${src}.opt" && mv "${src}.opt" "$src"
-            # Full-size WebP (lightbox + photo detail — modern browsers)
             cwebp -q 82 "$src" -o "${base}.webp" -quiet
             echo "  ✓ $(basename "$src")"
           done
