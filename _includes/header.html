@@ -1,7 +1,7 @@
 {% if page.url == '/' %}
-  {% assign all_categories = site.photos | map: "category" | compact | uniq | sort %}
-  {% if all_categories.size > 0 %}
-    {% include filter-pill.html categories=all_categories %}
-    {% include filter-mobile.html categories=all_categories %}
+  {% assign all_series = site.series | sort: "title" %}
+  {% if all_series.size > 0 %}
+    {% include filter-pill.html series=all_series %}
+    {% include filter-mobile.html series=all_series %}
   {% endif %}
 {% endif %}

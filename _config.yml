@@ -9,16 +9,8 @@ lang: fr
 
 # Collections
 collections:
-  photos:
-    output: true
-    permalink: /photos/:name/
-
-defaults:
-  - scope:
-      path: ""
-      type: "photos"
-    values:
-      layout: "photo"
+  series:
+    output: false
 
 # Build
 markdown: kramdown

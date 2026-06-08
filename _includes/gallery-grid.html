@@ -1,15 +1,25 @@
+{% assign all_series = site.series | sort: "title" %}
+{% assign global_index = 0 %}
+
 <section class="gallery-grid">
   <div class="gallery-grid__container">
-    {% if include.photos.size == 0 %}
-      <p class="gallery-empty">Ajoutez vos premières photos dans <code>_photos/</code></p>
-    {% else %}
-      {% for photo in include.photos %}
-        {% include gallery-card.html photo=photo index=forloop.index0 %}
+    {% for series in all_series %}
+      {% for file in series.photos %}
+        {% include gallery-card.html file=file series_slug=series.slug index=global_index %}
+        {% assign global_index = global_index | plus: 1 %}
       {% endfor %}
-    {% endif %}
+    {% endfor %}
   </div>
 </section>
 
 <script type="application/json" id="photo-data">
-[{% for photo in include.photos %}{"src":{{ photo.image | relative_url | jsonify }},"webp":{{ photo.image | replace: '.jpg', '.webp' | relative_url | jsonify }},"title":{{ photo.title | jsonify }},"category":{{ photo.category | default: "" | jsonify }},"date":{{ photo.date | date: "%Y" | jsonify }},"location":{{ photo.location | default: "" | jsonify }},"description":{{ photo.description | default: "" | strip | jsonify }}}{% unless forloop.last %},{% endunless %}{% endfor %}]
+[{% assign first = true %}
+{%- for series in all_series -%}
+  {%- assign base = '/assets/images/photos/' | append: series.slug | append: '/' -%}
+  {%- for file in series.photos -%}
+    {%- unless first %},{%- endunless -%}
+    {%- assign first = false -%}
+    {"src":{{ base | append: file | append: '.jpg' | relative_url | jsonify }},"webp":{{ base | append: file | append: '.webp' | relative_url | jsonify }}}
+  {%- endfor -%}
+{%- endfor %}]
 </script>

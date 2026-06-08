@@ -20,6 +20,8 @@ class Cover {
     document.body.style.overflow = 'hidden';
 
     const reveal = () => {
+      // Double rAF : garantit que le navigateur a rendu opacity:0 avant
+      // d'ajouter is-visible, sinon la transition CSS ne joue pas.
       requestAnimationFrame(() => requestAnimationFrame(() => {
         this.#picture.classList.add('is-visible');
         setTimeout(() => {
@@ -90,10 +92,15 @@ class Gallery extends EventTarget {
 
     this.#indicator = document.querySelector('.filter-pill__indicator');
     if (this.#indicator) {
-      this.#indicator.style.transition = 'none';
       const initial = this.#pill?.querySelector('.filter-pill__btn.is-active');
-      if (initial) this.#moveIndicator(initial);
-      requestAnimationFrame(() => { this.#indicator.style.transition = ''; });
+      if (initial) {
+        // Attend que les fontes soient prêtes avant de mesurer : font-display:block
+        // retient le rendu mais le script s'exécute en parallèle du chargement.
+        document.fonts.ready.then(() => {
+          this.#moveIndicator(initial);
+          requestAnimationFrame(() => { this.#pill?.classList.add('filter-pill--ready'); });
+        });
+      }
     }
 
     this.#bindFilters();
@@ -112,19 +119,19 @@ class Gallery extends EventTarget {
   #moveIndicator(btn) {
     if (!this.#indicator || !this.#pill) return;
     if (!this.#pill.contains(btn)) return;
-    const pillRect = this.#pill.getBoundingClientRect();
-    const btnRect  = btn.getBoundingClientRect();
-    this.#indicator.style.transform = `translateX(${btnRect.left - pillRect.left}px)`;
-    this.#indicator.style.width     = `${btnRect.width}px`;
+    this.#indicator.style.transform = `translateX(${btn.offsetLeft}px)`;
+    this.#indicator.style.width     = `${btn.offsetWidth}px`;
   }
 
   #bindFilters() {
     this.#filterBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        this.#filterBtns.forEach(b => b.classList.remove('is-active'));
-        btn.classList.add('is-active');
-        this.#moveIndicator(btn);
-        this.#filter(btn.dataset.filter, btn.textContent.trim(), true);
+        const filter = btn.dataset.filter;
+        // Synchronise l'état actif sur pill ET menu mobile simultanément.
+        this.#filterBtns.forEach(b => b.classList.toggle('is-active', b.dataset.filter === filter));
+        const pillBtn = this.#pill?.querySelector(`.filter-pill__btn[data-filter="${filter}"]`);
+        if (pillBtn) this.#moveIndicator(pillBtn);
+        this.#filter(filter, btn.textContent.trim(), true);
       });
     });
   }
@@ -307,6 +314,7 @@ class Lightbox {
     };
 
     this.#stage.addEventListener('touchstart', e => {
+      // Annule une navigation en cours pour qu'un swipe ne charge pas deux photos.
       if (this.#navTimeout) { clearTimeout(this.#navTimeout); this.#navTimeout = null; }
       swipeStartX   = e.touches[0].clientX;
       swipeDragging = false;
@@ -373,7 +381,7 @@ class Lightbox {
     };
     this.#img.onload = onLoad;
 
-    this.#img.alt = p.title;
+    this.#img.alt = '';
     if (p.webp) {
       this.#img.onerror = () => { this.#img.onerror = null; this.#img.src = p.src; };
       this.#img.src = p.webp;

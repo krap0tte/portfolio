@@ -85,7 +85,7 @@
     &--prev { left: 1rem; }
     &--next { right: 1rem; }
 
-    @media (max-width: $bp-sm) { display: none; }
+    @media (max-width: $bp-md) { display: none; }
   }
 
 }

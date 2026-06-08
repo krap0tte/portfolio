@@ -1,6 +1,6 @@
 # Portfolio Photographique — Jekyll
 
-Portfolio minimaliste hébergeable sur GitHub Pages. Grille plein-écran façon Instagram, visionneuse lightbox au clavier, pill de filtre par série, thème sombre synchronisé avec le système, images optimisées automatiquement au build.
+Portfolio minimaliste hébergeable sur GitHub Pages. Sidebar fixe avec titre de série, grille plein-écran, visionneuse lightbox au clavier et au glissement, sélecteur de série avec pill animé, thème sombre synchronisé avec le système, images optimisées automatiquement au build.
 
 ---
 
@@ -64,46 +64,57 @@ Le site est accessible sur [http://localhost:4000](http://localhost:4000).
 ```
 portfolio/
 │
-├── _config.yml              ← Configuration principale (titre, URL)
+├── _config.yml              ← Configuration principale (titre, URL, collections)
 ├── Gemfile                  ← Dépendances Ruby (Jekyll + plugins)
 │
+├── _series/                 ← Une fiche .md par série — source unique de vérité
+│   ├── architecture.md      ←   titre, description, liste des fichiers images
+│   ├── paysage.md
+│   └── portrait.md
+│
 ├── _layouts/
-│   ├── default.html         ← Gabarit de base (délègue à head.html et theme-toggle.html)
-│   └── photo.html           ← Page détail d'une photo
+│   └── default.html         ← Gabarit de base (head.html + contenu + theme-toggle)
 │
 ├── _includes/
-│   ├── head.html            ← Contenu du <head> : meta, fonts, CSS, SEO
-│   ├── header.html          ← Coordinateur filtre : calcule les catégories, inclut les deux suivants
-│   ├── filter-pill.html     ← Pill de filtre desktop (≥ 600 px), reçoit `categories`
-│   ├── filter-mobile.html   ← Trigger + overlay filtre mobile (< 600 px), reçoit `categories`
-│   ├── theme-toggle.html    ← Bouton de bascule clair/sombre avec SVG soleil/lune
-│   ├── gallery-heading.html ← En-tête galerie + JSON des descriptions de séries
-│   ├── gallery-grid.html    ← Section grille + boucle cards + JSON des données photos
-│   ├── gallery-card.html    ← Card unique, reçoit `photo` et `index`
+│   ├── head.html            ← Contenu du <head> : meta, CSS, preloads fontes, SEO
+│   ├── header.html          ← Bascule filtre : passe site.series aux deux composants
+│   ├── filter-pill.html     ← Pill de filtre desktop (≥ 768 px)
+│   ├── filter-mobile.html   ← Trigger + overlay filtre mobile (< 768 px)
+│   ├── theme-toggle.html    ← Bouton bascule clair/sombre (SVG soleil/lune)
+│   ├── cover.html           ← Splash plein-écran avec photo de couverture
+│   ├── gallery-heading.html ← Sidebar titre/description de série + JSON series-data
+│   ├── gallery-grid.html    ← Grille de cards + JSON photo-data
+│   ├── gallery-card.html    ← Card unique, reçoit file, series_slug, index
 │   └── lightbox.html        ← Visionneuse plein écran
 │
 ├── _sass/                   ← Styles SCSS (Dart Sass, @use)
-│   ├── _variables.scss      ← Tokens Sass : typographie, espacements, breakpoints
-│   ├── _base.scss           ← Reset CSS, CSS custom properties (thème clair/sombre, liquid glass)
+│   ├── _fonts.scss          ← Déclarations @font-face (Jost + Climate Crisis, auto-hébergées)
+│   ├── _variables.scss      ← Tokens : typographie, tailles, breakpoints
+│   ├── _mixins.scss         ← Mixin glass (verre dépoli) + mixin dark-theme
+│   ├── _base.scss           ← Reset, CSS custom properties thème clair/sombre
+│   ├── _cover.scss          ← Splash de couverture
 │   ├── _header.scss         ← Pill de filtre, overlay mobile, bouton thème
-│   ├── _gallery.scss        ← Heading galerie, grille responsive, cards, shimmer
-│   ├── _lightbox.scss       ← Visionneuse plein écran
-│   └── _photo.scss          ← Page détail photo
-│
-├── _photos/                 ← Une fiche .md par photo
-│   └── nom-de-la-photo.md
-│
-├── _data/
-│   └── series.yml           ← Descriptions des séries affichées dans le heading
+│   ├── _gallery.scss        ← Sidebar heading, grille responsive, cards, shimmer
+│   └── _lightbox.scss       ← Visionneuse plein écran
 │
 ├── assets/
 │   ├── css/main.scss        ← Point d'entrée SCSS (front matter Jekyll requis)
-│   ├── js/main.js           ← Gallery, FilterMobileMenu, Lightbox, ThemeToggle (4 classes ES2022)
-│   └── images/              ← Photos originales (JPG)
-│       ├── photo-01.jpg          ← Original commité dans git
-│       ├── photo-01.webp         ← Généré — gitignored
-│       ├── photo-01-thumb.jpg    ← Généré — gitignored
-│       └── photo-01-thumb.webp   ← Généré — gitignored
+│   ├── fonts/               ← Fichiers WOFF2 auto-hébergés (Jost + Climate Crisis)
+│   ├── js/main.js           ← Cover, Gallery, FilterMobileMenu, Lightbox, ThemeToggle
+│   └── images/
+│       ├── cover/           ← Photos de couverture
+│       │   ├── cover.jpg         ← Original commité
+│       │   ├── cover.webp        ← Généré — gitignored
+│       │   ├── cover_phone.jpg   ← Variante mobile commitée
+│       │   └── cover_phone.webp  ← Généré — gitignored
+│       └── photos/          ← Photos de galerie, un sous-dossier par série
+│           ├── architecture/
+│           │   ├── photo-03.jpg        ← Original commité
+│           │   ├── photo-03.webp       ← Généré — gitignored
+│           │   ├── photo-03-thumb.jpg  ← Généré — gitignored
+│           │   └── photo-03-thumb.webp ← Généré — gitignored
+│           ├── paysage/
+│           └── portrait/
 │
 ├── bin/
 │   └── optimize-images.sh   ← Script d'optimisation local (ne modifie pas les originaux)
@@ -118,43 +129,46 @@ portfolio/
 
 ## Ajouter du contenu
 
-### Ajouter une photo
+### Ajouter une photo à une série existante
 
-1. Placez le fichier image dans `assets/images/` (JPG, recommandé ≥ 2000 px de large)
-2. Créez une fiche dans `_photos/` :
+1. Placez le fichier image dans `assets/images/photos/<serie>/` (JPG, recommandé ≥ 2000 px de large)
+2. Ajoutez son nom (sans extension) dans la liste `photos:` du markdown de série correspondant :
 
 ```yaml
-# _photos/mon-titre.md
+# _series/paysage.md
 ---
-title: "Titre de la photo"
-date: 2024-11-01
-category: "Paysage"          # doit correspondre à une clé dans _data/series.yml
-image: /assets/images/mon-titre.jpg
-location: "Paris, France"    # optionnel
-description: |               # optionnel — supporte le Markdown
-  Contexte de la prise de vue.
+title: Paysage
+description: "Description de la série."
+photos:
+  - photo-01
+  - photo-06
+  - photo-07
+  - photo-10   ← nouvelle photo
 ---
 ```
 
 3. Relancez `bash bin/optimize-images.sh` pour générer les variantes WebP et miniatures
 
-> Le nom du fichier dans `_photos/` détermine l'URL de la page détail (`/photos/mon-titre/`).
+L'ordre dans la liste détermine l'ordre d'affichage dans la galerie et de navigation dans la lightbox.
 
-### Ajouter ou modifier une série
+### Créer une nouvelle série
 
-Les séries correspondent aux catégories assignées aux photos. Éditez `_data/series.yml` pour ajouter la description qui s'affiche sous le titre lors du filtrage :
+1. Ajoutez un fichier `_series/ma-serie.md` (le nom du fichier devient l'identifiant de la série) :
 
 ```yaml
-# Clé = valeur de `category` dans les fiches _photos/, slugifiée (minuscules, tirets)
-paysage: "Description de la série Paysage."
-portrait: "Description de la série Portrait."
-architecture: "Description de la série Architecture."
-ma-serie: "Description de votre nouvelle série."
+---
+title: Ma série
+description: "Description affichée dans la sidebar."
+photos:
+  - photo-11
+  - photo-12
+---
 ```
 
-> La clé doit être la version slugifiée du nom de catégorie (filtre Liquid `| slugify` : espaces → tirets, majuscules → minuscules).
+2. Créez le sous-dossier `assets/images/photos/ma-serie/` et placez-y les images
+3. Relancez `bash bin/optimize-images.sh`
 
-Les boutons de la pill de filtre sont générés automatiquement à partir des catégories présentes dans `_photos/` — aucune configuration supplémentaire n'est requise.
+Les boutons du sélecteur de série sont générés automatiquement à partir des fichiers présents dans `_series/` — aucune autre configuration n'est requise.
 
 ---
 
@@ -166,13 +180,15 @@ Les boutons de la pill de filtre sont générés automatiquement à partir des c
 bash bin/optimize-images.sh
 ```
 
-Pour chaque `photo-XX.jpg` dans `assets/images/`, le script génère :
+Pour chaque photo dans `assets/images/photos/<serie>/`, le script génère :
 
 | Fichier | Taille max | Usage |
 |---|---|---|
 | `photo-XX-thumb.jpg` | 800 px | Miniature grille galerie (fallback JPEG) |
 | `photo-XX-thumb.webp` | 800 px | Miniature grille galerie (WebP) |
-| `photo-XX.webp` | original | Page détail + lightbox (WebP) |
+| `photo-XX.webp` | 1920 px | Lightbox (WebP) |
+
+Pour les photos de couverture dans `assets/images/cover/`, seule la variante WebP pleine résolution est générée (pas de miniature).
 
 Les fichiers générés sont listés dans `.gitignore` et ne sont **pas** commités.
 
@@ -211,17 +227,28 @@ Les styles utilisent **Dart Sass** avec la syntaxe `@use` (pas de `@import` dép
 
 ```
 assets/css/main.scss   ← Point d'entrée (front matter Jekyll obligatoire)
+  @use "fonts"         ← @font-face Jost + Climate Crisis (font-display: block)
   @use "variables"     ← Tokens Sass : typo, tailles, breakpoints
-  @use "base"          ← Reset, CSS custom properties, liquid glass
+  @use "mixins"        ← Mixin glass (verre dépoli), mixin dark-theme
+  @use "base"          ← Reset, CSS custom properties thème clair/sombre
+  @use "cover"         ← Splash de couverture
   @use "header"        ← Pill de filtre, overlay mobile, bouton thème
-  @use "gallery"       ← Heading, grille responsive, cards, shimmer
+  @use "gallery"       ← Sidebar heading, grille responsive, cards, shimmer
   @use "lightbox"      ← Visionneuse plein écran
-  @use "photo"         ← Page détail
 ```
 
 Chaque partiel commence par `@use 'variables' as *;` pour accéder aux tokens sans préfixe.
 
+Les fontes Jost et Climate Crisis sont **auto-hébergées** dans `assets/fonts/` (WOFF2, subsets latin et latin-ext). Le `font-display: block` est intentionnel : il garantit que les mesures JavaScript de l'indicateur de filtre s'effectuent avec les métriques réelles de la fonte, sans reflow de layout après chargement.
+
 Les composants suivent la convention **BEM** (`.gallery-card__img-wrap`, `.lightbox__nav--prev`, etc.).
+
+### Layout desktop / mobile
+
+Le seuil unique est **768 px** (`$bp-md`) :
+
+- **< 768 px (mobile)** : grille 3 colonnes plein-écran, sélecteur de série en overlay, flèches lightbox masquées (navigation au glissement).
+- **≥ 768 px (desktop)** : sidebar fixe 1/3 écran (titre + description de série), grille 2/3 restants, pill de filtre centré sur la grille, flèches lightbox visibles.
 
 ### Thème clair / sombre
 
@@ -246,9 +273,9 @@ La propriété `data-theme` est écrite sur `<html>` par un script inline dans `
 | `--text` | Texte principal |
 | `--text-muted` | Texte secondaire |
 | `--text-faint` | Texte tertiaire |
-| `--glass-bg` | Dégradé translucide des surfaces flottantes (pill, toggle) |
-| `--glass-border` | Bordure des éléments verre |
-| `--glass-shadow` | Ombre portée + spéculaire inset des éléments verre |
+| `--glass-bg` | Fond translucide des surfaces flottantes (pill, toggle, boutons lightbox) |
+| `--glass-border` | Bordure des éléments verre dépoli |
+| `--glass-shadow` | Ombre portée des éléments verre dépoli |
 | `--glass-overlay-bg` | Fond semi-transparent des overlays plein écran |
 
 ---

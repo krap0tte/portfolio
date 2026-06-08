@@ -1,11 +1,11 @@
 <section class="gallery-heading">
   <div class="container">
-    {% assign default_cat = site.photos | map: "category" | compact | uniq | sort | first %}
-    <h1 class="gallery-heading__title" id="gallery-heading-title">{{ default_cat }}</h1>
+    {% assign default_series = site.series | sort: "title" | first %}
+    <h1 class="gallery-heading__title" id="gallery-heading-title">{{ default_series.title }}</h1>
     <p class="gallery-heading__desc" id="gallery-heading-desc"></p>
   </div>
 </section>
 
 <script type="application/json" id="series-data">
-{ {% for item in site.data.series %}{{ item[0] | jsonify }}:{{ item[1] | jsonify }}{% unless forloop.last %},{% endunless %}{% endfor %} }
+{ {% for s in site.series | sort: "title" %}{{ s.slug | jsonify }}:{{ s.description | jsonify }}{% unless forloop.last %},{% endunless %}{% endfor %} }
 </script>

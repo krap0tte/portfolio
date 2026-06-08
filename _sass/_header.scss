@@ -1,7 +1,7 @@
 @use 'variables' as *;
 @use 'mixins' as *;
 
-// ─── Desktop filter pill (≥ 600px) ───────────────────────────────────────────
+// ─── Desktop filter pill (≥ $bp-md) ─────────────────────────────────────────
 
 .filter-pill {
   @include glass;
@@ -17,7 +17,8 @@
   padding: 0.3rem 0.4rem;
   white-space: nowrap;
 
-  @media (max-width: 599px) { display: none; }
+  @media (max-width: $bp-md) { display: none; }
+  @media (min-width: $bp-md) { left: 66.666%; }
 
   // Surlignage glissant — position et largeur gérées par JS
   &__indicator {
@@ -29,6 +30,12 @@
     background: var(--text);
     z-index: -1;
     pointer-events: none;
+    // Transition activée par JS (.filter-pill--ready) après le premier
+    // positionnement, pour éviter l'animation depuis l'état initial.
+    transition: none;
+  }
+
+  &--ready &__indicator {
     transition: transform 0.26s cubic-bezier(0.35, 1.1, 0.5, 1),
                 width    0.26s cubic-bezier(0.35, 1.1, 0.5, 1);
   }
@@ -56,12 +63,12 @@
   }
 }
 
-// ─── Mobile filter trigger (< 600px) ─────────────────────────────────────────
+// ─── Mobile filter trigger (< $bp-md) ────────────────────────────────────────
 
 .filter-mobile-trigger {
   display: none;
 
-  @media (max-width: 599px) {
+  @media (max-width: $bp-md) {
     @include glass;
     display: flex;
     align-items: center;
@@ -86,7 +93,7 @@
   }
 }
 
-// ─── Mobile filter overlay (< 600px) ─────────────────────────────────────────
+// ─── Mobile filter overlay ───────────────────────────────────────────────────
 
 .filter-mobile-menu {
   position: fixed;

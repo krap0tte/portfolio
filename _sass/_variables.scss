@@ -8,7 +8,7 @@ $text-muted:  #6b6b68;
 $text-faint:  #a8a8a4;
 
 // ─── Typography ─────────────────────────────────────────────────────────────
-$font-display: 'Instrument Serif', Georgia, serif;
+$font-display: 'Jost', 'Helvetica Neue', sans-serif;
 $font-body:    'Jost', 'Helvetica Neue', sans-serif;
 
 $size-xs:   0.75rem;
@@ -25,7 +25,6 @@ $container-max: 1280px;
 $container-pad: clamp(1.5rem, 5vw, 3.5rem);
 
 // ─── Breakpoints ────────────────────────────────────────────────────────────
-$bp-sm:  640px;
 $bp-md:  768px;
 $bp-lg:  1024px;
 $bp-xl:  1280px;

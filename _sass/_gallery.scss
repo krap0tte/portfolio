@@ -12,7 +12,7 @@
   &__title {
     font-family: $font-display;
     font-size: clamp($size-xl, 3vw, $size-2xl);
-    font-weight: 400;
+    font-weight: 200;
     letter-spacing: -0.01em;
     line-height: 1.1;
     color: var(--text);
@@ -37,12 +37,6 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 0;
-
-    @media (min-width: $bp-sm)  { grid-template-columns: repeat(4, 1fr); }
-    @media (min-width: $bp-lg)  { grid-template-columns: repeat(5, 1fr); }
-    @media (min-width: $bp-xl)  { grid-template-columns: repeat(6, 1fr); }
-    @media (min-width: $bp-2xl) { grid-template-columns: repeat(7, 1fr); }
-    @media (min-width: $bp-3xl) { grid-template-columns: repeat(8, 1fr); }
   }
 }
 
@@ -92,22 +86,41 @@
   }
 }
 
-// ─── Empty state ─────────────────────────────────────────────────────────────
-
-.gallery-empty {
-  padding: 5rem 0;
-  color: var(--text-muted);
-  font-size: $size-base;
-
-  code {
-    font-family: monospace;
-    background: var(--bg-surface);
-    padding: 0.1em 0.4em;
-    font-size: 0.9em;
-  }
-}
-
 @keyframes card-shimmer {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+// ─── Desktop sidebar layout (≥ $bp-md) ───────────────────────────────────────
+
+@media (min-width: $bp-md) {
+  .gallery-heading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 33.333%;
+    height: 100vh;
+    border-right: 1px solid var(--border);
+    z-index: 10;
+
+    .container {
+      max-width: none;
+      text-align: left;
+    }
+
+    &__desc { margin-inline: 0; }
+  }
+
+  .gallery-grid {
+    margin-left: 33.333%;
+
+    &__container {
+      // La sidebar réduit la zone de grille : on démarre à 4 colonnes à $bp-lg
+      // plutôt que 5, pour conserver un ratio d'image cohérent.
+      @media (min-width: $bp-lg)  { grid-template-columns: repeat(4, 1fr); }
+      @media (min-width: $bp-xl)  { grid-template-columns: repeat(5, 1fr); }
+      @media (min-width: $bp-2xl) { grid-template-columns: repeat(6, 1fr); }
+      @media (min-width: $bp-3xl) { grid-template-columns: repeat(7, 1fr); }
+    }
+  }
 }

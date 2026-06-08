@@ -1,6 +1,7 @@
+{% assign first_series = include.series | first %}
 <button class="filter-mobile-trigger" id="filter-mobile-trigger"
         aria-haspopup="dialog" aria-expanded="false" aria-controls="filter-mobile-menu">
-  <span id="filter-mobile-label">{{ include.categories | first }}</span>
+  <span id="filter-mobile-label">{{ first_series.title }}</span>
   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
        stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
     <polyline points="6 9 12 15 18 9"/>
@@ -19,8 +20,8 @@
     </button>
   </div>
   <nav class="filter-mobile-menu__list">
-    {% for cat in include.categories %}
-      <button class="filter-pill__btn{% if forloop.first %} is-active{% endif %}" data-filter="{{ cat | slugify }}">{{ cat }}</button>
+    {% for s in include.series %}
+      <button class="filter-pill__btn{% if forloop.first %} is-active{% endif %}" data-filter="{{ s.slug }}">{{ s.title }}</button>
     {% endfor %}
   </nav>
 </div>
