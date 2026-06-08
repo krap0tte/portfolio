@@ -31,6 +31,12 @@
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 0;
+
+    @media (min-width: $bp-sm)  { grid-template-columns: repeat(4, 1fr); }
+    @media (min-width: $bp-lg)  { grid-template-columns: repeat(5, 1fr); }
+    @media (min-width: $bp-xl)  { grid-template-columns: repeat(6, 1fr); }
+    @media (min-width: $bp-2xl) { grid-template-columns: repeat(7, 1fr); }
+    @media (min-width: $bp-3xl) { grid-template-columns: repeat(8, 1fr); }
   }
 }
 
