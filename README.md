@@ -68,20 +68,26 @@ portfolio/
 ├── Gemfile                  ← Dépendances Ruby (Jekyll + plugins)
 │
 ├── _layouts/
-│   ├── default.html         ← Gabarit de base (script anti-FOUC, bouton thème)
+│   ├── default.html         ← Gabarit de base (délègue à head.html et theme-toggle.html)
 │   └── photo.html           ← Page détail d'une photo
 │
 ├── _includes/
-│   ├── header.html          ← Pill de filtre par série (rendue uniquement sur la galerie)
-│   ├── gallery-heading.html ← En-tête de galerie + JSON des descriptions de séries
-│   ├── gallery-grid.html    ← Grille des cards + JSON des données photos
+│   ├── head.html            ← Contenu du <head> : meta, fonts, CSS, SEO
+│   ├── header.html          ← Coordinateur filtre : calcule les catégories, inclut les deux suivants
+│   ├── filter-pill.html     ← Pill de filtre desktop (≥ 600 px), reçoit `categories`
+│   ├── filter-mobile.html   ← Trigger + overlay filtre mobile (< 600 px), reçoit `categories`
+│   ├── theme-toggle.html    ← Bouton de bascule clair/sombre avec SVG soleil/lune
+│   ├── gallery-heading.html ← En-tête galerie + JSON des descriptions de séries
+│   ├── gallery-grid.html    ← Section grille + boucle cards + JSON des données photos
+│   ├── gallery-card.html    ← Card unique, reçoit `photo` et `index`
 │   └── lightbox.html        ← Visionneuse plein écran
 │
 ├── _sass/                   ← Styles SCSS (Dart Sass, @use)
 │   ├── _variables.scss      ← Tokens Sass : typographie, espacements, breakpoints
-│   ├── _base.scss           ← Reset CSS, CSS custom properties (thème clair/sombre)
-│   ├── _header.scss         ← Pill de filtre et bouton de bascule de thème
-│   ├── _gallery.scss        ← Grille, cards, shimmer, lightbox
+│   ├── _base.scss           ← Reset CSS, CSS custom properties (thème clair/sombre, liquid glass)
+│   ├── _header.scss         ← Pill de filtre, overlay mobile, bouton thème
+│   ├── _gallery.scss        ← Heading galerie, grille responsive, cards, shimmer
+│   ├── _lightbox.scss       ← Visionneuse plein écran
 │   └── _photo.scss          ← Page détail photo
 │
 ├── _photos/                 ← Une fiche .md par photo
@@ -92,7 +98,7 @@ portfolio/
 │
 ├── assets/
 │   ├── css/main.scss        ← Point d'entrée SCSS (front matter Jekyll requis)
-│   ├── js/main.js           ← Gallery, Lightbox, ThemeToggle (3 classes ES2022)
+│   ├── js/main.js           ← Gallery, FilterMobileMenu, Lightbox, ThemeToggle (4 classes ES2022)
 │   └── images/              ← Photos originales (JPG)
 │       ├── photo-01.jpg          ← Original commité dans git
 │       ├── photo-01.webp         ← Généré — gitignored
@@ -105,7 +111,7 @@ portfolio/
 ├── .github/
 │   └── workflows/deploy.yml ← CI/CD : optimisation images + build + déploiement
 │
-└── index.html               ← Page unique — assemble les quatre includes de la galerie
+└── index.html               ← Page unique — assemble les includes de la galerie
 ```
 
 ---
@@ -206,9 +212,10 @@ Les styles utilisent **Dart Sass** avec la syntaxe `@use` (pas de `@import` dép
 ```
 assets/css/main.scss   ← Point d'entrée (front matter Jekyll obligatoire)
   @use "variables"     ← Tokens Sass : typo, tailles, breakpoints
-  @use "base"          ← Reset, CSS custom properties, utilitaires
-  @use "header"        ← Pill de filtre, bouton thème
-  @use "gallery"       ← Grille, cards, shimmer, lightbox
+  @use "base"          ← Reset, CSS custom properties, liquid glass
+  @use "header"        ← Pill de filtre, overlay mobile, bouton thème
+  @use "gallery"       ← Heading, grille responsive, cards, shimmer
+  @use "lightbox"      ← Visionneuse plein écran
   @use "photo"         ← Page détail
 ```
 
@@ -239,7 +246,10 @@ La propriété `data-theme` est écrite sur `<html>` par un script inline dans `
 | `--text` | Texte principal |
 | `--text-muted` | Texte secondaire |
 | `--text-faint` | Texte tertiaire |
-| `--pill-bg` | Fond semi-transparent des pills flottantes |
+| `--glass-bg` | Dégradé translucide des surfaces flottantes (pill, toggle) |
+| `--glass-border` | Bordure des éléments verre |
+| `--glass-shadow` | Ombre portée + spéculaire inset des éléments verre |
+| `--glass-overlay-bg` | Fond semi-transparent des overlays plein écran |
 
 ---
 

@@ -1,0 +1,7 @@
+<nav class="filter-pill" aria-label="Filtrer par série">
+  <span class="filter-pill__indicator" aria-hidden="true"></span>
+  <button class="filter-pill__btn is-active" data-filter="all">Tout</button>
+  {% for cat in include.categories %}
+    <button class="filter-pill__btn" data-filter="{{ cat | slugify }}">{{ cat }}</button>
+  {% endfor %}
+</nav>

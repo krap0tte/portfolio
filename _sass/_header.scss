@@ -120,12 +120,11 @@
   }
 
   &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    position: relative;
     padding: 1.5rem 1.25rem 1.25rem;
     border-bottom: 1px solid var(--glass-border);
     flex-shrink: 0;
+    text-align: center;
   }
 
   &__title {
@@ -137,6 +136,10 @@
   }
 
   &__close {
+    position: absolute;
+    top: 50%;
+    right: 1.25rem;
+    transform: translateY(-50%);
     color: var(--text-muted);
     padding: 0.4rem;
     line-height: 0;

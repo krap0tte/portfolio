@@ -1,0 +1,19 @@
+<a
+  href="{{ include.photo.url | relative_url }}"
+  class="gallery-card"
+  data-category="{{ include.photo.category | slugify | default: 'other' }}"
+  data-index="{{ include.index }}"
+>
+  <div class="gallery-card__img-wrap">
+    <picture>
+      <source srcset="{{ include.photo.image | replace: '.jpg', '-thumb.webp' | relative_url }}" type="image/webp">
+      <source srcset="{{ include.photo.image | replace: '.jpg', '-thumb.jpg' | relative_url }}">
+      <img
+        src="{{ include.photo.image | relative_url }}"
+        alt="{{ include.photo.title }}"
+        class="gallery-card__img"
+        loading="lazy"
+      />
+    </picture>
+  </div>
+</a>

@@ -1,32 +1,12 @@
 <section class="gallery-grid">
   <div class="gallery-grid__container">
-
     {% if include.photos.size == 0 %}
       <p class="gallery-empty">Ajoutez vos premières photos dans <code>_photos/</code></p>
     {% else %}
       {% for photo in include.photos %}
-        <a
-          href="{{ photo.url | relative_url }}"
-          class="gallery-card"
-          data-category="{{ photo.category | slugify | default: 'other' }}"
-          data-index="{{ forloop.index0 }}"
-        >
-          <div class="gallery-card__img-wrap">
-            <picture>
-              <source srcset="{{ photo.image | replace: '.jpg', '-thumb.webp' | relative_url }}" type="image/webp">
-              <source srcset="{{ photo.image | replace: '.jpg', '-thumb.jpg' | relative_url }}">
-              <img
-                src="{{ photo.image | relative_url }}"
-                alt="{{ photo.title }}"
-                class="gallery-card__img"
-                loading="lazy"
-              />
-            </picture>
-          </div>
-        </a>
+        {% include gallery-card.html photo=photo index=forloop.index0 %}
       {% endfor %}
     {% endif %}
-
   </div>
 </section>
 
