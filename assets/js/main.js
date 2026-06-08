@@ -7,6 +7,7 @@ class Cover {
   #name;
   #btn;
   #dismissed = false;
+  #removeKeyListener = null;
 
   constructor() {
     this.#el      = document.getElementById('cover');
@@ -37,15 +38,15 @@ class Cover {
 
     this.#btn.addEventListener('click', () => this.#dismiss(), { once: true });
 
-    const onKey = e => {
-      if (e.key === 'Escape') { document.removeEventListener('keydown', onKey); this.#dismiss(); }
-    };
+    const onKey = e => { if (e.key === 'Escape') this.#dismiss(); };
     document.addEventListener('keydown', onKey);
+    this.#removeKeyListener = () => document.removeEventListener('keydown', onKey);
   }
 
   #dismiss() {
     if (this.#dismissed) return;
     this.#dismissed = true;
+    this.#removeKeyListener?.();
 
     document.body.style.overflow = '';
     this.#name?.classList.remove('is-visible');
@@ -311,10 +312,11 @@ class Lightbox {
     this.#img.classList.add('is-loading');
     this.#loader.classList.add('is-visible');
 
-    this.#img.onload = () => {
+    const onLoad = () => {
       this.#img.classList.remove('is-loading');
       this.#loader.classList.remove('is-visible');
     };
+    this.#img.onload = onLoad;
 
     this.#img.alt = p.title;
     if (p.webp) {
@@ -323,7 +325,7 @@ class Lightbox {
     } else {
       this.#img.src = p.src;
     }
-    if (this.#img.complete && this.#img.naturalWidth) this.#img.onload();
+    if (this.#img.complete && this.#img.naturalWidth) onLoad();
 
     this.#title.textContent    = p.title;
     this.#meta.textContent     = [p.category, p.date].filter(Boolean).join(' · ');

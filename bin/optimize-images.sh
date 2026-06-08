@@ -30,10 +30,7 @@ for src in "$COVER_DIR"/*.jpg; do
 done
 
 # Photos de galerie : miniature JPEG + miniature WebP + WebP pleine résolution
-for src in "$PHOTOS_DIR"/**/*.jpg; do
-  [[ "$src" == *-thumb.jpg ]] && continue
-  [ -f "$src" ] || continue
-
+while IFS= read -r src; do
   base="${src%.jpg}"
   if [ -f "${base}.webp" ] && [ -f "${base}-thumb.jpg" ] && [ -f "${base}-thumb.webp" ] \
      && [ "${base}.webp" -nt "$src" ]; then
@@ -46,6 +43,6 @@ for src in "$PHOTOS_DIR"/**/*.jpg; do
 
   echo "  ✓ $(basename "$src")"
   ((count++)) || true
-done
+done < <(find "$PHOTOS_DIR" -name "*.jpg" ! -name "*-thumb.jpg" | sort)
 
 echo "Done — $count image(s) traitée(s), $skipped ignorée(s)."
