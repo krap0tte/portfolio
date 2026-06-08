@@ -9,7 +9,17 @@
   --text:       #{$text};
   --text-muted: #{$text-muted};
   --text-faint: #{$text-faint};
-  --pill-bg:    rgba(250, 250, 248, 0.88);
+
+  // Liquid glass — surfaces flottantes
+  --glass-bg:         linear-gradient(145deg, rgba(255,255,255,0.62) 0%, rgba(255,255,255,0.38) 100%);
+  --glass-border:     rgba(255, 255, 255, 0.65);
+  --glass-shadow:
+    0 2px 8px  rgba(0, 0, 0, 0.05),
+    0 10px 40px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.90),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+  // Fond des overlays plein écran (overlay filtre mobile, lightbox)
+  --glass-overlay-bg: rgba(249, 249, 247, 0.76);
 }
 
 [data-theme="dark"] {
@@ -19,7 +29,15 @@
   --text:       #efefed;
   --text-muted: #8a8a87;
   --text-faint: #525250;
-  --pill-bg:    rgba(17, 17, 16, 0.88);
+
+  --glass-bg:         linear-gradient(145deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%);
+  --glass-border:     rgba(255, 255, 255, 0.10);
+  --glass-shadow:
+    0 2px 8px  rgba(0, 0, 0, 0.25),
+    0 10px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.40);
+  --glass-overlay-bg: rgba(10, 10, 9, 0.80);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -30,7 +48,15 @@
     --text:       #efefed;
     --text-muted: #8a8a87;
     --text-faint: #525250;
-    --pill-bg:    rgba(17, 17, 16, 0.88);
+
+    --glass-bg:         linear-gradient(145deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.04) 100%);
+    --glass-border:     rgba(255, 255, 255, 0.10);
+    --glass-shadow:
+      0 2px 8px  rgba(0, 0, 0, 0.25),
+      0 10px 40px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.40);
+    --glass-overlay-bg: rgba(10, 10, 9, 0.80);
   }
 }
 

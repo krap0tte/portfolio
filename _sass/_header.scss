@@ -1,8 +1,18 @@
 @use 'variables' as *;
 
+// Mixin liquid glass appliqué aux surfaces flottantes
+@mixin glass {
+  background:            var(--glass-bg);
+  backdrop-filter:       blur(32px) saturate(200%);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border:                1px solid var(--glass-border);
+  box-shadow:            var(--glass-shadow);
+}
+
 // ─── Desktop filter pill (≥ 600px) ───────────────────────────────────────────
 
 .filter-pill {
+  @include glass;
   position: fixed;
   bottom: 2rem;
   left: 50%;
@@ -11,14 +21,9 @@
   display: flex;
   align-items: center;
   gap: 0.2rem;
-  background: var(--pill-bg);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--border);
   border-radius: 999px;
   padding: 0.3rem 0.4rem;
   white-space: nowrap;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 
   @media (max-width: 599px) { display: none; }
 
@@ -50,6 +55,7 @@
   display: none;
 
   @media (max-width: 599px) {
+    @include glass;
     display: flex;
     align-items: center;
     gap: 0.35rem;
@@ -58,13 +64,8 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 100;
-    background: var(--pill-bg);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid var(--border);
     border-radius: 999px;
     padding: 0.45rem 0.9rem 0.45rem 1.1rem;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
     color: var(--text);
     font-family: $font-body;
     font-size: $size-xs;
@@ -86,7 +87,9 @@
   z-index: 150;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  background: var(--glass-overlay-bg);
+  backdrop-filter: blur(56px) saturate(180%);
+  -webkit-backdrop-filter: blur(56px) saturate(180%);
   opacity: 0;
   visibility: hidden;
   transform: translateY(16px);
@@ -106,7 +109,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 1.5rem 1.25rem 1.25rem;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--glass-border);
     flex-shrink: 0;
   }
 
@@ -132,10 +135,10 @@
     flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 0.5rem 0 7rem; // espace pour le trigger fixe en bas
+    padding: 0.5rem 0 7rem;
   }
 
-  // Surcharge des styles pill pour le contexte liste
+  // Surcharge des styles pill dans le contexte liste
   .filter-pill__btn {
     display: flex;
     align-items: center;
@@ -172,7 +175,8 @@
 
     &:not(.is-active):hover {
       color: var(--text);
-      background: var(--bg-surface);
+      // Hover verre dépoli sur les items liste
+      background: rgba(128, 128, 128, 0.06);
     }
   }
 }
@@ -180,6 +184,7 @@
 // ─── Theme toggle ────────────────────────────────────────────────────────────
 
 .theme-toggle {
+  @include glass;
   position: fixed;
   bottom: 2rem;
   right: 2rem;
@@ -187,11 +192,6 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--pill-bg);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--border);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
