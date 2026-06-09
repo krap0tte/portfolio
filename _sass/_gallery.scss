@@ -35,7 +35,7 @@
 .gallery-grid {
   &__container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 0;
   }
 }
@@ -117,10 +117,10 @@
     &__container {
       // La sidebar réduit la zone de grille : on démarre à 4 colonnes à $bp-lg
       // plutôt que 5, pour conserver un ratio d'image cohérent.
-      @media (min-width: $bp-lg)  { grid-template-columns: repeat(4, 1fr); }
-      @media (min-width: $bp-xl)  { grid-template-columns: repeat(5, 1fr); }
-      @media (min-width: $bp-2xl) { grid-template-columns: repeat(6, 1fr); }
-      @media (min-width: $bp-3xl) { grid-template-columns: repeat(7, 1fr); }
+      @media (min-width: $bp-lg)  { grid-template-columns: repeat(3, 1fr); }
+      @media (min-width: $bp-xl)  { grid-template-columns: repeat(4, 1fr); }
+      @media (min-width: $bp-2xl) { grid-template-columns: repeat(5, 1fr); }
+      @media (min-width: $bp-3xl) { grid-template-columns: repeat(6, 1fr); }
     }
   }
 }

@@ -37,7 +37,7 @@ while IFS= read -r src; do
     ((skipped++)) || true
     continue
   fi
-  convert "$src" -resize "800x800>" -quality 82 -strip "${base}-thumb.jpg"
+  convert "$src" -resize "1200x1200>" -quality 82 -strip "${base}-thumb.jpg"
   cwebp -q 80 "${base}-thumb.jpg" -o "${base}-thumb.webp" -quiet
   cwebp -q 82 "$src" -o "${base}.webp" -quiet
 
