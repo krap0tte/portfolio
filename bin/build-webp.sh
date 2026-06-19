@@ -7,6 +7,8 @@ set -euo pipefail
 COVER_DIR="assets/images/cover"
 PHOTOS_DIR="assets/images/photos"
 
+[ -d "$PHOTOS_DIR" ] || { echo "Lancer depuis la racine du projet." >&2; exit 1; }
+
 FORCE=false
 for arg in "$@"; do [ "$arg" = "--force" ] && FORCE=true; done
 

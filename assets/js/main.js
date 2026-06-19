@@ -81,6 +81,7 @@ class Gallery extends EventTarget {
   #filterBtns;
   #indicator;
   #pill;
+  #filterTimeout = null;
 
   constructor() {
     super();
@@ -134,7 +135,10 @@ class Gallery extends EventTarget {
       btn.addEventListener('click', () => {
         const filter = btn.dataset.filter;
         // Synchronise l'état actif sur pill ET menu mobile simultanément.
-        this.#filterBtns.forEach(b => b.classList.toggle('is-active', b.dataset.filter === filter));
+        this.#filterBtns.forEach(b => {
+          b.classList.toggle('is-active', b.dataset.filter === filter);
+          b.setAttribute('aria-pressed', String(b.dataset.filter === filter));
+        });
         const pillBtn = [...this.#filterBtns].find(b => b.dataset.filter === filter && this.#pill?.contains(b));
         if (pillBtn) this.#moveIndicator(pillBtn);
         this.#filter(filter, btn.textContent.trim(), true);
@@ -143,6 +147,7 @@ class Gallery extends EventTarget {
   }
 
   #filter(filter, label, animate) {
+    if (this.#filterTimeout) { clearTimeout(this.#filterTimeout); this.#filterTimeout = null; }
     if (animate) {
       this.#cards.forEach(card => {
         if (card.style.display !== 'none') card.style.opacity = '0';
@@ -174,7 +179,7 @@ class Gallery extends EventTarget {
       }
     };
 
-    if (animate) setTimeout(apply, 200);
+    if (animate) this.#filterTimeout = setTimeout(() => { this.#filterTimeout = null; apply(); }, 200);
     else apply();
   }
 
@@ -188,7 +193,10 @@ class Gallery extends EventTarget {
         wrap?.classList.add('is-loaded');
       };
       if (img.complete && img.naturalWidth > 0) markLoaded();
-      else img.addEventListener('load', markLoaded, { once: true });
+      else {
+        img.addEventListener('load',  markLoaded, { once: true });
+        img.addEventListener('error', markLoaded, { once: true });
+      }
     });
   }
 }
@@ -212,7 +220,17 @@ class FilterMobileMenu {
     this.#closeBtn?.addEventListener('click', () => this.#close());
 
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && this.#menu.classList.contains('is-open')) this.#close();
+      if (!this.#menu.classList.contains('is-open')) return;
+      if (e.key === 'Escape') { this.#close(); return; }
+      if (e.key === 'Tab') {
+        const focusable = [this.#closeBtn, ...this.#menu.querySelectorAll('.filter-pill__btn')].filter(Boolean);
+        const first = focusable[0];
+        const last  = focusable[focusable.length - 1];
+        if (e.shiftKey ? document.activeElement === first : document.activeElement === last) {
+          e.preventDefault();
+          (e.shiftKey ? last : first).focus();
+        }
+      }
     });
 
     gallery.addEventListener('filterchange', e => {
@@ -253,10 +271,11 @@ class Lightbox {
   #next;
   #stage;
   #loader;
-  #current     = 0;
-  #lastFocused = null;
-  #visible     = [];
-  #navTimeout  = null;
+  #current      = 0;
+  #lastFocused  = null;
+  #visible      = [];
+  #navTimeout   = null;
+  #swipeTimeout = null;
 
   constructor(gallery) {
     const dataEl = document.getElementById('photo-data');
@@ -345,7 +364,8 @@ class Lightbox {
         this.#img.style.transition = 'transform 0.22s ease-out, opacity 0.22s ease-out';
         this.#img.style.transform  = `translateX(${exit})`;
         this.#img.style.opacity    = '0';
-        setTimeout(() => {
+        this.#swipeTimeout = setTimeout(() => {
+          this.#swipeTimeout = null;
           const pos = this.#visible.indexOf(this.#current);
           this.#current = this.#visible[(pos + dir + this.#visible.length) % this.#visible.length];
           this.#img.style.transition = 'none';
@@ -367,9 +387,18 @@ class Lightbox {
 
     document.addEventListener('keydown', e => {
       if (!this.#el.classList.contains('is-open')) return;
-      if (e.key === 'Escape')     this.#close();
-      if (e.key === 'ArrowLeft')  this.#navigate(-1);
-      if (e.key === 'ArrowRight') this.#navigate(1);
+      if (e.key === 'Escape')     { this.#close(); return; }
+      if (e.key === 'ArrowLeft')  { this.#navigate(-1); return; }
+      if (e.key === 'ArrowRight') { this.#navigate(1); return; }
+      if (e.key === 'Tab') {
+        const focusable = [this.#closeBtn, this.#prev, this.#next].filter(el => !el.hidden);
+        const first = focusable[0];
+        const last  = focusable[focusable.length - 1];
+        if (e.shiftKey ? document.activeElement === first : document.activeElement === last) {
+          e.preventDefault();
+          (e.shiftKey ? last : first).focus();
+        }
+      }
     });
   }
 
@@ -394,6 +423,12 @@ class Lightbox {
       }
     };
     this.#img.onload = onLoad;
+    this.#img.onerror = () => {
+      this.#img.onload  = null;
+      this.#img.onerror = null;
+      this.#img.classList.remove('is-loading');
+      this.#loader.classList.remove('is-visible');
+    };
 
     this.#img.alt = '';
     this.#img.src = p.src;
@@ -413,6 +448,8 @@ class Lightbox {
   }
 
   #close() {
+    if (this.#navTimeout)   { clearTimeout(this.#navTimeout);   this.#navTimeout   = null; }
+    if (this.#swipeTimeout) { clearTimeout(this.#swipeTimeout); this.#swipeTimeout = null; }
     this.#el.classList.remove('is-open');
     this.#el.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';

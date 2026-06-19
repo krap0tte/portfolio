@@ -21,7 +21,7 @@
   </div>
   <nav class="filter-mobile-menu__list">
     {% for s in include.series %}
-      <button class="filter-pill__btn{% if forloop.first %} is-active{% endif %}" data-filter="{{ s.slug }}">{{ s.title }}</button>
+      <button class="filter-pill__btn{% if forloop.first %} is-active{% endif %}" data-filter="{{ s.slug }}" aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}">{{ s.title }}</button>
     {% endfor %}
   </nav>
 </div>

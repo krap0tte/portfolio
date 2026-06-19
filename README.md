@@ -73,7 +73,7 @@ portfolio/
 │   └── portrait.md
 │
 ├── _layouts/
-│   └── default.html         ← Gabarit de base (head.html + contenu + theme-toggle)
+│   └── default.html         ← Gabarit de base (head.html + contenu)
 │
 ├── _includes/
 │   ├── head.html            ← Contenu du <head> : meta, CSS, preloads fontes, SEO
@@ -87,7 +87,7 @@ portfolio/
 │   ├── _fonts.scss          ← Déclarations @font-face (Jost + Climate Crisis, auto-hébergées)
 │   ├── _variables.scss      ← Tokens : typographie, tailles, breakpoints
 │   ├── _mixins.scss         ← Mixin surface (surfaces flottantes)
-│   ├── _base.scss           ← Reset, CSS custom properties thème clair/sombre
+│   ├── _base.scss           ← Reset, CSS custom properties (thème sombre fixe)
 │   ├── _cover.scss          ← Splash de couverture
 │   ├── _header.scss         ← Pill de filtre, overlay mobile, bouton thème
 │   ├── _gallery.scss        ← Grille responsive, cards, shimmer

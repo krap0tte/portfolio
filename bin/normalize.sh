@@ -4,6 +4,7 @@
 set -euo pipefail
 
 PHOTOS_DIR="assets/images/photos"
+[ -d "$PHOTOS_DIR" ] || { echo "Lancer depuis la racine du projet." >&2; exit 1; }
 MAX_RES="3840x2160"
 MAX_W="${MAX_RES%x*}"
 MAX_H="${MAX_RES#*x}"
