@@ -79,26 +79,14 @@ class Cover {
 class Gallery extends EventTarget {
   #cards;
   #filterBtns;
-  #seriesData;
   #indicator;
   #pill;
-  #title;
-  #desc;
 
   constructor() {
     super();
     this.#cards      = document.querySelectorAll('.gallery-card');
     this.#filterBtns = document.querySelectorAll('.filter-pill__btn');
     this.#pill       = document.querySelector('.filter-pill');
-    this.#title      = document.getElementById('gallery-heading-title');
-    this.#desc       = document.getElementById('gallery-heading-desc');
-
-    const seriesEl = document.getElementById('series-data');
-    try {
-      this.#seriesData = seriesEl ? JSON.parse(seriesEl.textContent) : {};
-    } catch {
-      this.#seriesData = {};
-    }
 
     this.#indicator = document.querySelector('.filter-pill__indicator');
     if (this.#indicator) {
@@ -156,17 +144,12 @@ class Gallery extends EventTarget {
 
   #filter(filter, label, animate) {
     if (animate) {
-      if (this.#title) this.#title.style.opacity = '0';
-      if (this.#desc)  this.#desc.style.opacity  = '0';
       this.#cards.forEach(card => {
         if (card.style.display !== 'none') card.style.opacity = '0';
       });
     }
 
     const apply = () => {
-      if (this.#title) this.#title.textContent = label;
-      if (this.#desc)  this.#desc.textContent  = this.#seriesData[filter] || '';
-
       const visible = [];
       this.#cards.forEach(card => {
         const show = card.dataset.category === filter;
@@ -184,8 +167,6 @@ class Gallery extends EventTarget {
 
       if (animate) {
         requestAnimationFrame(() => requestAnimationFrame(() => {
-          if (this.#title) this.#title.style.opacity = '';
-          if (this.#desc)  this.#desc.style.opacity  = '';
           this.#cards.forEach(card => {
             if (card.style.display !== 'none') card.style.opacity = '';
           });

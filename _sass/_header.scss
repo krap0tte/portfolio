@@ -18,7 +18,6 @@
   white-space: nowrap;
 
   @media (max-width: #{$bp-md - 1px}) { display: none; }
-  @media (min-width: $bp-md) { left: $sidebar-width * 2; }
 
   // Surlignage glissant — position et largeur gérées par JS
   &__indicator {

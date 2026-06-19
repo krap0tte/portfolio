@@ -1,6 +1,6 @@
 # Portfolio Photographique — Jekyll
 
-Portfolio minimaliste hébergeable sur GitHub Pages. Sidebar fixe avec titre de série, grille plein-écran, visionneuse lightbox au clavier et au glissement, sélecteur de série avec pill animé, thème sombre synchronisé avec le système, images optimisées automatiquement au build.
+Portfolio minimaliste hébergeable sur GitHub Pages. Galerie plein-écran, visionneuse lightbox au clavier et au glissement, sélecteur de série avec pill animé, thème sombre synchronisé avec le système, images optimisées automatiquement au build.
 
 ---
 
@@ -68,7 +68,7 @@ portfolio/
 ├── Gemfile                  ← Dépendances Ruby (Jekyll + plugins)
 │
 ├── _series/                 ← Une fiche .md par série — source unique de vérité
-│   ├── architecture.md      ←   titre, description, liste des fichiers images
+│   ├── architecture.md      ←   titre, liste des fichiers images
 │   ├── paysage.md
 │   └── portrait.md
 │
@@ -79,26 +79,24 @@ portfolio/
 │   ├── head.html            ← Contenu du <head> : meta, CSS, preloads fontes, SEO
 │   ├── filter-pill.html     ← Pill de filtre desktop (≥ 768 px)
 │   ├── filter-mobile.html   ← Trigger + overlay filtre mobile (< 768 px)
-│   ├── theme-toggle.html    ← Bouton bascule clair/sombre (SVG soleil/lune)
 │   ├── cover.html           ← Splash plein-écran avec photo de couverture
-│   ├── gallery-heading.html ← Sidebar titre/description de série
-│   ├── gallery-grid.html    ← Grille de cards + blocs JSON series-data et photo-data
+│   ├── gallery-grid.html    ← Grille de cards + bloc JSON photo-data
 │   └── lightbox.html        ← Visionneuse plein écran
 │
 ├── _sass/                   ← Styles SCSS (Dart Sass, @use)
 │   ├── _fonts.scss          ← Déclarations @font-face (Jost + Climate Crisis, auto-hébergées)
 │   ├── _variables.scss      ← Tokens : typographie, tailles, breakpoints
-│   ├── _mixins.scss         ← Mixin surface (surfaces flottantes) + mixin dark-theme
+│   ├── _mixins.scss         ← Mixin surface (surfaces flottantes)
 │   ├── _base.scss           ← Reset, CSS custom properties thème clair/sombre
 │   ├── _cover.scss          ← Splash de couverture
 │   ├── _header.scss         ← Pill de filtre, overlay mobile, bouton thème
-│   ├── _gallery.scss        ← Sidebar heading, grille responsive, cards, shimmer
+│   ├── _gallery.scss        ← Grille responsive, cards, shimmer
 │   └── _lightbox.scss       ← Visionneuse plein écran
 │
 ├── assets/
 │   ├── css/main.scss        ← Point d'entrée SCSS (front matter Jekyll requis)
 │   ├── fonts/               ← Fichiers WOFF2 auto-hébergés (Jost + Climate Crisis)
-│   ├── js/main.js           ← Cover, Gallery, FilterMobileMenu, Lightbox, ThemeToggle
+│   ├── js/main.js           ← Cover, Gallery, FilterMobileMenu, Lightbox
 │   └── images/
 │       ├── cover/           ← Photos de couverture
 │       │   ├── cover.jpg          ← Original commité
@@ -135,7 +133,6 @@ portfolio/
 # _series/paysage.md
 ---
 title: Paysage
-description: "Description de la série."
 photos:
   - photo-01
   - photo-06
@@ -155,7 +152,6 @@ L'ordre dans la liste détermine l'ordre d'affichage dans la galerie et de navig
 ```yaml
 ---
 title: Ma série
-description: "Description affichée dans la sidebar."
 photos:
   - photo-11
   - photo-12
@@ -224,11 +220,11 @@ Les styles utilisent **Dart Sass** avec la syntaxe `@use` (pas de `@import` dép
 assets/css/main.scss   ← Point d'entrée (front matter Jekyll obligatoire)
   @use "fonts"         ← @font-face Jost + Climate Crisis (font-display: block)
   @use "variables"     ← Tokens Sass : typo, tailles, breakpoints
-  @use "mixins"        ← Mixin surface (surfaces flottantes), mixin dark-theme
-  @use "base"          ← Reset, CSS custom properties thème clair/sombre
+  @use "mixins"        ← Mixin surface (surfaces flottantes)
+  @use "base"          ← Reset, CSS custom properties (thème sombre fixe)
   @use "cover"         ← Splash de couverture
-  @use "header"        ← Pill de filtre, overlay mobile, bouton thème
-  @use "gallery"       ← Sidebar heading, grille responsive, cards, shimmer
+  @use "header"        ← Pill de filtre, overlay mobile
+  @use "gallery"       ← Grille responsive, cards, shimmer
   @use "lightbox"      ← Visionneuse plein écran
 ```
 
@@ -243,22 +239,11 @@ Les composants suivent la convention **BEM** (`.gallery-card__img-wrap`, `.light
 Le seuil unique est **768 px** (`$bp-md`) :
 
 - **< 768 px (mobile)** : grille 2 colonnes plein-écran, sélecteur de série en overlay, flèches lightbox masquées (navigation au glissement).
-- **≥ 768 px (desktop)** : sidebar fixe 1/3 écran (titre + description de série), grille 2/3 restants, pill de filtre centré sur la grille, flèches lightbox visibles.
+- **≥ 768 px (desktop)** : grille plein-écran, pill de filtre centré, flèches lightbox visibles.
 
-### Thème clair / sombre
+### Thème
 
-Les couleurs sont exposées comme **CSS custom properties** dans `_base.scss`, ce qui permet de les modifier à l'exécution sans recompiler le SCSS :
-
-```
-:root                              ← thème clair (défaut)
-[data-theme="dark"]                ← override manuel (localStorage)
-@media (prefers-color-scheme: dark)
-  :root:not([data-theme="light"])  ← thème système (sans override)
-```
-
-La propriété `data-theme` est écrite sur `<html>` par un script inline dans `<head>` avant le premier rendu, ce qui évite le flash de contenu non stylé (FOUC). Le bouton de bascule (`.theme-toggle`) en bas à droite permet un override manuel persistent via `localStorage`.
-
-**Variables disponibles :**
+Le site utilise un thème sombre fixe. Les couleurs sont exposées comme **CSS custom properties** dans `_base.scss` sous `:root` :
 
 | Variable | Rôle |
 |---|---|

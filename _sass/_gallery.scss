@@ -1,35 +1,5 @@
 @use 'variables' as *;
 
-// ─── Heading ─────────────────────────────────────────────────────────────────
-
-.gallery-heading {
-  height: clamp(9rem, 22vh, 12rem);
-  display: flex;
-  align-items: center;
-
-  .container { text-align: center; }
-
-  &__title {
-    font-family: $font-body;
-    font-size: clamp($size-xl, 3vw, $size-2xl);
-    font-weight: 200;
-    letter-spacing: -0.01em;
-    line-height: 1.1;
-    color: var(--text);
-    margin-bottom: 0.6rem;
-    transition: opacity 0.2s ease;
-  }
-
-  &__desc {
-    font-size: $size-base;
-    color: var(--text-muted);
-    max-width: 56ch;
-    margin-inline: auto;
-    line-height: 1.7;
-    transition: opacity 0.2s ease;
-  }
-}
-
 // ─── Grid ────────────────────────────────────────────────────────────────────
 
 .gallery-grid {
@@ -87,36 +57,11 @@
   100% { background-position: -200% 0; }
 }
 
-// ─── Desktop sidebar layout (≥ $bp-md) ───────────────────────────────────────
+// ─── Desktop grid breakpoints ────────────────────────────────────────────────
 
-@media (min-width: $bp-md) {
-  .gallery-heading {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: $sidebar-width;
-    height: 100vh;
-    border-right: 1px solid var(--border);
-    z-index: $z-sidebar;
-
-    .container {
-      max-width: none;
-      text-align: left;
-    }
-
-    &__desc { margin-inline: 0; }
-  }
-
-  .gallery-grid {
-    margin-left: $sidebar-width;
-
-    &__container {
-      // La sidebar réduit la zone de grille : on démarre à 3 colonnes à $bp-lg
-      // plutôt que 4, pour conserver un ratio d'image cohérent.
-      @media (min-width: $bp-lg)  { grid-template-columns: repeat(3, 1fr); }
-      @media (min-width: $bp-xl)  { grid-template-columns: repeat(4, 1fr); }
-      @media (min-width: $bp-2xl) { grid-template-columns: repeat(5, 1fr); }
-      @media (min-width: $bp-3xl) { grid-template-columns: repeat(6, 1fr); }
-    }
-  }
+.gallery-grid__container {
+  @media (min-width: $bp-lg)  { grid-template-columns: repeat(3, 1fr); }
+  @media (min-width: $bp-xl)  { grid-template-columns: repeat(4, 1fr); }
+  @media (min-width: $bp-2xl) { grid-template-columns: repeat(5, 1fr); }
+  @media (min-width: $bp-3xl) { grid-template-columns: repeat(6, 1fr); }
 }

@@ -26,11 +26,11 @@ bash bin/build-webp.sh && JEKYLL_ENV=production bundle exec jekyll build
 
 ### Modèle de contenu — `_series/`
 
-`_series/*.md` est la source unique de vérité. Chaque fichier déclare `title`, `description` et une liste ordonnée `photos:` (noms de fichiers sans extension). Le slug du nom de fichier devient l'identifiant de la série utilisé dans les templates et le JS. Ajouter un fichier ici génère automatiquement un bouton de filtre, sans autre configuration.
+`_series/*.md` est la source unique de vérité. Chaque fichier déclare `title` et une liste ordonnée `photos:` (noms de fichiers sans extension). Le slug du nom de fichier devient l'identifiant de la série utilisé dans les templates et le JS. Ajouter un fichier ici génère automatiquement un bouton de filtre, sans autre configuration.
 
 ### Flux de données : Liquid → JSON → JS
 
-Jekyll ne peut pas transmettre de données complexes au JS à l'exécution. `gallery-grid.html` intègre deux blocs `<script type="application/json">` que Liquid compile en données structurées. Le JS lit ces blocs à l'initialisation (`#series-data` pour les descriptions, `#photo-data` pour la liste complète des photos avec chemins src). Ce schéma évite tout appel Ajax.
+Jekyll ne peut pas transmettre de données complexes au JS à l'exécution. `gallery-grid.html` intègre un bloc `<script type="application/json" id="photo-data">` que Liquid compile en données structurées. Le JS lit ce bloc à l'initialisation pour obtenir la liste complète des photos avec leurs chemins src. Ce schéma évite tout appel Ajax.
 
 ### Hiérarchie des classes JS
 
@@ -46,9 +46,9 @@ Les cards sont rendues dans une boucle plate unique sur toutes les séries (tri�
 
 Point d'entrée : `assets/css/main.scss` (front matter Jekyll obligatoire). Chaque partiel commence par `@use 'variables' as *` pour accéder aux tokens sans préfixe. Convention BEM (`.gallery-card__img-wrap`, `.lightbox__nav--prev`).
 
-Point de rupture unique : `$bp-md = 768px`. En dessous (≤ 767px) : grille 2 colonnes plein-écran, filtre en overlay mobile, navigation lightbox au glissement uniquement. Au-dessus (≥ 768px) : sidebar fixe (1/3), pill de filtre, navigation par flèches.
+Point de rupture unique : `$bp-md = 768px`. En dessous (≤ 767px) : grille 2 colonnes plein-écran, filtre en overlay mobile, navigation lightbox au glissement uniquement. Au-dessus (≥ 768px) : grille plein-écran, pill de filtre, navigation par flèches.
 
-Le système de thème utilise des propriétés CSS personnalisées (`--bg`, `--bg-surface`, `--border`, `--text`, `--text-muted`, `--shimmer-color`) déclarées dans `_base.scss` sous `:root`, `[data-theme="dark"]` et `@media (prefers-color-scheme: dark) :root:not([data-theme="light"])`. Un script inline dans `<head>` (dans `head.html`) écrit `data-theme` sur `<html>` avant le premier rendu pour éviter le FOUC. Les overrides manuels sont persistés dans `localStorage`.
+Le thème est sombre fixe. Les propriétés CSS (`--bg`, `--bg-surface`, `--border`, `--text`, `--text-muted`, `--shimmer-color`) sont déclarées dans `_base.scss` sous `:root` uniquement — pas de bascule, pas de `localStorage`.
 
 ### Variantes d'images
 
@@ -125,3 +125,25 @@ Pour les tâches en plusieurs étapes, énoncer un bref plan :
 ```
 
 Des critères de succès solides permettent de boucler en autonomie. Des critères faibles (« faire en sorte que ça marche ») exigent des clarifications constantes.
+
+## Complément : quelques principes de la méthode Kaizen
+
+### 1. Se remettre en permanence en question
+
+**Même si quelque chose fonctionne, il faut toujours chercher à l’améliorer.**
+
+### 2. Ne pas viser la perfection mais l’amélioration continue
+
+**La perfection sera atteinte par la répétition de petites améliorations apportées au quotidien.**
+
+### 3. Identifier la cause originelle des problèmes pour les résoudre durablement
+
+**Régler les symptômes d’un problème sans en rechercher l’origine vous expose à être de nouveau confronté au problème.**
+
+### 4. Régler les problèmes sans attendre
+
+**Il est très important de régler les problèmes dès qu’ils se posent et avant qu’ils n’empirent et que cela devienne plus compliqué et plus coûteux en temps et en énergie de les résoudre.**
+
+### 5. Hiérarchiser les changements
+
+**Privilégier les progrès faciles, rapides et peu coûteux à mettre en place.**
