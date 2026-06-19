@@ -1,24 +1,18 @@
-// ─── Liquid glass ────────────────────────────────────────────────────────────
+// ─── Surface flottante ───────────────────────────────────────────────────────
 
-@mixin glass {
-  background:              var(--glass-bg);
-  backdrop-filter:         blur(28px) saturate(130%);
-  -webkit-backdrop-filter: blur(28px) saturate(130%);
-  border:                  1px solid var(--glass-border);
-  box-shadow:              var(--glass-shadow);
+@mixin surface {
+  background: var(--bg);
+  border:     1px solid var(--border);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.14);
 }
 
 // ─── Dark theme ───────────────────────────────────────────────────────────────
 
 @mixin dark-theme {
-  --bg:               #111110;
-  --bg-surface:       #1c1c1a;
-  --border:           #2e2e2b;
-  --text:             #efefed;
-  --text-muted:       #8a8a87;
-  --text-faint:       #525250;
-  --glass-bg:         rgba(28, 28, 26, 0.45);
-  --glass-border:     rgba(255, 255, 255, 0.09);
-  --glass-shadow:     0 2px 16px rgba(0, 0, 0, 0.28);
-  --glass-overlay-bg: rgba(10, 10, 9, 0.84);
+  --bg:             #111110;
+  --bg-surface:     #1c1c1a;
+  --border:         #2e2e2b;
+  --text:           #efefed;
+  --text-muted:     #8a8a87;
+  --shimmer-color:  rgba(255, 255, 255, 0.1);
 }

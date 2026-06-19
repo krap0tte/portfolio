@@ -7,13 +7,11 @@
 <link rel="preload" href="{{ '/assets/fonts/climate-crisis-latin.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin />
 <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}" />
 {% if page.url == '/' %}
-  <link rel="preload" as="image"
-        href="{{ '/assets/images/cover/cover_phone.webp' | relative_url }}"
-        type="image/webp"
-        media="(max-width: 767px)" />
-  <link rel="preload" as="image"
-        href="{{ '/assets/images/cover/cover.webp' | relative_url }}"
-        type="image/webp"
-        media="(min-width: 768px)" />
+  {% if jekyll.environment == "production" %}
+  <link rel="preload" as="image" href="{{ '/assets/images/cover/cover_phone.webp' | relative_url }}" type="image/webp" media="(max-width: 767px)" />
+  <link rel="preload" as="image" href="{{ '/assets/images/cover/cover.webp' | relative_url }}" type="image/webp" media="(min-width: 768px)" />
+  {% else %}
+  <link rel="preload" as="image" href="{{ '/assets/images/cover/cover_phone.jpg' | relative_url }}" media="(max-width: 767px)" />
+  <link rel="preload" as="image" href="{{ '/assets/images/cover/cover.jpg' | relative_url }}" media="(min-width: 768px)" />
+  {% endif %}
 {% endif %}
-{% seo %}

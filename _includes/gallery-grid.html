@@ -1,16 +1,44 @@
-{% assign all_series = site.series | sort: "title" %}
+{% assign all_series = include.series %}
 {% assign global_index = 0 %}
 
 <section class="gallery-grid">
   <div class="gallery-grid__container">
     {% for series in all_series %}
+      {% assign img_base_dir = '/assets/images/photos/' | append: series.slug | append: '/' %}
       {% for file in series.photos %}
-        {% include gallery-card.html file=file series_slug=series.slug index=global_index %}
+        {% assign img_base = img_base_dir | append: file %}
+        {% if jekyll.environment == "production" %}
+          {% assign card_href  = img_base | append: '.webp'       | relative_url %}
+          {% assign thumb_src  = img_base | append: '-thumb.webp' | relative_url %}
+        {% else %}
+          {% assign card_href  = img_base | append: '.jpg' | relative_url %}
+          {% assign thumb_src  = img_base | append: '.jpg' | relative_url %}
+        {% endif %}
+        <a
+          href="{{ card_href }}"
+          class="gallery-card"
+          data-category="{{ series.slug }}"
+          data-index="{{ global_index }}"
+        >
+          <div class="gallery-card__img-wrap">
+            <img
+              src="{{ thumb_src }}"
+              alt=""
+              class="gallery-card__img"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        </a>
         {% assign global_index = global_index | plus: 1 %}
       {% endfor %}
     {% endfor %}
   </div>
 </section>
+
+<script type="application/json" id="series-data">
+{ {% for s in all_series %}{{ s.slug | jsonify }}:{{ s.description | jsonify }}{% unless forloop.last %},{% endunless %}{% endfor %} }
+</script>
 
 <script type="application/json" id="photo-data">
 [{% assign first = true %}
@@ -19,7 +47,11 @@
   {%- for file in series.photos -%}
     {%- unless first %},{%- endunless -%}
     {%- assign first = false -%}
-    {"src":{{ base | append: file | append: '.jpg' | relative_url | jsonify }},"webp":{{ base | append: file | append: '.webp' | relative_url | jsonify }}}
+    {%- if jekyll.environment == "production" -%}
+    {"src":{{ base | append: file | append: '.webp' | relative_url | jsonify }}}
+    {%- else -%}
+    {"src":{{ base | append: file | append: '.jpg' | relative_url | jsonify }}}
+    {%- endif -%}
   {%- endfor -%}
 {%- endfor %}]
 </script>

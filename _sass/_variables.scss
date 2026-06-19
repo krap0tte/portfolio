@@ -1,29 +1,36 @@
 // ─── Palette ────────────────────────────────────────────────────────────────
-$bg:          #fafaf8;
-$bg-surface:  #f2f2f0;
-$border:      #d8d8d4;
+$bg:         #fafaf8;
+$bg-surface: #f2f2f0;
+$border:     #d8d8d4;
 
-$text:        #111110;
-$text-muted:  #6b6b68;
-$text-faint:  #a8a8a4;
+$text:       #111110;
+$text-muted: #6b6b68;
+
+$color-void: #0a0a09; // fond sombre absolu — cover et lightbox
 
 // ─── Typography ─────────────────────────────────────────────────────────────
-$font-display: 'Jost', 'Helvetica Neue', sans-serif;
-$font-body:    'Jost', 'Helvetica Neue', sans-serif;
-$font-cover:   'Climate Crisis', sans-serif;
+$font-body:  'Jost', 'Helvetica Neue', sans-serif;
+$font-cover: 'Climate Crisis', sans-serif;
 
 $size-xs:   0.75rem;
-$size-sm:   0.875rem;
 $size-base: 1rem;
-$size-md:   1.125rem;
 $size-lg:   1.5rem;
 $size-xl:   2rem;
 $size-2xl:  3rem;
-$size-3xl:  4.5rem;
 
 // ─── Layout ─────────────────────────────────────────────────────────────────
 $container-max: 1280px;
 $container-pad: clamp(1.5rem, 5vw, 3.5rem);
+$sidebar-width: 33.333%;
+$radius-pill:   999px;
+$ui-bottom:     2rem;
+
+// ─── Z-index ────────────────────────────────────────────────────────────────
+$z-sidebar:  10;
+$z-ui:       100;
+$z-overlay:  150;
+$z-lightbox: 200;
+$z-cover:    300;
 
 // ─── Breakpoints ────────────────────────────────────────────────────────────
 $bp-md:  768px;

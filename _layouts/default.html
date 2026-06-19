@@ -4,7 +4,11 @@
   {% include head.html %}
 </head>
 <body>
-  {% include header.html %}
+  {% if page.show_filters %}
+    {% assign all_series = site.series | sort: "title" %}
+    {% include filter-pill.html series=all_series %}
+    {% include filter-mobile.html series=all_series %}
+  {% endif %}
   <main class="site-main">{{ content }}</main>
   {% include theme-toggle.html %}
   <script src="{{ '/assets/js/main.js' | relative_url }}"></script>

@@ -4,21 +4,21 @@
 // ─── Desktop filter pill (≥ $bp-md) ─────────────────────────────────────────
 
 .filter-pill {
-  @include glass;
+  @include surface;
   position: fixed;
-  bottom: 2rem;
+  bottom: $ui-bottom;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 100;
+  z-index: $z-ui;
   display: flex;
   align-items: center;
   gap: 0.2rem;
-  border-radius: 999px;
+  border-radius: $radius-pill;
   padding: 0.3rem 0.4rem;
   white-space: nowrap;
 
   @media (max-width: #{$bp-md - 1px}) { display: none; }
-  @media (min-width: $bp-md) { left: 66.666%; }
+  @media (min-width: $bp-md) { left: $sidebar-width * 2; }
 
   // Surlignage glissant — position et largeur gérées par JS
   &__indicator {
@@ -26,7 +26,7 @@
     top: 0.3rem;
     left: 0;
     height: calc(100% - 0.6rem);
-    border-radius: 999px;
+    border-radius: $radius-pill;
     background: var(--text);
     z-index: -1;
     pointer-events: none;
@@ -43,23 +43,17 @@
   &__btn {
     position: relative;
     padding: 0.35rem 1rem;
-    border-radius: 999px;
-    border: none;
-    background: transparent;
-    font-family: $font-body;
+    border-radius: $radius-pill;
     font-size: $size-xs;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-muted);
-    cursor: pointer;
     transition: color 0.15s;
 
     &:hover { color: var(--text); }
 
     // L'indicateur fournit le fond, le bouton gère uniquement la couleur du texte
-    &.is-active {
-      color: var(--bg);
-    }
+    &.is-active { color: var(--bg); }
   }
 }
 
@@ -69,23 +63,21 @@
   display: none;
 
   @media (max-width: #{$bp-md - 1px}) {
-    @include glass;
+    @include surface;
     display: flex;
     align-items: center;
     gap: 0.35rem;
     position: fixed;
-    bottom: 2rem;
+    bottom: $ui-bottom;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 100;
-    border-radius: 999px;
+    z-index: $z-ui;
+    border-radius: $radius-pill;
     padding: 0.45rem 0.9rem 0.45rem 1.1rem;
     color: var(--text);
-    font-family: $font-body;
     font-size: $size-xs;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    cursor: pointer;
     white-space: nowrap;
 
     svg { flex-shrink: 0; transition: transform 0.2s ease; }
@@ -98,12 +90,10 @@
 .filter-mobile-menu {
   position: fixed;
   inset: 0;
-  z-index: 150;
+  z-index: $z-overlay;
   display: flex;
   flex-direction: column;
-  background: var(--glass-overlay-bg);
-  backdrop-filter: blur(56px) saturate(180%);
-  -webkit-backdrop-filter: blur(56px) saturate(180%);
+  background: var(--bg);
   opacity: 0;
   visibility: hidden;
   transform: translateY(16px);
@@ -121,13 +111,13 @@
   &__header {
     position: relative;
     padding: 1.5rem 1.25rem 1.25rem;
-    border-bottom: 1px solid var(--glass-border);
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
     text-align: center;
   }
 
   &__title {
-    font-family: $font-display;
+    font-family: $font-body;
     font-size: $size-lg;
     font-weight: 400;
     color: var(--text);
@@ -142,7 +132,6 @@
     color: var(--text-muted);
     padding: 0.4rem;
     line-height: 0;
-    cursor: pointer;
     border-radius: 4px;
     transition: color 0.15s;
     &:hover { color: var(--text); }
@@ -161,15 +150,11 @@
     width: 100%;
     padding: 1rem 1.25rem;
     border-radius: 0;
-    border: none;
-    background: transparent;
-    font-family: $font-body;
     font-size: $size-base;
     letter-spacing: 0;
     text-transform: none;
     text-align: center;
     color: var(--text-muted);
-    cursor: pointer;
     transition: color 0.12s, background 0.12s;
 
     &.is-active { color: var(--text); }
@@ -184,11 +169,11 @@
 // ─── Theme toggle ────────────────────────────────────────────────────────────
 
 .theme-toggle {
-  @include glass;
+  @include surface;
   position: fixed;
-  bottom: 2rem;
+  bottom: $ui-bottom;
   right: 2rem;
-  z-index: 100;
+  z-index: $z-ui;
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -196,7 +181,6 @@
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
-  cursor: pointer;
   transition: color 0.15s;
 
   &:hover { color: var(--text); }

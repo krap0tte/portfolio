@@ -1,8 +1,6 @@
 title: "Demo"
 description: "Photographe — Portrait · Paysage · Architecture"
-author: "Demo"
 baseurl: ""       # laisser vide si déployé sur username.github.io
-url: "https://username.github.io"  # ← remplacer par votre URL
 
 # Thème
 lang: fr
@@ -23,15 +21,10 @@ exclude:
   - vendor
   - .gitignore
   - README.md
-
-# Plugins
-plugins:
-  - jekyll-feed
-  - jekyll-seo-tag
-  - jekyll-sitemap
+  - CLAUDE.md
+  - bin/
 
 # Sass
 sass:
   sass_dir: _sass
   style: compressed
-

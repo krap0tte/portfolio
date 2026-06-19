@@ -1,7 +1,0 @@
-{% if page.url == '/' %}
-  {% assign all_series = site.series | sort: "title" %}
-  {% if all_series.size > 0 %}
-    {% include filter-pill.html series=all_series %}
-    {% include filter-mobile.html series=all_series %}
-  {% endif %}
-{% endif %}

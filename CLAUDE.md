@@ -15,11 +15,11 @@ bundle install
 # Serveur de développement avec rechargement automatique
 bundle exec jekyll serve --livereload
 
-# Générer les variantes d'images optimisées (requis pour chaque nouvelle photo)
-bash bin/optimize-images.sh
+# Normaliser les originaux si un JPEG dépasse 4K (optionnel)
+bash bin/normalize.sh
 
-# Build de production
-JEKYLL_ENV=production bundle exec jekyll build
+# Build de production (génère les WebP puis compile)
+bash bin/build-webp.sh && JEKYLL_ENV=production bundle exec jekyll build
 ```
 
 ## Architecture
@@ -30,7 +30,7 @@ JEKYLL_ENV=production bundle exec jekyll build
 
 ### Flux de données : Liquid → JSON → JS
 
-Jekyll ne peut pas transmettre de données complexes au JS à l'exécution. `gallery-heading.html` et `gallery-grid.html` intègrent donc chacun un bloc `<script type="application/json">` que Liquid compile en données structurées. Le JS lit ces blocs à l'initialisation (`#series-data` pour les descriptions, `#photo-data` pour la liste complète des photos avec chemins src/webp). Ce schéma évite tout appel Ajax.
+Jekyll ne peut pas transmettre de données complexes au JS à l'exécution. `gallery-grid.html` intègre deux blocs `<script type="application/json">` que Liquid compile en données structurées. Le JS lit ces blocs à l'initialisation (`#series-data` pour les descriptions, `#photo-data` pour la liste complète des photos avec chemins src). Ce schéma évite tout appel Ajax.
 
 ### Hiérarchie des classes JS
 
@@ -48,15 +48,21 @@ Point d'entrée : `assets/css/main.scss` (front matter Jekyll obligatoire). Chaq
 
 Point de rupture unique : `$bp-md = 768px`. En dessous (≤ 767px) : grille 2 colonnes plein-écran, filtre en overlay mobile, navigation lightbox au glissement uniquement. Au-dessus (≥ 768px) : sidebar fixe (1/3), pill de filtre, navigation par flèches.
 
-Le système de thème utilise des propriétés CSS personnalisées (`--bg`, `--text`, `--glass-bg`, etc.) déclarées dans `_base.scss` sous `:root`, `[data-theme="dark"]` et `@media (prefers-color-scheme: dark) :root:not([data-theme="light"])`. Un script inline dans `<head>` (dans `head.html`) écrit `data-theme` sur `<html>` avant le premier rendu pour éviter le FOUC. Les overrides manuels sont persistés dans `localStorage`.
+Le système de thème utilise des propriétés CSS personnalisées (`--bg`, `--bg-surface`, `--border`, `--text`, `--text-muted`, `--shimmer-color`) déclarées dans `_base.scss` sous `:root`, `[data-theme="dark"]` et `@media (prefers-color-scheme: dark) :root:not([data-theme="light"])`. Un script inline dans `<head>` (dans `head.html`) écrit `data-theme` sur `<html>` avant le premier rendu pour éviter le FOUC. Les overrides manuels sont persistés dans `localStorage`.
 
 ### Variantes d'images
 
 Les originaux (`.jpg`) sont commités. Les variantes générées sont dans `.gitignore` :
-- `photo-XX-thumb.jpg` / `.webp` — 1200 px max (local) / 800 px max (CI), utilisées dans la grille
-- `photo-XX.webp` — WebP pleine résolution, utilisée dans la lightbox
+- `photo-XX-thumb.webp` — 1200 px max, utilisée dans la grille (production uniquement)
+- `photo-XX.webp` — WebP pleine résolution, utilisée dans la lightbox (production uniquement)
 
-Le CI diffère du local : il redimensionne les originaux en place à 1920 px avant d'encoder le WebP (le script local ne touche pas aux originaux). Relancer `bin/optimize-images.sh` est sans risque et idempotent.
+En développement, le site utilise directement les JPEG originaux — aucune variante n'est générée. `bin/build-webp.sh` génère toutes les variantes WebP avant le build de production. Relancer le script est sans risque et idempotent (`--force` pour régénérer sans tenir compte des timestamps).
+
+## Mémoire
+
+À chaque session, alimenter le système de mémoire persistant (`~/.claude/projects/.../memory/`) avec les points clés, décisions d'architecture et pièges rencontrés. L'objectif est de rester cohérent d'une conversation à l'autre sans redemander ce qui a déjà été établi.
+
+Ce qu'il faut y consigner : décisions structurantes, patterns validés, plugins ou abstractions délibérément exclus, comportements qui ont surpris ou posé problème. Ce qu'il ne faut pas y mettre : patterns dérivables du code, historique git, solutions de debug.
 
 ## Règles de comportement
 

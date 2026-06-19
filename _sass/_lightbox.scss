@@ -1,16 +1,12 @@
 @use 'variables' as *;
-@use 'mixins' as *;
 
 .lightbox {
   position: fixed;
   inset: 0;
-  z-index: 200;
+  z-index: $z-lightbox;
   display: flex;
   flex-direction: column;
-  // Verre sombre : la grille reste vaguement visible en dessous
-  background: rgba(8, 8, 7, 0.72);
-  backdrop-filter: blur(48px) saturate(110%);
-  -webkit-backdrop-filter: blur(48px) saturate(110%);
+  background: $color-void;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -25,14 +21,18 @@
     top: 1rem;
     right: 1.25rem;
     z-index: 10;
-    @include glass;
-    color: var(--text-muted);
+    background: rgba(0, 0, 0, 0.52);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.72);
     padding: 0.65rem;
     line-height: 0;
     border-radius: 50%;
-    transition: color 0.15s;
+    transition: color 0.15s, background 0.15s;
 
-    &:hover { color: var(--text); }
+    &:hover {
+      background: rgba(0, 0, 0, 0.72);
+      color: #fff;
+    }
   }
 
   &__stage {
@@ -46,7 +46,6 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
-    display: block;
     transition: opacity 0.2s ease;
 
     &.is-loading { opacity: 0; }
@@ -74,18 +73,22 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    @include glass;
-    color: var(--text-muted);
+    background: rgba(0, 0, 0, 0.52);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.72);
     padding: 0.65rem;
     line-height: 0;
     border-radius: 50%;
-    transition: color 0.15s;
+    transition: color 0.15s, background 0.15s;
 
-    &:hover { color: var(--text); }
+    &:hover {
+      background: rgba(0, 0, 0, 0.72);
+      color: #fff;
+    }
     &--prev { left: 1rem; }
     &--next { right: 1rem; }
 
-    @media (max-width: $bp-md) { display: none; }
+    @media (max-width: #{$bp-md - 1px}) { display: none; }
   }
 
 }

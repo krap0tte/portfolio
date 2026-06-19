@@ -56,12 +56,18 @@ class Cover {
 
     setTimeout(() => {
       this.#el.classList.add('is-leaving');
+      let fallback;
       const onEnd = e => {
         if (e.target !== this.#el || e.propertyName !== 'opacity') return;
+        clearTimeout(fallback);
         this.#el.removeEventListener('transitionend', onEnd);
         this.#el.hidden = true;
       };
       this.#el.addEventListener('transitionend', onEnd);
+      fallback = setTimeout(() => {
+        this.#el.removeEventListener('transitionend', onEnd);
+        this.#el.hidden = true;
+      }, 800);
     }, 250);
   }
 }
@@ -87,8 +93,12 @@ class Gallery extends EventTarget {
     this.#title      = document.getElementById('gallery-heading-title');
     this.#desc       = document.getElementById('gallery-heading-desc');
 
-    const seriesEl   = document.getElementById('series-data');
-    this.#seriesData = seriesEl ? JSON.parse(seriesEl.textContent) : {};
+    const seriesEl = document.getElementById('series-data');
+    try {
+      this.#seriesData = seriesEl ? JSON.parse(seriesEl.textContent) : {};
+    } catch {
+      this.#seriesData = {};
+    }
 
     this.#indicator = document.querySelector('.filter-pill__indicator');
     if (this.#indicator) {
@@ -101,6 +111,14 @@ class Gallery extends EventTarget {
           requestAnimationFrame(() => { this.#pill?.classList.add('filter-pill--ready'); });
         });
       }
+      // La pill est display:none sur mobile : offsetLeft/offsetWidth valent 0,
+      // donc l'indicateur est mal positionné si une sélection est faite dans le
+      // menu mobile. On re-mesure dès que la pill redevient visible.
+      window.matchMedia('(min-width: 768px)').addEventListener('change', e => {
+        if (!e.matches) return;
+        const active = this.#pill?.querySelector('.filter-pill__btn.is-active');
+        if (active) this.#moveIndicator(active);
+      });
     }
 
     this.#bindFilters();
@@ -129,7 +147,7 @@ class Gallery extends EventTarget {
         const filter = btn.dataset.filter;
         // Synchronise l'état actif sur pill ET menu mobile simultanément.
         this.#filterBtns.forEach(b => b.classList.toggle('is-active', b.dataset.filter === filter));
-        const pillBtn = this.#pill?.querySelector(`.filter-pill__btn[data-filter="${filter}"]`);
+        const pillBtn = [...this.#filterBtns].find(b => b.dataset.filter === filter && this.#pill?.contains(b));
         if (pillBtn) this.#moveIndicator(pillBtn);
         this.#filter(filter, btn.textContent.trim(), true);
       });
@@ -263,16 +281,21 @@ class Lightbox {
     const dataEl = document.getElementById('photo-data');
     if (!dataEl) return;
 
-    this.#photos = JSON.parse(dataEl.textContent);
-    this.#el     = document.getElementById('lightbox');
+    try {
+      this.#photos = JSON.parse(dataEl.textContent);
+    } catch {
+      return;
+    }
+    this.#el = document.getElementById('lightbox');
     if (!this.#el) return;
 
     this.#img = document.getElementById('lightbox-img');
     this.#closeBtn = document.getElementById('lightbox-close');
     this.#prev     = document.getElementById('lightbox-prev');
     this.#next     = document.getElementById('lightbox-next');
-    this.#stage    = document.getElementById('lightbox-stage');
-    this.#loader   = document.getElementById('lightbox-loader');
+    this.#stage  = document.getElementById('lightbox-stage');
+    this.#loader = document.getElementById('lightbox-loader');
+    if (!this.#img || !this.#closeBtn || !this.#prev || !this.#next || !this.#stage || !this.#loader) return;
 
     this.#visible = this.#photos.map((_, i) => i);
     this.#bind(gallery);
@@ -383,12 +406,7 @@ class Lightbox {
     this.#img.onload = onLoad;
 
     this.#img.alt = '';
-    if (p.webp) {
-      this.#img.onerror = () => { this.#img.onerror = null; this.#img.src = p.src; };
-      this.#img.src = p.webp;
-    } else {
-      this.#img.src = p.src;
-    }
+    this.#img.src = p.src;
     if (this.#img.complete && this.#img.naturalWidth) onLoad();
 
     this.#prev.hidden = this.#next.hidden = this.#visible.length < 2;
