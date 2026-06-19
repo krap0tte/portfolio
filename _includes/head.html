@@ -2,7 +2,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>{% if page.title %}{{ page.title }} — {% endif %}{{ site.title }}</title>
 <meta name="description" content="{{ page.excerpt | default: site.description | strip_html | normalize_whitespace | truncate: 160 }}" />
-<script>(function(){var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.dataset.theme=t;}());</script>
 <link rel="preload" href="{{ '/assets/fonts/jost-latin.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin />
 <link rel="preload" href="{{ '/assets/fonts/climate-crisis-latin.woff2' | relative_url }}" as="font" type="font/woff2" crossorigin />
 <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}" />

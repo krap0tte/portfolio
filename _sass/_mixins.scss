@@ -5,14 +5,3 @@
   border:     1px solid var(--border);
   box-shadow: 0 2px 14px rgba(0, 0, 0, 0.14);
 }
-
-// ─── Dark theme ───────────────────────────────────────────────────────────────
-
-@mixin dark-theme {
-  --bg:             #111110;
-  --bg-surface:     #1c1c1a;
-  --border:         #2e2e2b;
-  --text:           #efefed;
-  --text-muted:     #8a8a87;
-  --shimmer-color:  rgba(255, 255, 255, 0.1);
-}

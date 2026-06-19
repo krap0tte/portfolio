@@ -455,40 +455,9 @@ class Lightbox {
   }
 }
 
-// ─── ThemeToggle ─────────────────────────────────────────────────────────────
-
-class ThemeToggle {
-  #btn;
-
-  constructor() {
-    this.#btn = document.getElementById('theme-toggle');
-    if (!this.#btn) return;
-    this.#updateLabel();
-    this.#btn.addEventListener('click', () => {
-      const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-      document.documentElement.dataset.theme = next;
-      localStorage.setItem('theme', next);
-      this.#updateLabel();
-    });
-    // Suit la préférence système si aucun override manuel n'est actif.
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-      if (!localStorage.getItem('theme')) {
-        document.documentElement.dataset.theme = e.matches ? 'dark' : 'light';
-        this.#updateLabel();
-      }
-    });
-  }
-
-  #updateLabel() {
-    const isDark = document.documentElement.dataset.theme === 'dark';
-    this.#btn.setAttribute('aria-label', isDark ? 'Passer en thème clair' : 'Passer en thème sombre');
-  }
-}
-
 // ─── Init ────────────────────────────────────────────────────────────────────
 
 new Cover();
 const gallery = new Gallery();
 new FilterMobileMenu(gallery);
 new Lightbox(gallery);
-new ThemeToggle();

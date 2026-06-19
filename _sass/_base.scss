@@ -9,13 +9,7 @@
   --border:         #{$border};
   --text:           #{$text};
   --text-muted:     #{$text-muted};
-  --shimmer-color:  rgba(255, 255, 255, 0.06);
-}
-
-[data-theme="dark"]                        { @include dark-theme; }
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"])          { @include dark-theme; }
+  --shimmer-color:  rgba(255, 255, 255, 0.1);
 }
 
 // ─── Reset ───────────────────────────────────────────────────────────────────
@@ -38,7 +32,6 @@ body {
   font-family: $font-body;
   font-weight: 300;
   line-height: 1.6;
-  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 img {
