@@ -17,15 +17,25 @@ check_cmd cwebp   "cwebp introuvable. Installation : sudo apt-get install webp"
 count=0
 skipped=0
 
-# Covers : WebP pleine résolution
+# Covers : phone → WebP direct ; desktop → 1920 px (1×) + 3840 px max (2×)
 for src in "$COVER_DIR"/*.jpg; do
   [ -f "$src" ] || continue
   base="${src%.jpg}"
-  if [ "$FORCE" = false ] && [ -f "${base}.webp" ] && [ "${base}.webp" -nt "$src" ]; then
-    skipped=$((skipped + 1))
-    continue
+  fname="$(basename "$base")"
+
+  if [[ "$fname" == *_phone ]]; then
+    if [ "$FORCE" = false ] && [ -f "${base}.webp" ] && [ "${base}.webp" -nt "$src" ]; then
+      skipped=$((skipped + 1)); continue
+    fi
+    cwebp -q 82 "$src" -o "${base}.webp" -quiet
+  else
+    if [ "$FORCE" = false ] && [ -f "${base}.webp" ] && [ -f "${base}-2x.webp" ] \
+       && [ "${base}.webp" -nt "$src" ]; then
+      skipped=$((skipped + 1)); continue
+    fi
+    convert "$src" -resize "1920x>" -quality 82 -strip "${base}.webp"
+    convert "$src" -resize "3840x>" -quality 82 -strip "${base}-2x.webp"
   fi
-  cwebp -q 82 "$src" -o "${base}.webp" -quiet
   echo "  ✓ $(basename "$src")"
   count=$((count + 1))
 done
@@ -34,11 +44,12 @@ done
 while IFS= read -r src; do
   base="${src%.jpg}"
   if [ "$FORCE" = false ] && [ -f "${base}.webp" ] && [ -f "${base}-thumb.webp" ] \
-     && [ "${base}.webp" -nt "$src" ]; then
+     && [ -f "${base}-thumb-2x.webp" ] && [ "${base}.webp" -nt "$src" ]; then
     skipped=$((skipped + 1))
     continue
   fi
   convert "$src" -resize "1200x1200>" -quality 82 -strip "${base}-thumb.webp"
+  convert "$src" -resize "2400x2400>" -quality 82 -strip "${base}-thumb-2x.webp"
   cwebp -q 82 "$src" -o "${base}.webp" -quiet
   echo "  ✓ $(basename "$src")"
   count=$((count + 1))

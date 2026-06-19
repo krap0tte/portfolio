@@ -51,8 +51,6 @@
     background: var(--bg-surface);
     aspect-ratio: 1;
 
-    picture { display: block; height: 100%; }
-
     &::after {
       content: '';
       position: absolute;

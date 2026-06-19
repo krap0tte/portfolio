@@ -8,8 +8,9 @@
       {% for file in series.photos %}
         {% assign img_base = img_base_dir | append: file %}
         {% if jekyll.environment == "production" %}
-          {% assign card_href  = img_base | append: '.webp'       | relative_url %}
-          {% assign thumb_src  = img_base | append: '-thumb.webp' | relative_url %}
+          {% assign card_href    = img_base | append: '.webp'          | relative_url %}
+          {% assign thumb_src    = img_base | append: '-thumb.webp'    | relative_url %}
+          {% assign thumb_src_2x = img_base | append: '-thumb-2x.webp' | relative_url %}
         {% else %}
           {% assign card_href  = img_base | append: '.jpg' | relative_url %}
           {% assign thumb_src  = img_base | append: '.jpg' | relative_url %}
@@ -23,6 +24,10 @@
           <div class="gallery-card__img-wrap">
             <img
               src="{{ thumb_src }}"
+              {% if jekyll.environment == "production" %}
+              srcset="{{ thumb_src }} 1200w, {{ thumb_src_2x }} 2400w"
+              sizes="(max-width: 767px) 50vw, (max-width: 1023px) 33vw, (max-width: 1279px) 22vw, (max-width: 1599px) 17vw, (max-width: 1999px) 13vw, 11vw"
+              {% endif %}
               alt=""
               class="gallery-card__img"
               loading="lazy"

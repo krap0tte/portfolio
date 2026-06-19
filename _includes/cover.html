@@ -6,7 +6,7 @@
     {% endif %}
     <source media="(max-width: 767px)" srcset="{{ '/assets/images/cover/cover_phone.jpg' | relative_url }}">
     {% if jekyll.environment == "production" %}
-    <source srcset="{{ '/assets/images/cover/cover.webp' | relative_url }}" type="image/webp">
+    <source srcset="{{ '/assets/images/cover/cover.webp' | relative_url }} 1x, {{ '/assets/images/cover/cover-2x.webp' | relative_url }} 2x" type="image/webp">
     {% endif %}
     <img class="cover__img" id="cover-img"
          src="{{ '/assets/images/cover/cover.jpg' | relative_url }}"

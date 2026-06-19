@@ -397,11 +397,20 @@ class Lightbox {
 
     this.#img.classList.add('is-loading');
     this.#loader.classList.add('is-visible');
+    this.#img.style.width  = '';
+    this.#img.style.height = '';
 
     const onLoad = () => {
       this.#img.onload = null;
       this.#img.classList.remove('is-loading');
       this.#loader.classList.remove('is-visible');
+      const dpr   = window.devicePixelRatio || 1;
+      const physW = this.#stage.clientWidth  * dpr;
+      const physH = this.#stage.clientHeight * dpr;
+      if (this.#img.naturalWidth < physW && this.#img.naturalHeight < physH) {
+        this.#img.style.width  = `${this.#img.naturalWidth  / dpr}px`;
+        this.#img.style.height = `${this.#img.naturalHeight / dpr}px`;
+      }
     };
     this.#img.onload = onLoad;
 

@@ -15,7 +15,7 @@ bundle install
 # Serveur de développement avec rechargement automatique
 bundle exec jekyll serve --livereload
 
-# Normaliser les originaux si un JPEG dépasse 4K (optionnel)
+# Normaliser les photos si un JPEG dépasse 4K (optionnel — covers exclues)
 bash bin/normalize.sh
 
 # Build de production (génère les WebP puis compile)
@@ -53,8 +53,12 @@ Le système de thème utilise des propriétés CSS personnalisées (`--bg`, `--b
 ### Variantes d'images
 
 Les originaux (`.jpg`) sont commités. Les variantes générées sont dans `.gitignore` :
-- `photo-XX-thumb.webp` — 1200 px max, utilisée dans la grille (production uniquement)
-- `photo-XX.webp` — WebP pleine résolution, utilisée dans la lightbox (production uniquement)
+- `photo-XX-thumb.webp` — 1200 px max, miniature grille (production uniquement)
+- `photo-XX-thumb-2x.webp` — 2400 px max, miniature Retina 2× (production uniquement)
+- `photo-XX.webp` — WebP pleine résolution, lightbox (production uniquement)
+- `cover.webp` — 1920 px max, cover desktop standard
+- `cover-2x.webp` — 3840 px max, cover desktop Retina 2×
+- `cover_phone.webp` — WebP pleine résolution, cover mobile
 
 En développement, le site utilise directement les JPEG originaux — aucune variante n'est générée. `bin/build-webp.sh` génère toutes les variantes WebP avant le build de production. Relancer le script est sans risque et idempotent (`--force` pour régénérer sans tenir compte des timestamps).
 

@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-# Redimensionne les originaux JPEG dépassant 4K en place.
+# Redimensionne les JPEG photo > 4K en place (covers exclues — gérées par build-webp.sh).
 # Usage : bash bin/normalize.sh
 set -euo pipefail
 
-COVER_DIR="assets/images/cover"
 PHOTOS_DIR="assets/images/photos"
 MAX_RES="3840x2160"
 MAX_W="${MAX_RES%x*}"
@@ -25,7 +24,6 @@ normalize() {
   fi
 }
 
-for src in "$COVER_DIR"/*.jpg; do [ -f "$src" ] && normalize "$src"; done
 while IFS= read -r src; do normalize "$src"; done < <(find "$PHOTOS_DIR" -name "*.jpg" | sort)
 
 echo "Done — $resized original(aux) réduit(s)."

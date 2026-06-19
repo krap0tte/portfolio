@@ -46,8 +46,8 @@ cd username.github.io
 # 2. Installer les dépendances Ruby
 bundle install
 
-# 3. Générer les variantes d'images optimisées (à relancer pour chaque nouvelle photo)
-bash bin/optimize-images.sh
+# 3. Générer les variantes d'images WebP (à relancer pour chaque nouvelle photo)
+bash bin/build-webp.sh
 
 # 4. Lancer le serveur de développement
 bundle exec jekyll serve --livereload
@@ -55,7 +55,7 @@ bundle exec jekyll serve --livereload
 
 Le site est accessible sur [http://localhost:4000](http://localhost:4000).
 
-> **Remarque** : sans l'étape 3, la galerie fonctionne mais charge les JPEGs originaux (non compressés). En production, le CI génère automatiquement les variantes optimisées.
+> **Remarque** : sans l'étape 3, la galerie fonctionne mais charge les JPEGs originaux non compressés. En production, relancer le script avant chaque build.
 
 ---
 
@@ -77,20 +77,18 @@ portfolio/
 │
 ├── _includes/
 │   ├── head.html            ← Contenu du <head> : meta, CSS, preloads fontes, SEO
-│   ├── header.html          ← Bascule filtre : passe site.series aux deux composants
 │   ├── filter-pill.html     ← Pill de filtre desktop (≥ 768 px)
 │   ├── filter-mobile.html   ← Trigger + overlay filtre mobile (< 768 px)
 │   ├── theme-toggle.html    ← Bouton bascule clair/sombre (SVG soleil/lune)
 │   ├── cover.html           ← Splash plein-écran avec photo de couverture
-│   ├── gallery-heading.html ← Sidebar titre/description de série + JSON series-data
-│   ├── gallery-grid.html    ← Grille de cards + JSON photo-data
-│   ├── gallery-card.html    ← Card unique, reçoit file, series_slug, index
+│   ├── gallery-heading.html ← Sidebar titre/description de série
+│   ├── gallery-grid.html    ← Grille de cards + blocs JSON series-data et photo-data
 │   └── lightbox.html        ← Visionneuse plein écran
 │
 ├── _sass/                   ← Styles SCSS (Dart Sass, @use)
 │   ├── _fonts.scss          ← Déclarations @font-face (Jost + Climate Crisis, auto-hébergées)
 │   ├── _variables.scss      ← Tokens : typographie, tailles, breakpoints
-│   ├── _mixins.scss         ← Mixin glass (verre dépoli) + mixin dark-theme
+│   ├── _mixins.scss         ← Mixin surface (surfaces flottantes) + mixin dark-theme
 │   ├── _base.scss           ← Reset, CSS custom properties thème clair/sombre
 │   ├── _cover.scss          ← Splash de couverture
 │   ├── _header.scss         ← Pill de filtre, overlay mobile, bouton thème
@@ -103,24 +101,23 @@ portfolio/
 │   ├── js/main.js           ← Cover, Gallery, FilterMobileMenu, Lightbox, ThemeToggle
 │   └── images/
 │       ├── cover/           ← Photos de couverture
-│       │   ├── cover.jpg         ← Original commité
-│       │   ├── cover.webp        ← Généré — gitignored
-│       │   ├── cover_phone.jpg   ← Variante mobile commitée
-│       │   └── cover_phone.webp  ← Généré — gitignored
+│       │   ├── cover.jpg          ← Original commité
+│       │   ├── cover.webp         ← Généré 1920 px (1×) — gitignored
+│       │   ├── cover-2x.webp      ← Généré 3840 px max (Retina 2×) — gitignored
+│       │   ├── cover_phone.jpg    ← Variante mobile commitée
+│       │   └── cover_phone.webp   ← Généré — gitignored
 │       └── photos/          ← Photos de galerie, un sous-dossier par série
 │           ├── architecture/
-│           │   ├── photo-03.jpg        ← Original commité
-│           │   ├── photo-03.webp       ← Généré — gitignored
-│           │   ├── photo-03-thumb.jpg  ← Généré — gitignored
-│           │   └── photo-03-thumb.webp ← Généré — gitignored
+│           │   ├── photo-03.jpg            ← Original commité
+│           │   ├── photo-03.webp           ← Généré pleine résolution — gitignored
+│           │   ├── photo-03-thumb.webp     ← Généré 1200 px — gitignored
+│           │   └── photo-03-thumb-2x.webp  ← Généré 2400 px (Retina 2×) — gitignored
 │           ├── paysage/
 │           └── portrait/
 │
 ├── bin/
-│   └── optimize-images.sh   ← Script d'optimisation local (ne modifie pas les originaux)
-│
-├── .github/
-│   └── workflows/deploy.yml ← CI/CD : optimisation images + build + déploiement
+│   ├── build-webp.sh        ← Génère les variantes WebP avant le build de production
+│   └── normalize.sh         ← Redimensionne les photos > 4K en place (optionnel)
 │
 └── index.html               ← Page unique — assemble les includes de la galerie
 ```
@@ -147,7 +144,7 @@ photos:
 ---
 ```
 
-3. Relancez `bash bin/optimize-images.sh` pour générer les variantes WebP et miniatures
+3. Relancez `bash bin/build-webp.sh` pour générer les variantes WebP et miniatures
 
 L'ordre dans la liste détermine l'ordre d'affichage dans la galerie et de navigation dans la lightbox.
 
@@ -166,7 +163,7 @@ photos:
 ```
 
 2. Créez le sous-dossier `assets/images/photos/ma-serie/` et placez-y les images
-3. Relancez `bash bin/optimize-images.sh`
+3. Relancez `bash bin/build-webp.sh`
 
 Les boutons du sélecteur de série sont générés automatiquement à partir des fichiers présents dans `_series/` — aucune autre configuration n'est requise.
 
@@ -177,31 +174,29 @@ Les boutons du sélecteur de série sont générés automatiquement à partir de
 ### En développement local
 
 ```bash
-bash bin/optimize-images.sh
+bash bin/build-webp.sh
 ```
 
 Pour chaque photo dans `assets/images/photos/<serie>/`, le script génère :
 
 | Fichier | Taille max | Usage |
 |---|---|---|
-| `photo-XX-thumb.jpg` | 800 px | Miniature grille galerie (fallback JPEG) |
-| `photo-XX-thumb.webp` | 800 px | Miniature grille galerie (WebP) |
-| `photo-XX.webp` | 1920 px | Lightbox (WebP) |
+| `photo-XX-thumb.webp` | 1200 px | Miniature grille galerie |
+| `photo-XX-thumb-2x.webp` | 2400 px | Miniature Retina 2× |
+| `photo-XX.webp` | Résolution native | Lightbox |
 
-Pour les photos de couverture dans `assets/images/cover/`, seule la variante WebP pleine résolution est générée (pas de miniature).
+Pour les covers desktop, deux variantes sont générées : `cover.webp` (1920 px, affichage standard) et `cover-2x.webp` (3840 px max, Retina 2×). Les covers mobiles (`*_phone`) génèrent une seule variante WebP.
 
 Les fichiers générés sont listés dans `.gitignore` et ne sont **pas** commités.
 
 > Le script ne modifie **pas** les originaux. Il peut être relancé autant de fois que nécessaire.
 
-### En production (CI)
+### En production
 
-Le workflow GitHub Actions optimise automatiquement les images avant le build Jekyll :
-
-1. Redimensionne les JPEGs originaux à **1920 px maximum** (qualité 85, EXIF supprimé) — en place, uniquement dans le contexte CI
-2. Génère les miniatures 800 px + variantes WebP
-
-Les originaux dans le dépôt git ne sont jamais modifiés.
+```bash
+bash bin/build-webp.sh
+JEKYLL_ENV=production bundle exec jekyll build
+```
 
 ---
 
@@ -229,7 +224,7 @@ Les styles utilisent **Dart Sass** avec la syntaxe `@use` (pas de `@import` dép
 assets/css/main.scss   ← Point d'entrée (front matter Jekyll obligatoire)
   @use "fonts"         ← @font-face Jost + Climate Crisis (font-display: block)
   @use "variables"     ← Tokens Sass : typo, tailles, breakpoints
-  @use "mixins"        ← Mixin glass (verre dépoli), mixin dark-theme
+  @use "mixins"        ← Mixin surface (surfaces flottantes), mixin dark-theme
   @use "base"          ← Reset, CSS custom properties thème clair/sombre
   @use "cover"         ← Splash de couverture
   @use "header"        ← Pill de filtre, overlay mobile, bouton thème
@@ -268,31 +263,17 @@ La propriété `data-theme` est écrite sur `<html>` par un script inline dans `
 | Variable | Rôle |
 |---|---|
 | `--bg` | Fond de page |
-| `--bg-surface` | Fond de surface (placeholder images) |
+| `--bg-surface` | Fond de surface (placeholder images, shimmer) |
 | `--border` | Couleur des bordures |
 | `--text` | Texte principal |
 | `--text-muted` | Texte secondaire |
-| `--text-faint` | Texte tertiaire |
-| `--glass-bg` | Fond translucide des surfaces flottantes (pill, toggle, boutons lightbox) |
-| `--glass-border` | Bordure des éléments verre dépoli |
-| `--glass-shadow` | Ombre portée des éléments verre dépoli |
-| `--glass-overlay-bg` | Fond semi-transparent des overlays plein écran |
+| `--shimmer-color` | Couleur de l'animation shimmer des cards |
 
 ---
 
 ## Déploiement
 
-### GitHub Pages (automatique)
-
-Le workflow `.github/workflows/deploy.yml` se déclenche à chaque push sur `main` :
-
-1. **Install image tools** — installe ImageMagick et cwebp
-2. **Optimise images** — génère les variantes WebP et miniatures
-3. **Setup Ruby** — installe Ruby 3.3 et les gems (cache Bundler)
-4. **Build Jekyll** — `bundle exec jekyll build` avec `JEKYLL_ENV=production`
-5. **Deploy** — publie `_site/` sur GitHub Pages
-
-#### Mise en place initiale
+### GitHub Pages
 
 1. Créez un dépôt GitHub :
    - `username.github.io` pour un site utilisateur (URL : `https://username.github.io`)
@@ -300,7 +281,9 @@ Le workflow `.github/workflows/deploy.yml` se déclenche à chaque push sur `mai
 
 2. Activez GitHub Pages : **Settings → Pages → Source → GitHub Actions**
 
-3. Poussez le code :
+3. Créez un workflow `.github/workflows/deploy.yml` qui installe ImageMagick et cwebp, lance `bash bin/build-webp.sh`, puis `JEKYLL_ENV=production bundle exec jekyll build`, et publie `_site/`.
+
+4. Poussez le code :
 
 ```bash
 git init
