@@ -115,8 +115,8 @@
     margin-left: 33.333%;
 
     &__container {
-      // La sidebar réduit la zone de grille : on démarre à 4 colonnes à $bp-lg
-      // plutôt que 5, pour conserver un ratio d'image cohérent.
+      // La sidebar réduit la zone de grille : on démarre à 3 colonnes à $bp-lg
+      // plutôt que 4, pour conserver un ratio d'image cohérent.
       @media (min-width: $bp-lg)  { grid-template-columns: repeat(3, 1fr); }
       @media (min-width: $bp-xl)  { grid-template-columns: repeat(4, 1fr); }
       @media (min-width: $bp-2xl) { grid-template-columns: repeat(5, 1fr); }

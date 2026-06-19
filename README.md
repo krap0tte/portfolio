@@ -247,7 +247,7 @@ Les composants suivent la convention **BEM** (`.gallery-card__img-wrap`, `.light
 
 Le seuil unique est **768 px** (`$bp-md`) :
 
-- **< 768 px (mobile)** : grille 3 colonnes plein-écran, sélecteur de série en overlay, flèches lightbox masquées (navigation au glissement).
+- **< 768 px (mobile)** : grille 2 colonnes plein-écran, sélecteur de série en overlay, flèches lightbox masquées (navigation au glissement).
 - **≥ 768 px (desktop)** : sidebar fixe 1/3 écran (titre + description de série), grille 2/3 restants, pill de filtre centré sur la grille, flèches lightbox visibles.
 
 ### Thème clair / sombre

@@ -46,7 +46,7 @@
     top: 2rem;
     left: 50%;
     z-index: 2;
-    font-family: 'Climate Crisis', sans-serif;
+    font-family: $font-cover;
     font-size: clamp(0.875rem, 2.5vw, 1.625rem);
     color: rgba(255, 255, 255, 0.92);
     white-space: nowrap;

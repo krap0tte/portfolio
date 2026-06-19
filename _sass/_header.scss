@@ -17,7 +17,7 @@
   padding: 0.3rem 0.4rem;
   white-space: nowrap;
 
-  @media (max-width: $bp-md) { display: none; }
+  @media (max-width: #{$bp-md - 1px}) { display: none; }
   @media (min-width: $bp-md) { left: 66.666%; }
 
   // Surlignage glissant — position et largeur gérées par JS
@@ -68,7 +68,7 @@
 .filter-mobile-trigger {
   display: none;
 
-  @media (max-width: $bp-md) {
+  @media (max-width: #{$bp-md - 1px}) {
     @include glass;
     display: flex;
     align-items: center;

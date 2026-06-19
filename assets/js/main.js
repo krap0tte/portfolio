@@ -229,7 +229,7 @@ class FilterMobileMenu {
   #open() {
     this.#menu.classList.add('is-open');
     this.#trigger.setAttribute('aria-expanded', 'true');
-    this.#menu.setAttribute('aria-hidden', 'false');
+    this.#menu.removeAttribute('aria-hidden');
     this.#closeBtn?.focus();
   }
 
@@ -376,6 +376,7 @@ class Lightbox {
     this.#loader.classList.add('is-visible');
 
     const onLoad = () => {
+      this.#img.onload = null;
       this.#img.classList.remove('is-loading');
       this.#loader.classList.remove('is-visible');
     };
@@ -398,7 +399,7 @@ class Lightbox {
     this.#current = index;
     this.#update();
     this.#el.classList.add('is-open');
-    this.#el.setAttribute('aria-hidden', 'false');
+    this.#el.removeAttribute('aria-hidden');
     document.body.style.overflow = 'hidden';
     this.#closeBtn.focus();
   }
