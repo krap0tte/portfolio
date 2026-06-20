@@ -192,7 +192,12 @@ class Gallery extends EventTarget {
           b.setAttribute('aria-pressed', String(b.dataset.series === filter));
         });
         const pillBtn = [...this.#filterBtns].find(b => b.dataset.series === filter && this.#pill?.contains(b));
-        if (pillBtn) this.#moveIndicator(pillBtn);
+        if (pillBtn) {
+          this.#moveIndicator(pillBtn);
+          const pill = this.#pill;
+          const target = pillBtn.offsetLeft - (pill.clientWidth - pillBtn.offsetWidth) / 2;
+          pill.scrollTo({ left: Math.max(0, Math.min(target, pill.scrollWidth - pill.clientWidth)), behavior: 'smooth' });
+        }
         this.#apply(filter, btn.textContent.trim(), true);
         if (wasAbout) window.scrollTo({ top: 0, behavior: 'smooth' });
       });
@@ -301,6 +306,7 @@ class FilterMobileMenu {
       if (e.key === 'Escape') { this.#close(); return; }
       if (e.key === 'Tab') {
         const focusable = [
+          this.#menu.querySelector('.filter-mobile-menu__all'),
           this.#closeBtn,
           ...this.#menu.querySelectorAll('.filter-pill__btn'),
           this.#aboutBtn,

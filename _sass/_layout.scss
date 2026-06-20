@@ -228,11 +228,22 @@
     text-align: center;
   }
 
-  &__title {
-    font-size: $size-lg;
+  &__all {
+    font-size: $size-xs;
     font-weight: $weight-ui;
-    color: var(--text);
-    letter-spacing: -0.01em;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: color 0.12s, background 0.12s;
+
+    &.is-active { color: var(--text); }
+
+    &:not(.is-active):hover {
+      color: var(--text);
+      background: rgba(128, 128, 128, 0.06);
+    }
   }
 
   &__close {
@@ -290,12 +301,6 @@
     &:not(.is-active):hover {
       color: var(--text);
       background: rgba(128, 128, 128, 0.06);
-    }
-
-    // Séparateur visuel après "Tout"
-    &:first-child {
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 0.25rem;
     }
   }
 }

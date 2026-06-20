@@ -40,7 +40,7 @@
     <div class="filter-mobile-menu" id="filter-mobile-menu"
          role="dialog" aria-modal="true" aria-label="Filtrer par série" aria-hidden="true">
       <div class="filter-mobile-menu__header">
-        <span class="filter-mobile-menu__title">Séries</span>
+        <button class="filter-mobile-menu__all js-filter-all is-active" aria-pressed="true">Tout</button>
         <button class="filter-mobile-menu__close" id="filter-mobile-close" aria-label="Fermer">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
@@ -49,7 +49,6 @@
         </button>
       </div>
       <nav class="filter-mobile-menu__list">
-        <button class="filter-pill__btn js-filter-all is-active" aria-pressed="true">Tout</button>
         {% for s in all_series %}
           <button class="filter-pill__btn" data-series="{{ s.slug }}" aria-pressed="false">{{ s.title }}</button>
         {% endfor %}
