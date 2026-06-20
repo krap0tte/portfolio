@@ -3,9 +3,7 @@ _site/
 .jekyll-cache/
 .jekyll-metadata
 vendor/
-Gemfile.lock
 .DS_Store
 
 # Generated image variants (bin/build-webp.sh)
 assets/images/**/*.webp
-assets/images/**/*-thumb.webp

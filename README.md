@@ -94,7 +94,7 @@ portfolio/
 ├── assets/
 │   ├── css/main.scss        ← Point d'entrée SCSS (front matter Jekyll requis)
 │   ├── fonts/               ← Fichiers WOFF2 auto-hébergés (Jost + Climate Crisis)
-│   ├── js/main.js           ← Cover, Gallery, FilterMobileMenu, Lightbox
+│   ├── js/main.js           ← Cover, Gallery, FilterMobileMenu, Lightbox, PillScroller
 │   └── images/
 │       ├── cover/           ← Photos de couverture
 │       │   ├── cover.jpg          ← Original commité
@@ -274,6 +274,8 @@ git commit -m "Initial commit"
 git remote add origin https://github.com/username/username.github.io.git
 git push -u origin main
 ```
+
+> **Important** : `Gemfile.lock` doit être commité. Il garantit des builds CI reproductibles (`bundler-cache: true` dans le workflow s'ancre sur son hash). Ne pas l'ajouter à `.gitignore`.
 
 Le site est disponible ~2 minutes après le premier push.
 

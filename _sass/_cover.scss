@@ -63,9 +63,10 @@
     left: 50%;
     z-index: 2;
     border-radius: $radius-pill;
-    padding: 0.45rem 1.5rem;
+    padding: 0.5rem 1.8rem;
     border: 1px solid rgba(255, 255, 255, 0.55);
-    font-size: $size-xs;
+    font-size: $size-base;
+    font-weight: $weight-ui;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.9);

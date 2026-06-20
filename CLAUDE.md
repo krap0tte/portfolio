@@ -40,6 +40,8 @@ Jekyll ne peut pas transmettre de données complexes au JS à l'exécution. `gal
 
 `Lightbox` et `FilterMobileMenu` s'abonnent à ces événements — ils ne sont jamais couplés entre eux. L'ordre d'instanciation dans `main.js` est important : `Gallery` doit être créé avant d'être passé aux autres constructeurs.
 
+`PillScroller` est une classe autonome (pas d'accès à `Gallery`). Elle gère les flèches de défilement du sélecteur desktop (`.filter-pill-wrap__arrow--prev/next`) : visibilité pilotée par `ResizeObserver` + `scroll`, défilement de `clientWidth / 2` au clic, interception `wheel` non passive pour que la molette/trackpad scrolle la pill sans scroller la page. Elle est instanciée avant `Gallery` (pas de dépendance). La constante `BP_MD = 768` est déclarée en tête de `main.js` et partagée entre `Gallery` et `PillScroller` — ne pas dupliquer.
+
 `Gallery.enterAbout()` est une méthode publique appelable depuis `FilterMobileMenu` (bouton "À propos" mobile). Le clic sur le bouton desktop "À propos" (`.filter-bar__about`) est bindé dans `Gallery` directement. `FilterMobileMenu` ne connaît que son propre DOM mobile.
 
 La position de l'indicateur de la pill est mesurée après `document.fonts.ready` car `font-display: block` (intentionnel) garantit que les métriques sont stables seulement une fois les fontes chargées.
@@ -61,6 +63,10 @@ Partiels SCSS et leur périmètre :
 
 Point de rupture unique : `$bp-md = 768px`. En dessous (≤ 767px) : grille 2 colonnes plein-écran, filtre en overlay mobile, navigation lightbox au glissement uniquement. Au-dessus (≥ 768px) : grille plein-écran, pill de filtre, navigation par flèches.
 
+Variables de typographie dans `_variables.scss` : `$size-xs` (0.75rem), `$size-base` (1rem), `$size-lg` (1.5rem), `$weight-ui` (400). `$weight-ui` est le grammage de toutes les pills et labels d'interface — il s'applique partout où `text-transform: uppercase` + `letter-spacing` est utilisé. Ne pas introduire de valeur en dur.
+
+Le sélecteur pill desktop (`.filter-pill`) a `max-width: min(52rem, 60vw)`, défile horizontalement, et ses flèches (`.filter-pill-wrap__arrow`) sont liées aux dégradés de bord via `:has()` CSS — les pseudo-éléments `::before/::after` n'ont `opacity: 1` que si la flèche correspondante est `.is-visible`. Ce couplage est intentionnel et pur CSS.
+
 Le thème est sombre fixe. Les propriétés CSS (`--bg`, `--bg-surface`, `--border`, `--text`, `--text-muted`, `--shimmer-color`) sont déclarées dans `_base.scss` sous `:root` uniquement — pas de bascule, pas de `localStorage`.
 
 ### Partials `_includes/`
@@ -78,6 +84,8 @@ Les originaux (`.jpg`) sont commités. Les variantes générées sont dans `.git
 - `cover_phone.webp` — WebP pleine résolution, cover mobile
 
 En développement, le site utilise directement les JPEG originaux — aucune variante n'est générée. `bin/build-webp.sh` génère toutes les variantes WebP avant le build de production. Relancer le script est sans risque et idempotent (`--force` pour régénérer sans tenir compte des timestamps).
+
+Le workflow CI (`.github/workflows/deploy.yml`) appelle `bash bin/build-webp.sh` directement — source de vérité unique. Ne pas dupliquer la logique d'optimisation inline dans le YAML. `Gemfile.lock` doit être commité (retiré du `.gitignore`) pour que `bundler-cache: true` soit efficace et les builds reproductibles.
 
 ## Mémoire
 

@@ -16,11 +16,10 @@
     pointer-events: auto;
   }
 
-  &__close {
+  // Styles partagés : bouton fermer + flèches de navigation
+  &__close,
+  &__nav {
     position: absolute;
-    top: 1rem;
-    right: 1.25rem;
-    z-index: 10;
     background: rgba(0, 0, 0, 0.52);
     border: 1px solid rgba(255, 255, 255, 0.12);
     color: rgba(255, 255, 255, 0.72);
@@ -33,6 +32,12 @@
       background: rgba(0, 0, 0, 0.72);
       color: #fff;
     }
+  }
+
+  &__close {
+    top: 1rem;
+    right: 1.25rem;
+    z-index: 10;
   }
 
   &__stage {
@@ -72,27 +77,14 @@
   }
 
   &__nav {
-    position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(0, 0, 0, 0.52);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.72);
-    padding: 0.65rem;
-    line-height: 0;
-    border-radius: 50%;
-    transition: color 0.15s, background 0.15s;
 
-    &:hover {
-      background: rgba(0, 0, 0, 0.72);
-      color: #fff;
-    }
     &--prev { left: 1rem; }
     &--next { right: 1rem; }
 
     @media (max-width: #{$bp-md - 1px}) { display: none; }
   }
-
 }
 
 @keyframes lb-spin {

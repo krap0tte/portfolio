@@ -1,3 +1,5 @@
+const BP_MD = 768;
+
 // ─── Cover ───────────────────────────────────────────────────────────────────
 
 class Cover {
@@ -98,7 +100,7 @@ class Gallery extends EventTarget {
       });
       // La pill est display:none sur mobile : offsetLeft/offsetWidth valent 0.
       // On re-mesure dès qu'elle redevient visible au changement de breakpoint.
-      window.matchMedia('(min-width: 768px)').addEventListener('change', e => {
+      window.matchMedia(`(min-width: ${BP_MD}px)`).addEventListener('change', e => {
         if (!e.matches) return;
         const active = this.#pill?.querySelector('.filter-pill__btn.is-active');
         if (active) this.#moveIndicator(active);
@@ -558,9 +560,50 @@ class Lightbox {
   }
 }
 
+// ─── PillScroller ────────────────────────────────────────────────────────────
+
+class PillScroller {
+  #pill;
+  #prev;
+  #next;
+
+  constructor() {
+    this.#pill = document.querySelector('.filter-pill');
+    this.#prev = document.querySelector('.filter-pill-wrap__arrow--prev');
+    this.#next = document.querySelector('.filter-pill-wrap__arrow--next');
+    if (!this.#pill || !this.#prev || !this.#next) return;
+
+    this.#pill.addEventListener('scroll', () => this.#update(), { passive: true });
+    this.#prev.addEventListener('click', () => {
+      this.#pill.scrollBy({ left: -(this.#pill.clientWidth / 2), behavior: 'smooth' });
+    });
+    this.#next.addEventListener('click', () => {
+      this.#pill.scrollBy({ left: this.#pill.clientWidth / 2, behavior: 'smooth' });
+    });
+    this.#pill.addEventListener('wheel', e => {
+      if (this.#pill.scrollWidth <= this.#pill.clientWidth) return;
+      e.preventDefault();
+      const delta = Math.abs(e.deltaX) >= Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      this.#pill.scrollLeft += delta;
+    }, { passive: false });
+
+    new ResizeObserver(() => this.#update()).observe(this.#pill);
+    window.matchMedia(`(min-width: ${BP_MD}px)`).addEventListener('change', () => this.#update());
+    this.#update();
+  }
+
+  #update() {
+    if (!this.#pill.clientWidth) return;
+    const { scrollLeft, scrollWidth, clientWidth } = this.#pill;
+    this.#prev.classList.toggle('is-visible', scrollLeft > 1);
+    this.#next.classList.toggle('is-visible', scrollLeft + clientWidth < scrollWidth - 1);
+  }
+}
+
 // ─── Init ────────────────────────────────────────────────────────────────────
 
 new Cover();
+new PillScroller();
 const gallery = new Gallery();
 new FilterMobileMenu(gallery);
 new Lightbox(gallery);

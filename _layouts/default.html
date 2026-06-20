@@ -9,12 +9,22 @@
     <div class="filter-bar">
       <button class="filter-bar__all js-filter-all is-active" aria-pressed="true">Tout</button>
       <div class="filter-pill-wrap">
+        <button class="filter-pill-wrap__arrow filter-pill-wrap__arrow--prev" aria-hidden="true" tabindex="-1">
+          <svg width="6" height="10" viewBox="0 0 6 10" fill="none">
+            <path d="M5 1L1 5L5 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
         <nav class="filter-pill" aria-label="Filtrer par série">
           <span class="filter-pill__indicator" aria-hidden="true"></span>
           {% for s in all_series %}
             <button class="filter-pill__btn" data-series="{{ s.slug }}" aria-pressed="false">{{ s.title }}</button>
           {% endfor %}
         </nav>
+        <button class="filter-pill-wrap__arrow filter-pill-wrap__arrow--next" aria-hidden="true" tabindex="-1">
+          <svg width="6" height="10" viewBox="0 0 6 10" fill="none">
+            <path d="M1 1L5 5L1 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
       </div>
       <button class="filter-bar__about" aria-pressed="false">À propos</button>
     </div>

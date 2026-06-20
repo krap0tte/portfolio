@@ -29,23 +29,7 @@ jobs:
         run: sudo apt-get install -y imagemagick webp
 
       - name: Optimise images
-        run: |
-          # Covers : WebP pleine résolution uniquement, pas de miniature
-          for src in assets/images/cover/*.jpg; do
-            [ -f "$src" ] || continue
-            base="${src%.jpg}"
-            cwebp -q 82 "$src" -o "${base}.webp" -quiet
-            echo "  ✓ $(basename "$src")"
-          done
-          # Photos de galerie : miniature JPEG + miniature WebP + WebP pleine résolution
-          while IFS= read -r src; do
-            base="${src%.jpg}"
-            convert "$src" -resize "800x800>" -quality 82 -strip "${base}-thumb.jpg"
-            cwebp -q 80 "${base}-thumb.jpg" -o "${base}-thumb.webp" -quiet
-            convert "$src" -resize "1920x1920>" -quality 85 -strip "${src}.opt" && mv "${src}.opt" "$src"
-            cwebp -q 82 "$src" -o "${base}.webp" -quiet
-            echo "  ✓ $(basename "$src")"
-          done < <(find assets/images/photos -name "*.jpg" ! -name "*-thumb.jpg" | sort)
+        run: bash bin/build-webp.sh
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1

@@ -25,8 +25,9 @@
   @include surface;
   flex-shrink: 0;
   border-radius: $radius-pill;
-  padding: 0.35rem 1rem;
-  font-size: $size-xs;
+  padding: 0.5rem 1.5rem;
+  font-size: $size-base;
+  font-weight: $weight-ui;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -53,21 +54,53 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    width: 1.5rem;
+    width: 2.5rem;
     z-index: 2;
     pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
   }
 
   &::before {
     left: 0;
     background: linear-gradient(to right, var(--bg), transparent);
-    border-radius: $radius-pill 0 0 $radius-pill;
   }
 
   &::after {
     right: 0;
     background: linear-gradient(to left, var(--bg), transparent);
-    border-radius: 0 $radius-pill $radius-pill 0;
+  }
+
+  &:has(.filter-pill-wrap__arrow--prev.is-visible)::before { opacity: 1; }
+  &:has(.filter-pill-wrap__arrow--next.is-visible)::after  { opacity: 1; }
+
+  &__arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, background 0.15s;
+
+    &--prev { left: 0.3rem; }
+    &--next { right: 0.3rem; }
+
+    &.is-visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    &:hover { background: var(--border); }
   }
 }
 
@@ -83,21 +116,21 @@
   align-items: center;
   gap: 0.2rem;
   border-radius: $radius-pill;
-  padding: 0.3rem 0.4rem;
+  padding: 0.45rem 0.6rem;
   white-space: nowrap;
-  max-width: 24rem;
+  max-width: min(52rem, 60vw);
   overflow-x: auto;
+  scroll-behavior: smooth;
   scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
 
   &::-webkit-scrollbar { display: none; }
 
   // Surlignage glissant — position et largeur gérées par JS
   &__indicator {
     position: absolute;
-    top: 0.3rem;
+    top: 0.45rem;
     left: 0;
-    height: calc(100% - 0.6rem);
+    height: calc(100% - 0.9rem);
     border-radius: $radius-pill;
     background: var(--text);
     z-index: -1;
@@ -113,9 +146,10 @@
 
   &__btn {
     position: relative;
-    padding: 0.35rem 1rem;
+    padding: 0.5rem 1.5rem;
     border-radius: $radius-pill;
-    font-size: $size-xs;
+    font-size: $size-base;
+    font-weight: $weight-ui;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-muted);
@@ -124,6 +158,11 @@
     &:hover { color: var(--text); }
 
     &.is-active { color: var(--bg); }
+
+    &:focus-visible {
+      outline: 2px solid var(--text);
+      outline-offset: 2px;
+    }
   }
 }
 
@@ -143,9 +182,10 @@
     transform: translateX(-50%);
     z-index: $z-ui;
     border-radius: $radius-pill;
-    padding: 0.45rem 0.9rem 0.45rem 1.1rem;
+    padding: 0.6rem 1.25rem 0.6rem 1.5rem;
     color: var(--text);
-    font-size: $size-xs;
+    font-size: $size-base;
+    font-weight: $weight-ui;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     white-space: nowrap;
@@ -187,9 +227,8 @@
   }
 
   &__title {
-    font-family: $font-body;
     font-size: $size-lg;
-    font-weight: 400;
+    font-weight: $weight-ui;
     color: var(--text);
     letter-spacing: -0.01em;
   }
@@ -219,6 +258,7 @@
     border-top: 1px solid var(--border);
     text-align: center;
     font-size: $size-xs;
+    font-weight: $weight-ui;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-muted);
@@ -267,7 +307,6 @@
 
 .site-footer {
   min-height: 100vh;
-  border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   align-items: center;
