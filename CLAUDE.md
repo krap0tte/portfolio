@@ -65,13 +65,38 @@ Point de rupture unique : `$bp-md = 768px`. En dessous (≤ 767px) : grille 2 co
 
 Variables de typographie dans `_variables.scss` : `$size-xs` (0.75rem), `$size-base` (1rem), `$size-lg` (1.5rem), `$weight-ui` (400). `$weight-ui` est le grammage de toutes les pills et labels d'interface — il s'applique partout où `text-transform: uppercase` + `letter-spacing` est utilisé. Ne pas introduire de valeur en dur.
 
-Le sélecteur pill desktop (`.filter-pill`) a `max-width: min(52rem, 60vw)`, défile horizontalement, et ses flèches (`.filter-pill-wrap__arrow`) sont liées aux dégradés de bord via `:has()` CSS — les pseudo-éléments `::before/::after` n'ont `opacity: 1` que si la flèche correspondante est `.is-visible`. Ce couplage est intentionnel et pur CSS.
+Le sélecteur pill desktop (`.filter-pill`) a `max-width: min(52rem, 60vw)`, défile horizontalement. Les flèches (`.filter-pill-wrap__arrow`) pilotent leurs dégradés via les classes `.has-prev` / `.has-next` sur `.filter-pill-wrap`, togglées par `PillScroller#update()` — les pseudo-éléments `::before/::after` ont `opacity: 1` quand ces classes sont présentes. Ce couplage JS → CSS remplace un ancien `:has()` (incompatible Chrome < 105 / Firefox < 121). Ne pas revenir au `:has()`.
 
 Le thème est sombre fixe. Les propriétés CSS (`--bg`, `--bg-surface`, `--border`, `--text`, `--text-muted`, `--shimmer-color`) sont déclarées dans `_base.scss` sous `:root` uniquement — pas de bascule, pas de `localStorage`.
 
 ### Partials `_includes/`
 
 Un partial ne se justifie que s'il est inclus dans plusieurs endroits ou s'il représente un composant substantiel et autonome. Un partial à usage unique et de moins de ~20 lignes doit être inliné dans son appelant. `_includes/` contient : `head.html`, `cover.html`, `gallery-grid.html`, `lightbox.html`.
+
+### Page `/compat/`
+
+Variante allégée ciblant Chrome 49+, Firefox 52+, Safari 12+. Fichiers :
+- `compat.html` — page Jekyll (front matter uniquement, layout `compat`)
+- `_layouts/compat.html` — layout standalone, sans `head.html`
+- `assets/css/compat.scss` — styles ; `@use 'base'` + `@use 'variables' as *`
+- `assets/js/compat.js` — ES5 + `const`/`let` + `Array.from()`, IIFE strict
+
+**Détection depuis le site principal (`_layouts/default.html`) :**
+Script inline dans `<head>` : `new Function('class T{#x}')`. Si ça lève (syntaxe ES2022 non reconnue), `window.location.replace('/compat/')` — redirige sans créer d'entrée d'historique. Couvre Chrome < 74, Firefox < 90.
+
+**Détection sur la page compat (`_layouts/compat.html`) :**
+Script ES5 inline. Teste `IDBIndex.prototype.getAll` (Chrome 48+, Firefox 44+, Safari 12+ ; absent de Safari 11) combiné à `CSS.supports('color', 'var(--x)')`. Si le test échoue, ajoute `compat-outdated` sur `<html>` → affiche `.compat-warning`, masque le reste.
+
+**Fontes :**
+`@font-face` avec `font-weight: 400` fixe (pas de range `100 900` — non reconnu avant Chrome 66 / Firefox 62, la règle serait silencieusement ignorée). Mêmes fichiers WOFF2 que le site principal. `font-display: swap` (vs. `block` sur le principal — compat n'a pas de mesure JS dépendante des métriques fontes).
+
+**Contraintes CSS :**
+Pas de `aspect-ratio` → padding-top trick (`padding-top: 66.666%` sur `.compat-card__inner`). Pas de `inset`, `gap`, `min()`, `clamp()`, `system-ui`.
+
+**Contraintes JS :**
+Pas d'`IntersectionObserver` → lazy load via `getBoundingClientRect()` + `scroll`/`resize`. Pas de champs privés, pas de `class`. Clavier via `e.key` uniquement (pas de `e.keyCode`).
+
+**Images :** JPEG directs (`data-src` lazy), jamais de WebP.
 
 ### Variantes d'images
 

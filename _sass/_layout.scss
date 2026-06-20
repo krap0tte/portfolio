@@ -71,8 +71,8 @@
     background: linear-gradient(to left, var(--bg), transparent);
   }
 
-  &:has(.filter-pill-wrap__arrow--prev.is-visible)::before { opacity: 1; }
-  &:has(.filter-pill-wrap__arrow--next.is-visible)::after  { opacity: 1; }
+  &.has-prev::before { opacity: 1; }
+  &.has-next::after  { opacity: 1; }
 
   &__arrow {
     position: absolute;
@@ -325,5 +325,17 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-muted);
+  }
+
+  &__compat {
+    font-size: $size-xs;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-decoration: none;
+    opacity: 0.4;
+    transition: opacity 0.15s;
+
+    &:hover { opacity: 0.8; }
   }
 }

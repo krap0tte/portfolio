@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang | default: 'fr' }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ site.title }} — Version allégée</title>
+  <link rel="stylesheet" href="{{ '/assets/css/compat.css' | relative_url }}">
+  <script>
+  (function () {
+    var ok = typeof IDBIndex !== 'undefined' &&
+             'getAll' in IDBIndex.prototype &&
+             window.CSS && CSS.supports('color', 'var(--x)');
+    if (!ok) document.documentElement.className += ' compat-outdated';
+  }());
+  </script>
+</head>
+<body>
+
+  <div class="compat-warning">
+    <p>Votre navigateur est trop ancien pour afficher cette page.</p>
+    <p>Installez <strong>Chrome 49</strong> ou <strong>Firefox 52</strong> (ou une version plus récente) pour continuer.</p>
+  </div>
+
+  {% assign all_series = site.series | sort: "title" %}
+
+  <nav class="compat-filter" aria-label="Filtrer par série">
+    <button class="compat-filter__btn is-active" data-series="" aria-pressed="true">Tout</button>
+    {% for s in all_series %}
+    <button class="compat-filter__btn" data-series="{{ s.slug }}" aria-pressed="false">{{ s.title }}</button>
+    {% endfor %}
+  </nav>
+
+  <main class="compat-grid" id="compat-grid">
+    {% assign idx = 0 %}
+    {% for series in all_series %}
+      {% assign img_dir = '/assets/images/photos/' | append: series.slug | append: '/' %}
+      {% for photo in series.photos %}
+        <div class="compat-card" data-series="{{ series.slug }}" data-index="{{ idx }}">
+          <div class="compat-card__inner">
+            <img data-src="{{ img_dir | append: photo | append: '.jpg' | relative_url }}" alt="">
+          </div>
+        </div>
+        {% assign idx = idx | plus: 1 %}
+      {% endfor %}
+    {% endfor %}
+  </main>
+
+  <script type="application/json" id="compat-photo-data">
+  [{% assign first = true %}
+  {%- for series in all_series -%}
+    {%- assign base = '/assets/images/photos/' | append: series.slug | append: '/' -%}
+    {%- for photo in series.photos -%}
+      {%- unless first %},{%- endunless %}{%- assign first = false -%}
+      {"src":{{ base | append: photo | append: '.jpg' | relative_url | jsonify }}}
+    {%- endfor -%}
+  {%- endfor -%}]
+  </script>
+
+  <div class="compat-lightbox" id="compat-lightbox" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="compat-lightbox__stage" id="compat-lb-stage">
+      <img class="compat-lightbox__img" id="compat-lb-img" src="" alt="">
+    </div>
+    <button class="compat-lightbox__btn compat-lightbox__close" id="compat-lb-close" aria-label="Fermer">&#x2715;</button>
+    <button class="compat-lightbox__btn compat-lightbox__prev" id="compat-lb-prev" aria-label="Précédente">&#x2039;</button>
+    <button class="compat-lightbox__btn compat-lightbox__next" id="compat-lb-next" aria-label="Suivante">&#x203A;</button>
+  </div>
+
+  <footer class="compat-footer" id="about">
+    <p class="compat-footer__name">{{ site.title }}</p>
+    <p class="compat-footer__description">{{ site.description }}</p>
+    <a class="compat-footer__back" href="{{ '/' | relative_url }}">← Version complète</a>
+  </footer>
+
+  <script src="{{ '/assets/js/compat.js' | relative_url }}"></script>
+</body>
+</html>

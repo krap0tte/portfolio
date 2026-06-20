@@ -73,7 +73,8 @@ portfolio/
 │   └── portrait.md
 │
 ├── _layouts/
-│   └── default.html         ← Gabarit unique : <head>, filter-bar, main, footer, <script>
+│   ├── default.html         ← Gabarit principal : <head>, filter-bar, main, footer, <script>
+│   └── compat.html          ← Gabarit version allégée (standalone, sans head.html)
 │
 ├── _includes/
 │   ├── head.html            ← Contenu du <head> : meta, CSS, preloads fontes
@@ -92,9 +93,13 @@ portfolio/
 │   └── _lightbox.scss       ← Visionneuse plein écran
 │
 ├── assets/
-│   ├── css/main.scss        ← Point d'entrée SCSS (front matter Jekyll requis)
+│   ├── css/
+│   │   ├── main.scss        ← Point d'entrée SCSS (front matter Jekyll requis)
+│   │   └── compat.scss      ← Styles version allégée (@use 'base' + 'variables')
 │   ├── fonts/               ← Fichiers WOFF2 auto-hébergés (Jost + Climate Crisis)
-│   ├── js/main.js           ← Cover, Gallery, FilterMobileMenu, Lightbox, PillScroller
+│   ├── js/
+│   │   ├── main.js          ← Cover, Gallery, FilterMobileMenu, Lightbox, PillScroller
+│   │   └── compat.js        ← Galerie allégée (ES5 + const/let, IIFE strict)
 │   └── images/
 │       ├── cover/           ← Photos de couverture
 │       │   ├── cover.jpg          ← Original commité
@@ -115,7 +120,8 @@ portfolio/
 │   ├── build-webp.sh        ← Génère les variantes WebP avant le build de production
 │   └── normalize.sh         ← Redimensionne les photos > 4K en place (optionnel)
 │
-└── index.html               ← Page unique — assemble cover, gallery-grid, lightbox
+├── index.html               ← Page principale — assemble cover, gallery-grid, lightbox
+└── compat.html              ← Page version allégée (layout: compat, permalink: /compat/)
 ```
 
 ---
@@ -250,6 +256,51 @@ Le site utilise un thème **sombre fixe**. Les couleurs sont exposées comme CSS
 | `--text` | Texte principal |
 | `--text-muted` | Texte secondaire |
 | `--shimmer-color` | Animation shimmer des cards |
+
+---
+
+## Version allégée (`/compat/`)
+
+Le site inclut une variante allégée accessible à `/compat/`, conçue pour les navigateurs anciens.
+
+**Cibles minimales** : Chrome 49+, Firefox 52+, Safari 12+
+
+### Redirection automatique
+
+Un script inline dans le `<head>` de chaque page principale teste le support des champs privés ES2022 :
+
+```javascript
+(function(){
+  try { new Function('class T{#x}'); }
+  catch(e) { window.location.replace('/compat/'); }
+})();
+```
+
+Les navigateurs ne supportant pas cette syntaxe (Chrome < 74, Firefox < 90) sont redirigés sans créer d'entrée dans l'historique.
+
+### Détection sur la page compat
+
+Un second test inline distingue les navigateurs trop anciens même pour la version allégée :
+
+```javascript
+var ok = typeof IDBIndex !== 'undefined' &&
+         'getAll' in IDBIndex.prototype &&
+         window.CSS && CSS.supports('color', 'var(--x)');
+if (!ok) document.documentElement.className += ' compat-outdated';
+```
+
+Si le test échoue, un message invite l'utilisateur à mettre à jour son navigateur (Chrome 49+ ou Firefox 52+).
+
+### Différences techniques
+
+| | Site principal | Version allégée |
+|---|---|---|
+| JS | ES2022, classes, champs privés | ES5 + `const`/`let` + `Array.from()` |
+| Images | WebP (prod), JPEG (dev) | JPEG uniquement |
+| Lazy load | `IntersectionObserver` | `getBoundingClientRect()` + scroll |
+| Aspect ratio | `aspect-ratio` CSS | `padding-top: 66.666%` |
+| `font-display` | `block` | `swap` |
+| `font-weight` | `100 900` (variable font) | `400` (statique) |
 
 ---
 

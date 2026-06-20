@@ -595,8 +595,15 @@ class PillScroller {
   #update() {
     if (!this.#pill.clientWidth) return;
     const { scrollLeft, scrollWidth, clientWidth } = this.#pill;
-    this.#prev.classList.toggle('is-visible', scrollLeft > 1);
-    this.#next.classList.toggle('is-visible', scrollLeft + clientWidth < scrollWidth - 1);
+    const hasPrev = scrollLeft > 1;
+    const hasNext = scrollLeft + clientWidth < scrollWidth - 1;
+    this.#prev.classList.toggle('is-visible', hasPrev);
+    this.#next.classList.toggle('is-visible', hasNext);
+    const wrap = this.#pill.closest('.filter-pill-wrap');
+    if (wrap) {
+      wrap.classList.toggle('has-prev', hasPrev);
+      wrap.classList.toggle('has-next', hasNext);
+    }
   }
 }
 
