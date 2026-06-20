@@ -34,7 +34,13 @@ Jekyll ne peut pas transmettre de données complexes au JS à l'exécution. `gal
 
 ### Hiérarchie des classes JS
 
-`Gallery` étend `EventTarget` et sert de hub central. Elle émet `filterchange` avec `{ visible: number[], filter, label }` à chaque changement de série active. `Lightbox` et `FilterMobileMenu` s'abonnent à cet événement — ils ne sont jamais couplés entre eux. L'ordre d'instanciation dans `main.js` est important : `Gallery` doit être créé avant d'être passé aux autres constructeurs.
+`Gallery` étend `EventTarget` et sert de hub central. Elle émet deux événements :
+- `filterchange { visible: number[], filter: string|null, label }` — filtre appliqué (null = Tout).
+- `aboutstate { active: bool, label? }` — entrée/sortie de l'état "À propos".
+
+`Lightbox` et `FilterMobileMenu` s'abonnent à ces événements — ils ne sont jamais couplés entre eux. L'ordre d'instanciation dans `main.js` est important : `Gallery` doit être créé avant d'être passé aux autres constructeurs.
+
+`Gallery.enterAbout()` est une méthode publique appelable depuis `FilterMobileMenu` (bouton "À propos" mobile). Le clic sur le bouton desktop "À propos" (`.filter-bar__about`) est bindé dans `Gallery` directement. `FilterMobileMenu` ne connaît que son propre DOM mobile.
 
 La position de l'indicateur de la pill est mesurée après `document.fonts.ready` car `font-display: block` (intentionnel) garantit que les métriques sont stables seulement une fois les fontes chargées.
 
@@ -42,13 +48,24 @@ La position de l'indicateur de la pill est mesurée après `document.fonts.ready
 
 Les cards sont rendues dans une boucle plate unique sur toutes les séries (triées alphabétiquement par titre), chacune recevant un `data-index` correspondant à sa position dans le tableau JSON `photo-data`. La lightbox navigue par cet index global ; `#visible` est mis à jour sur `filterchange` pour restreindre la navigation à la série courante.
 
+Les cards portent `data-series="{{ series.slug }}"` et les boutons de filtre portent `data-series="{{ s.slug }}"` — même attribut, même valeur. Le JS lit `card.dataset.series` et `btn.dataset.series` partout.
+
 ### CSS
 
 Point d'entrée : `assets/css/main.scss` (front matter Jekyll obligatoire). Chaque partiel commence par `@use 'variables' as *` pour accéder aux tokens sans préfixe. Convention BEM (`.gallery-card__img-wrap`, `.lightbox__nav--prev`).
 
+Partiels SCSS et leur périmètre :
+- `_base.scss` — reset + custom properties uniquement, aucun composant.
+- `_layout.scss` — filter-bar desktop, pill, menu mobile, `.site-main`, `.site-footer`. (Anciennement `_header.scss` — renommé car le fichier ne contient aucun header.)
+- `_cover.scss`, `_gallery.scss`, `_lightbox.scss` — composants autonomes.
+
 Point de rupture unique : `$bp-md = 768px`. En dessous (≤ 767px) : grille 2 colonnes plein-écran, filtre en overlay mobile, navigation lightbox au glissement uniquement. Au-dessus (≥ 768px) : grille plein-écran, pill de filtre, navigation par flèches.
 
 Le thème est sombre fixe. Les propriétés CSS (`--bg`, `--bg-surface`, `--border`, `--text`, `--text-muted`, `--shimmer-color`) sont déclarées dans `_base.scss` sous `:root` uniquement — pas de bascule, pas de `localStorage`.
+
+### Partials `_includes/`
+
+Un partial ne se justifie que s'il est inclus dans plusieurs endroits ou s'il représente un composant substantiel et autonome. Un partial à usage unique et de moins de ~20 lignes doit être inliné dans son appelant. `_includes/` contient : `head.html`, `cover.html`, `gallery-grid.html`, `lightbox.html`.
 
 ### Variantes d'images
 

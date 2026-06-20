@@ -4,7 +4,6 @@ class Cover {
   #el;
   #picture;
   #img;
-  #name;
   #btn;
   #dismissed = false;
   #removeKeyListener = null;
@@ -13,7 +12,6 @@ class Cover {
     this.#el      = document.getElementById('cover');
     this.#picture = document.getElementById('cover-picture');
     this.#img     = document.getElementById('cover-img');
-    this.#name    = document.getElementById('cover-name');
     this.#btn     = document.getElementById('cover-enter');
     if (!this.#el || !this.#picture || !this.#img || !this.#btn) return;
 
@@ -24,10 +22,7 @@ class Cover {
       // d'ajouter is-visible, sinon la transition CSS ne joue pas.
       requestAnimationFrame(() => requestAnimationFrame(() => {
         this.#picture.classList.add('is-visible');
-        setTimeout(() => {
-          this.#name?.classList.add('is-visible');
-          this.#btn.classList.add('is-visible');
-        }, 450);
+        setTimeout(() => { this.#btn.classList.add('is-visible'); }, 450);
       }));
     };
 
@@ -51,7 +46,6 @@ class Cover {
     this.#removeKeyListener?.();
 
     document.body.style.overflow = '';
-    this.#name?.classList.remove('is-visible');
     this.#btn.classList.remove('is-visible');
 
     setTimeout(() => {
@@ -74,35 +68,36 @@ class Cover {
 
 // ─── Gallery ─────────────────────────────────────────────────────────────────
 
-// Étend EventTarget pour émettre `filterchange` — Lightbox et FilterMobileMenu
-// s'abonnent sans couplage direct.
 class Gallery extends EventTarget {
   #cards;
   #filterBtns;
+  #allBtns;
   #indicator;
   #pill;
   #filterTimeout = null;
+  #currentFilter = null;
+  #currentLabel  = 'Tout';
+  #isAbout       = false;
+  #aboutBtn;
 
   constructor() {
     super();
     this.#cards      = document.querySelectorAll('.gallery-card');
-    this.#filterBtns = document.querySelectorAll('.filter-pill__btn');
+    this.#filterBtns = document.querySelectorAll('.filter-pill__btn:not(.js-filter-all)');
+    this.#allBtns    = document.querySelectorAll('.js-filter-all');
     this.#pill       = document.querySelector('.filter-pill');
+    this.#aboutBtn   = document.querySelector('.filter-bar__about');
 
     this.#indicator = document.querySelector('.filter-pill__indicator');
     if (this.#indicator) {
-      const initial = this.#pill?.querySelector('.filter-pill__btn.is-active');
-      if (initial) {
-        // Attend que les fontes soient prêtes avant de mesurer : font-display:block
-        // retient le rendu mais le script s'exécute en parallèle du chargement.
-        document.fonts.ready.then(() => {
-          this.#moveIndicator(initial);
-          requestAnimationFrame(() => { this.#pill?.classList.add('filter-pill--ready'); });
-        });
-      }
-      // La pill est display:none sur mobile : offsetLeft/offsetWidth valent 0,
-      // donc l'indicateur est mal positionné si une sélection est faite dans le
-      // menu mobile. On re-mesure dès que la pill redevient visible.
+      this.#indicator.style.opacity = '0';
+      // font-display:block retient le rendu jusqu'à ce que les fontes soient
+      // prêtes — activer les transitions avant exposerait des mesures instables.
+      document.fonts.ready.then(() => {
+        requestAnimationFrame(() => { this.#pill?.classList.add('filter-pill--ready'); });
+      });
+      // La pill est display:none sur mobile : offsetLeft/offsetWidth valent 0.
+      // On re-mesure dès qu'elle redevient visible au changement de breakpoint.
       window.matchMedia('(min-width: 768px)').addEventListener('change', e => {
         if (!e.matches) return;
         const active = this.#pill?.querySelector('.filter-pill__btn.is-active');
@@ -110,17 +105,69 @@ class Gallery extends EventTarget {
       });
     }
 
+    const footer = document.getElementById('about');
+    if (footer) {
+      new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) this.enterAbout();
+        else this.#leaveAbout(true);
+      }, { threshold: 0.5 }).observe(footer);
+    }
+
+    this.#aboutBtn?.addEventListener('click', () => {
+      this.enterAbout();
+      footer?.scrollIntoView({ behavior: 'smooth' });
+    });
+
     this.#bindFilters();
     this.#bindImageFadeIn();
-    // Déclenche après que Lightbox et FilterMobileMenu ont souscrit à filterchange
-    queueMicrotask(() => {
-      const btn = this.#pill?.querySelector('.filter-pill__btn.is-active');
-      if (btn) this.#filter(btn.dataset.filter, btn.textContent.trim(), false);
-    });
+    // Déclenche après que Lightbox et FilterMobileMenu ont souscrit à filterchange.
+    queueMicrotask(() => { this.#apply(null, 'Tout', false); });
   }
 
-  // Exposé pour que Lightbox attache ses listeners sur les cards.
   get cards() { return this.#cards; }
+
+  enterAbout() {
+    if (this.#isAbout) return;
+    this.#isAbout = true;
+    this.#aboutBtn?.classList.add('is-active');
+    this.#aboutBtn?.setAttribute('aria-pressed', 'true');
+    this.#allBtns.forEach(b => { b.classList.remove('is-active'); b.setAttribute('aria-pressed', 'false'); });
+    this.#filterBtns.forEach(b => { b.classList.remove('is-active'); b.setAttribute('aria-pressed', 'false'); });
+    if (this.#indicator) this.#indicator.style.opacity = '0';
+    this.dispatchEvent(new CustomEvent('aboutstate', { detail: { active: true } }));
+  }
+
+  // restoreFilter = true  : scroll vers le haut → restaure le dernier filtre visuellement.
+  // restoreFilter = false : clic sur un filtre → le filtre gère lui-même son état.
+  #leaveAbout(restoreFilter) {
+    if (!this.#isAbout) return;
+    this.#isAbout = false;
+    this.#aboutBtn?.classList.remove('is-active');
+    this.#aboutBtn?.setAttribute('aria-pressed', 'false');
+
+    if (restoreFilter) {
+      if (this.#currentFilter === null) {
+        this.#allBtns.forEach(b => { b.classList.add('is-active'); b.setAttribute('aria-pressed', 'true'); });
+        if (this.#indicator) this.#indicator.style.opacity = '0';
+      } else {
+        const pillBtn = [...this.#filterBtns].find(
+          b => b.dataset.series === this.#currentFilter && this.#pill?.contains(b)
+        );
+        this.#filterBtns.forEach(b => {
+          const match = b.dataset.series === this.#currentFilter;
+          b.classList.toggle('is-active', match);
+          b.setAttribute('aria-pressed', String(match));
+        });
+        this.#allBtns.forEach(b => { b.classList.remove('is-active'); b.setAttribute('aria-pressed', 'false'); });
+        if (this.#indicator) {
+          if (pillBtn) this.#moveIndicator(pillBtn);
+          this.#indicator.style.opacity = '';
+        }
+      }
+    }
+
+    this.dispatchEvent(new CustomEvent('aboutstate', { detail: { active: false, label: this.#currentLabel } }));
+  }
 
   // Ignoré si le bouton est hors de .filter-pill (overlay mobile).
   #moveIndicator(btn) {
@@ -133,31 +180,51 @@ class Gallery extends EventTarget {
   #bindFilters() {
     this.#filterBtns.forEach(btn => {
       btn.addEventListener('click', () => {
-        const filter = btn.dataset.filter;
-        // Synchronise l'état actif sur pill ET menu mobile simultanément.
+        const filter   = btn.dataset.series;
+        const wasAbout = this.#isAbout;
+        if (wasAbout) this.#leaveAbout(false);
+        this.#allBtns.forEach(b => { b.classList.remove('is-active'); b.setAttribute('aria-pressed', 'false'); });
+        // #filterBtns couvre pill desktop et menu mobile — les deux se synchronisent ici.
         this.#filterBtns.forEach(b => {
-          b.classList.toggle('is-active', b.dataset.filter === filter);
-          b.setAttribute('aria-pressed', String(b.dataset.filter === filter));
+          b.classList.toggle('is-active', b.dataset.series === filter);
+          b.setAttribute('aria-pressed', String(b.dataset.series === filter));
         });
-        const pillBtn = [...this.#filterBtns].find(b => b.dataset.filter === filter && this.#pill?.contains(b));
+        const pillBtn = [...this.#filterBtns].find(b => b.dataset.series === filter && this.#pill?.contains(b));
         if (pillBtn) this.#moveIndicator(pillBtn);
-        this.#filter(filter, btn.textContent.trim(), true);
+        this.#apply(filter, btn.textContent.trim(), true);
+        if (wasAbout) window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+
+    this.#allBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const wasAbout = this.#isAbout;
+        if (wasAbout) this.#leaveAbout(false);
+        this.#allBtns.forEach(b => { b.classList.add('is-active'); b.setAttribute('aria-pressed', 'true'); });
+        this.#filterBtns.forEach(b => { b.classList.remove('is-active'); b.setAttribute('aria-pressed', 'false'); });
+        this.#apply(null, 'Tout', true);
+        if (wasAbout) window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     });
   }
 
-  #filter(filter, label, animate) {
+  // filter === null → affiche tout ; sinon filtre par data-series.
+  #apply(filter, label, animate) {
     if (this.#filterTimeout) { clearTimeout(this.#filterTimeout); this.#filterTimeout = null; }
+    this.#currentFilter = filter;
+    this.#currentLabel  = label;
+    if (this.#indicator) this.#indicator.style.opacity = filter === null ? '0' : '';
+
     if (animate) {
       this.#cards.forEach(card => {
         if (card.style.display !== 'none') card.style.opacity = '0';
       });
     }
 
-    const apply = () => {
+    const commit = () => {
       const visible = [];
       this.#cards.forEach(card => {
-        const show = card.dataset.category === filter;
+        const show = filter === null || card.dataset.series === filter;
         if (show) {
           card.style.display = '';
           if (animate) card.style.opacity = '0';
@@ -179,8 +246,8 @@ class Gallery extends EventTarget {
       }
     };
 
-    if (animate) this.#filterTimeout = setTimeout(() => { this.#filterTimeout = null; apply(); }, 200);
-    else apply();
+    if (animate) this.#filterTimeout = setTimeout(() => { this.#filterTimeout = null; commit(); }, 200);
+    else commit();
   }
 
   #bindImageFadeIn() {
@@ -208,22 +275,34 @@ class FilterMobileMenu {
   #label;
   #menu;
   #closeBtn;
+  #aboutBtn;
 
   constructor(gallery) {
     this.#trigger  = document.getElementById('filter-mobile-trigger');
     this.#label    = document.getElementById('filter-mobile-label');
     this.#menu     = document.getElementById('filter-mobile-menu');
     this.#closeBtn = document.getElementById('filter-mobile-close');
+    this.#aboutBtn = document.getElementById('filter-mobile-about');
     if (!this.#trigger || !this.#menu) return;
 
     this.#trigger.addEventListener('click', () => this.#toggle());
     this.#closeBtn?.addEventListener('click', () => this.#close());
 
+    this.#aboutBtn?.addEventListener('click', () => {
+      this.#close();
+      gallery.enterAbout();
+      document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
+    });
+
     document.addEventListener('keydown', e => {
       if (!this.#menu.classList.contains('is-open')) return;
       if (e.key === 'Escape') { this.#close(); return; }
       if (e.key === 'Tab') {
-        const focusable = [this.#closeBtn, ...this.#menu.querySelectorAll('.filter-pill__btn')].filter(Boolean);
+        const focusable = [
+          this.#closeBtn,
+          ...this.#menu.querySelectorAll('.filter-pill__btn'),
+          this.#aboutBtn,
+        ].filter(Boolean);
         const first = focusable[0];
         const last  = focusable[focusable.length - 1];
         if (e.shiftKey ? document.activeElement === first : document.activeElement === last) {
@@ -236,6 +315,12 @@ class FilterMobileMenu {
     gallery.addEventListener('filterchange', e => {
       if (this.#label) this.#label.textContent = e.detail.label;
       if (this.#menu.classList.contains('is-open')) this.#close();
+    });
+
+    gallery.addEventListener('aboutstate', e => {
+      if (this.#label) {
+        this.#label.textContent = e.detail.active ? 'À propos' : e.detail.label;
+      }
     });
   }
 
@@ -260,8 +345,8 @@ class FilterMobileMenu {
 
 // ─── Lightbox ────────────────────────────────────────────────────────────────
 
-// Maintient #visible à jour via filterchange pour que la navigation
-// respecte le filtre actif sans interroger le DOM.
+// #visible est mis à jour via filterchange pour que la navigation reste dans
+// le filtre actif sans interroger le DOM.
 class Lightbox {
   #photos;
   #el;
@@ -289,12 +374,12 @@ class Lightbox {
     this.#el = document.getElementById('lightbox');
     if (!this.#el) return;
 
-    this.#img = document.getElementById('lightbox-img');
+    this.#img      = document.getElementById('lightbox-img');
     this.#closeBtn = document.getElementById('lightbox-close');
     this.#prev     = document.getElementById('lightbox-prev');
     this.#next     = document.getElementById('lightbox-next');
-    this.#stage  = document.getElementById('lightbox-stage');
-    this.#loader = document.getElementById('lightbox-loader');
+    this.#stage    = document.getElementById('lightbox-stage');
+    this.#loader   = document.getElementById('lightbox-loader');
     if (!this.#img || !this.#closeBtn || !this.#prev || !this.#next || !this.#stage || !this.#loader) return;
 
     this.#visible = this.#photos.map((_, i) => i);

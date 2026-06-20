@@ -1,6 +1,6 @@
 # Portfolio Photographique — Jekyll
 
-Portfolio minimaliste hébergeable sur GitHub Pages. Galerie plein-écran, visionneuse lightbox au clavier et au glissement, sélecteur de série avec pill animé, thème sombre synchronisé avec le système, images optimisées automatiquement au build.
+Portfolio minimaliste hébergeable sur GitHub Pages. Galerie plein-écran, visionneuse lightbox au clavier et au glissement, sélecteur de série avec pill animé, thème sombre fixe, images optimisées automatiquement au build.
 
 ---
 
@@ -64,32 +64,30 @@ Le site est accessible sur [http://localhost:4000](http://localhost:4000).
 ```
 portfolio/
 │
-├── _config.yml              ← Configuration principale (titre, URL, collections)
-├── Gemfile                  ← Dépendances Ruby (Jekyll + plugins)
+├── _config.yml              ← Configuration principale (titre, description, lang)
+├── Gemfile                  ← Dépendances Ruby (Jekyll + WEBrick)
 │
 ├── _series/                 ← Une fiche .md par série — source unique de vérité
-│   ├── architecture.md      ←   titre, liste des fichiers images
+│   ├── architecture.md      ←   title + liste ordonnée photos:
 │   ├── paysage.md
 │   └── portrait.md
 │
 ├── _layouts/
-│   └── default.html         ← Gabarit de base (head.html + contenu)
+│   └── default.html         ← Gabarit unique : <head>, filter-bar, main, footer, <script>
 │
 ├── _includes/
-│   ├── head.html            ← Contenu du <head> : meta, CSS, preloads fontes, SEO
-│   ├── filter-pill.html     ← Pill de filtre desktop (≥ 768 px)
-│   ├── filter-mobile.html   ← Trigger + overlay filtre mobile (< 768 px)
+│   ├── head.html            ← Contenu du <head> : meta, CSS, preloads fontes
 │   ├── cover.html           ← Splash plein-écran avec photo de couverture
 │   ├── gallery-grid.html    ← Grille de cards + bloc JSON photo-data
 │   └── lightbox.html        ← Visionneuse plein écran
 │
 ├── _sass/                   ← Styles SCSS (Dart Sass, @use)
 │   ├── _fonts.scss          ← Déclarations @font-face (Jost + Climate Crisis, auto-hébergées)
-│   ├── _variables.scss      ← Tokens : typographie, tailles, breakpoints
+│   ├── _variables.scss      ← Tokens : typographie, tailles, breakpoints, z-index
 │   ├── _mixins.scss         ← Mixin surface (surfaces flottantes)
-│   ├── _base.scss           ← Reset, CSS custom properties (thème sombre fixe)
+│   ├── _base.scss           ← Reset + CSS custom properties (thème sombre fixe)
 │   ├── _cover.scss          ← Splash de couverture
-│   ├── _header.scss         ← Pill de filtre, overlay mobile, bouton thème
+│   ├── _layout.scss         ← Filter-bar, pill, menu mobile, site-main, site-footer
 │   ├── _gallery.scss        ← Grille responsive, cards, shimmer
 │   └── _lightbox.scss       ← Visionneuse plein écran
 │
@@ -117,7 +115,7 @@ portfolio/
 │   ├── build-webp.sh        ← Génère les variantes WebP avant le build de production
 │   └── normalize.sh         ← Redimensionne les photos > 4K en place (optionnel)
 │
-└── index.html               ← Page unique — assemble les includes de la galerie
+└── index.html               ← Page unique — assemble cover, gallery-grid, lightbox
 ```
 
 ---
@@ -147,7 +145,7 @@ L'ordre dans la liste détermine l'ordre d'affichage dans la galerie et de navig
 
 ### Créer une nouvelle série
 
-1. Ajoutez un fichier `_series/ma-serie.md` (le nom du fichier devient l'identifiant de la série) :
+1. Ajoutez un fichier `_series/ma-serie.md` (le nom du fichier devient le slug de la série) :
 
 ```yaml
 ---
@@ -161,7 +159,7 @@ photos:
 2. Créez le sous-dossier `assets/images/photos/ma-serie/` et placez-y les images
 3. Relancez `bash bin/build-webp.sh`
 
-Les boutons du sélecteur de série sont générés automatiquement à partir des fichiers présents dans `_series/` — aucune autre configuration n'est requise.
+Les boutons du sélecteur de série sont générés automatiquement à partir des fichiers `_series/` — aucune autre configuration n'est requise.
 
 ---
 
@@ -203,7 +201,6 @@ JEKYLL_ENV=production bundle exec jekyll build
 ```yaml
 title: "Votre Nom"
 description: "Photographe — Portrait · Paysage · Architecture"
-author: "Votre Nom"
 url: "https://username.github.io"  # URL racine du site déployé
 baseurl: ""                        # Laisser vide pour username.github.io
                                    # Mettre "/nom-du-repo" pour un dépôt projet
@@ -219,11 +216,11 @@ Les styles utilisent **Dart Sass** avec la syntaxe `@use` (pas de `@import` dép
 ```
 assets/css/main.scss   ← Point d'entrée (front matter Jekyll obligatoire)
   @use "fonts"         ← @font-face Jost + Climate Crisis (font-display: block)
-  @use "variables"     ← Tokens Sass : typo, tailles, breakpoints
+  @use "variables"     ← Tokens Sass : typo, tailles, breakpoints, z-index
   @use "mixins"        ← Mixin surface (surfaces flottantes)
   @use "base"          ← Reset, CSS custom properties (thème sombre fixe)
   @use "cover"         ← Splash de couverture
-  @use "header"        ← Pill de filtre, overlay mobile
+  @use "layout"        ← Filter-bar, pill, menu mobile, site-main, site-footer
   @use "gallery"       ← Grille responsive, cards, shimmer
   @use "lightbox"      ← Visionneuse plein écran
 ```
@@ -239,20 +236,20 @@ Les composants suivent la convention **BEM** (`.gallery-card__img-wrap`, `.light
 Le seuil unique est **768 px** (`$bp-md`) :
 
 - **< 768 px (mobile)** : grille 2 colonnes plein-écran, sélecteur de série en overlay, flèches lightbox masquées (navigation au glissement).
-- **≥ 768 px (desktop)** : grille plein-écran, pill de filtre centré, flèches lightbox visibles.
+- **≥ 768 px (desktop)** : grille plein-écran, pill de filtre centré en bas, flèches lightbox visibles.
 
 ### Thème
 
-Le site utilise un thème sombre fixe. Les couleurs sont exposées comme **CSS custom properties** dans `_base.scss` sous `:root` :
+Le site utilise un thème **sombre fixe**. Les couleurs sont exposées comme CSS custom properties dans `_base.scss` sous `:root` :
 
 | Variable | Rôle |
 |---|---|
 | `--bg` | Fond de page |
-| `--bg-surface` | Fond de surface (placeholder images, shimmer) |
+| `--bg-surface` | Fond de surface (placeholder images) |
 | `--border` | Couleur des bordures |
 | `--text` | Texte principal |
 | `--text-muted` | Texte secondaire |
-| `--shimmer-color` | Couleur de l'animation shimmer des cards |
+| `--shimmer-color` | Animation shimmer des cards |
 
 ---
 

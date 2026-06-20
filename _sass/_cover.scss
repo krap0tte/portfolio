@@ -12,7 +12,7 @@
     pointer-events: none;
   }
 
-  // Vignettes haute et basse pour lisibilité du nom et du bouton
+  // Vignettes haute et basse pour la lisibilité du bouton
   &::before,
   &::after {
     content: '';
@@ -38,26 +38,6 @@
       rgba(0, 0, 0, 0.10) 30%,
       transparent 60%
     );
-  }
-
-  &__name {
-    position: absolute;
-    top: 2rem;
-    left: 50%;
-    z-index: 2;
-    font-family: $font-cover;
-    font-size: clamp(0.875rem, 2.5vw, 1.625rem);
-    color: rgba(255, 255, 255, 0.92);
-    white-space: nowrap;
-    pointer-events: none;
-    opacity: 0;
-    transform: translateX(-50%) translateY(-10px);
-    transition: opacity 0.45s ease, transform 0.45s ease;
-
-    &.is-visible {
-      opacity: 1;
-      transform: translateX(-50%);
-    }
   }
 
   // La photo s'affiche en fondu une fois chargée

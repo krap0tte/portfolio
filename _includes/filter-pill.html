@@ -1,6 +1,0 @@
-<nav class="filter-pill" aria-label="Filtrer par série">
-  <span class="filter-pill__indicator" aria-hidden="true"></span>
-  {% for s in include.series %}
-    <button class="filter-pill__btn{% if forloop.first %} is-active{% endif %}" data-filter="{{ s.slug }}" aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}">{{ s.title }}</button>
-  {% endfor %}
-</nav>
