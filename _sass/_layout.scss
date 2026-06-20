@@ -47,6 +47,8 @@
 
 .filter-pill-wrap {
   position: relative;
+  border-radius: $radius-pill;
+  overflow: hidden;
 
   &::before,
   &::after {
