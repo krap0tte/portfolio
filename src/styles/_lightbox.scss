@@ -6,7 +6,7 @@
   z-index: $z-lightbox;
   display: flex;
   flex-direction: column;
-  background: $color-void;
+  background: var(--bg);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease;
@@ -14,30 +14,6 @@
   &.is-open {
     opacity: 1;
     pointer-events: auto;
-  }
-
-  // Styles partagés : bouton fermer + flèches de navigation
-  &__close,
-  &__nav {
-    position: absolute;
-    background: rgba(0, 0, 0, 0.52);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.72);
-    padding: 0.65rem;
-    line-height: 0;
-    border-radius: 50%;
-    transition: color 0.15s, background 0.15s;
-
-    &:hover {
-      background: rgba(0, 0, 0, 0.72);
-      color: #fff;
-    }
-  }
-
-  &__close {
-    top: 1rem;
-    right: 1.25rem;
-    z-index: 10;
   }
 
   &__stage {
@@ -48,6 +24,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: clamp(1rem, 3vw, 2.5rem);
   }
 
   &__img {
@@ -65,8 +42,8 @@
     width: 22px;
     height: 22px;
     margin: -11px 0 0 -11px;
-    border: 1.5px solid rgba(255, 255, 255, 0.12);
-    border-top-color: rgba(255, 255, 255, 0.55);
+    border: 1.5px solid rgba(0, 0, 0, 0.12);
+    border-top-color: rgba(0, 0, 0, 0.55);
     border-radius: 50%;
     animation: lb-spin 0.7s linear infinite;
     pointer-events: none;
@@ -76,14 +53,32 @@
     &.is-visible { opacity: 1; }
   }
 
-  &__nav {
-    top: 50%;
-    transform: translateY(-50%);
+  &__controls {
+    position: fixed;
+    left: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
 
-    &--prev { left: 1rem; }
-    &--next { right: 1rem; }
+  &__nav-row {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
 
     @media (max-width: #{$bp-md - 1px}) { display: none; }
+  }
+
+  &__link {
+    font-size: $size-xs;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    transition: color 0.15s;
+
+    &:hover { color: var(--text); }
   }
 }
 

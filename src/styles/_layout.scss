@@ -1,60 +1,22 @@
 @use 'variables' as *;
-@use 'mixins' as *;
 
-// ─── Bouton À propos ──────────────────────────────────────────────────────────
+// ─── Header ──────────────────────────────────────────────────────────────────
 
-.about-button {
-  @include surface;
-  position: fixed;
-  bottom: $ui-bottom;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: $z-ui;
-  border-radius: $radius-pill;
-  padding: 0.5rem 1.5rem;
-  font-size: $size-base;
-  font-weight: $weight-ui;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  white-space: nowrap;
-  transition: color 0.15s, background 0.15s, border-color 0.15s;
+.site-header {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem;
 
-  &:hover { color: var(--text); }
-
-  &.is-active {
-    background: var(--text);
-    border-color: var(--text);
-    color: var(--bg);
+  &__brand {
+    font-family: $font-cover;
+    font-size: clamp(1rem, 3vw, 1.5rem);
+    letter-spacing: 0.02em;
+    color: var(--text);
   }
 }
 
 // ─── Page layout ─────────────────────────────────────────────────────────────
 
 .site-main {
-  padding-bottom: 6rem;
   min-height: 100vh;
-}
-
-.site-footer {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-
-  &__name {
-    font-family: $font-cover;
-    font-size: clamp(1rem, 3vw, 2rem);
-    color: var(--text);
-    letter-spacing: 0.02em;
-  }
-
-  &__description {
-    font-size: $size-xs;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-  }
 }

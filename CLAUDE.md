@@ -32,21 +32,20 @@ Les chemins d'images sont construits dans `photos.ts` selon `isDevMode()` : JPEG
 
 ### État partagé : `GalleryState` (signals)
 
-`src/app/gallery-state.ts` est le hub central — il remplace l'ancienne classe `Gallery extends EventTarget` et ses événements `filterchange`/`aboutstate`. Signals :
+`src/app/gallery-state.ts` est le hub central — il remplace l'ancienne classe `Gallery extends EventTarget` et ses événements `filterchange`/`aboutstate`. Signal :
 
-- `isAbout` — état « À propos » (footer plein écran).
 - `lightboxIndex` (`number | null`) — demande d'ouverture de la lightbox ; remis à null à la fermeture (sinon rouvrir la même photo ne notifierait pas).
 
-L'état visuel du bouton À propos (`is-active`, `aria-pressed`) **dérive** de `isAbout` — il n'y a aucune restauration manuelle d'état à la sortie d'À propos, contrairement à l'ancien JS.
+Il n'y a plus de section « À propos » ni d'état associé (`isAbout`, `about-button.ts`) — supprimés intentionnellement, le site n'est plus que le header, la grille et la lightbox.
 
 ### Composants (`src/app/`)
 
 Tous standalone, templates inline, **aucun style par composant** — le SCSS est global et les éléments hôtes (`app-gallery-grid`, etc.) sont neutralisés par `display: contents` dans `_base.scss`, donc le CSS voit la même arborescence qu'avant la migration.
 
-- `app.ts` (App) — composition + footer « À propos » ; possède l'`IntersectionObserver` (threshold 0.5) qui synchronise `isAbout` avec la visibilité du footer.
-- `about-button.ts` — bouton « À propos » unique, même rendu à tous les breakpoints.
-- `gallery-grid.ts` — boucle plate unique sur `PHOTOS`, aucune animation de filtre (il n'y a plus de filtre).
-- `lightbox.ts` — visionneuse ; navigation par index global sur `PHOTOS` (modulo la longueur totale), swipe tactile, clavier, focus trap, dimensionnement DPR. Écouteurs touch bindés manuellement (`passive: true` requis). `navTimeout` (nav clic/clavier) et `swipeTimeout` (nav swipe) sont annulés ensemble via `clearTimeouts()` dès qu'une nouvelle navigation démarre — sinon un swipe suivi d'un clic sur une flèche fait cohabiter deux mises à jour de `current`. `isOpen` est un getter dérivé de la classe DOM `is-open`, pas un champ à synchroniser.
+- `app.ts` (App) — composition minimale : header, grille, lightbox.
+- `site-header.ts` — petit header, marque « Demo » centrée, cliquable (`scrollTo({ top: 0, behavior: 'smooth' })`) pour remonter en haut de la grille. Pas de routage (le site n'a qu'une page) : « retour à l'accueil » signifie remonter en haut, pas une navigation.
+- `gallery-grid.ts` — boucle plate unique sur `PHOTOS`, aucune animation de filtre (il n'y a plus de filtre). Grille en masonry (CSS `columns`, pas `grid`) : chaque miniature garde son ratio naturel (pas de crop carré), `break-inside: avoid` sur `.gallery-card` évite qu'une image soit coupée entre deux colonnes.
+- `lightbox.ts` — visionneuse ; navigation par index global sur `PHOTOS` (modulo la longueur totale), swipe tactile, clavier, focus trap, dimensionnement DPR. Écouteurs touch bindés manuellement (`passive: true` requis). `navTimeout` (nav clic/clavier) et `swipeTimeout` (nav swipe) sont annulés ensemble via `clearTimeouts()` dès qu'une nouvelle navigation démarre — sinon un swipe suivi d'un clic sur une flèche fait cohabiter deux mises à jour de `current`. `isOpen` est un getter dérivé de la classe DOM `is-open`, pas un champ à synchroniser. Contrôles en liens texte (pas de boutons icônes/cercles, pas de compteur, pas de scrim sombre) fixés en bas à gauche : « Précédent / Suivant » (masqué sous `$bp-md`, swipe uniquement) et « Grille » (ferme la visionneuse, seul contrôle toujours visible). Fond de la visionneuse = `var(--bg)`, aligné sur le thème clair du site — plus de fond sombre dédié.
 
 `focus-trap.ts` (`trapTabFocus()`) est partagé — ne pas redupliquer la logique de piège de focus Tab dans un nouveau composant modal, importer depuis ce fichier.
 
@@ -58,7 +57,7 @@ Point d'entrée : `src/styles/main.scss` (déclaré dans `angular.json`). Chaque
 
 Partiels SCSS et leur périmètre :
 - `_base.scss` — reset (y compris `display: contents` sur **tous** les hôtes Angular, `app-root` inclus) + custom properties uniquement, aucun composant.
-- `_layout.scss` — bouton À propos, `.site-main`, `.site-footer`.
+- `_layout.scss` — `.site-header`, `.site-main`.
 - `_gallery.scss`, `_lightbox.scss` — composants autonomes.
 
 **Chemins d'assets : toujours relatifs (jamais de `/` en tête), pour que `<base href>` (posé par `--base-href` au build CI) les résolve correctement quel que soit le sous-chemin de déploiement.** Un chemin racine-absolu (`/assets/...`) ignore `<base href>` et casse tout déploiement en dépôt projet GitHub Pages (`username.github.io/portfolio/`) — ce dépôt en est un, ce n'est pas un cas hypothétique. S'applique à `photos.ts`, `src/index.html` et aux `url()` SCSS.
@@ -67,11 +66,11 @@ Partiels SCSS et leur périmètre :
 
 L'`assets` glob d'`angular.json` ne copie que `assets/images/**` (pas `assets/fonts/`) — copier les fontes brutes en plus des fichiers hachés produirait une sortie dupliquée et inutilisée.
 
-Point de rupture unique : `$bp-md = 768px`. En dessous (≤ 767px) : grille 2 colonnes plein-écran, navigation lightbox au glissement uniquement. Au-dessus (≥ 768px) : grille plein-écran, navigation par flèches.
+Point de rupture unique : `$bp-md = 768px`. En dessous (≤ 767px) : grille masonry 2 colonnes, navigation lightbox au glissement uniquement. Au-dessus (≥ 768px) : grille masonry (3 à 6 colonnes selon la largeur, `_gallery.scss`), navigation par flèches. `.gallery-grid` a un padding fluide (`clamp(1rem, 3vw, 2.5rem)`) à tous les breakpoints — plus de grille bord-à-bord.
 
-Variables de typographie dans `_variables.scss` : `$size-xs` (0.75rem), `$size-base` (1rem), `$weight-ui` (400). `$weight-ui` est le grammage du bouton À propos et des labels d'interface — il s'applique partout où `text-transform: uppercase` + `letter-spacing` est utilisé. Ne pas introduire de valeur en dur.
+Variables de typographie dans `_variables.scss` : `$size-xs` (0.75rem).
 
-Le thème est sombre fixe. Les propriétés CSS (`--bg`, `--bg-surface`, `--border`, `--text`, `--text-muted`, `--shimmer-color`) sont déclarées dans `_base.scss` sous `:root` uniquement — pas de bascule, pas de `localStorage`.
+Le thème est clair fixe (palette `_variables.scss` : `$bg` blanc, `$text` quasi-noir). Les propriétés CSS (`--bg`, `--bg-surface`, `--text`, `--text-muted`, `--shimmer-color`) sont déclarées dans `_base.scss` sous `:root` uniquement — pas de bascule, pas de `localStorage`. La lightbox reste sur un fond sombre fixe (`$color-void`, `_variables.scss`) indépendamment du thème du site — choix délibéré pour le contraste des photos, pas un oubli.
 
 ### `src/index.html`
 

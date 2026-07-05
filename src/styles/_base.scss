@@ -6,17 +6,16 @@
 :root {
   --bg:             #{$bg};
   --bg-surface:     #{$bg-surface};
-  --border:         #{$border};
   --text:           #{$text};
   --text-muted:     #{$text-muted};
-  --shimmer-color:  rgba(255, 255, 255, 0.1);
+  --shimmer-color:  rgba(0, 0, 0, 0.06);
 }
 
 // ─── Reset ───────────────────────────────────────────────────────────────────
 
 // Les éléments hôtes Angular sont retirés du layout : le CSS voit exactement
 // la même arborescence qu'avant la migration (pas de wrapper intercalé).
-app-root, app-about-button, app-gallery-grid, app-lightbox {
+app-root, app-site-header, app-gallery-grid, app-lightbox {
   display: contents;
 }
 

@@ -15,28 +15,18 @@ import { trapTabFocus } from './focus-trap';
   template: `
     <div class="lightbox" #lightbox aria-hidden="true" role="dialog" aria-modal="true" aria-label="Visionneuse photo">
 
-      <button class="lightbox__close" #closeBtn aria-label="Fermer" (click)="close()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-          <path d="M18 6L6 18M6 6l12 12"/>
-        </svg>
-      </button>
-
       <div class="lightbox__stage" #stage (click)="onStageClick($event)">
         <div class="lightbox__loader" #loader aria-hidden="true"></div>
-
-        <button class="lightbox__nav lightbox__nav--prev" #prev aria-label="Photo précédente" (click)="navigate(-1)">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-            <path d="M15 18l-6-6 6-6"/>
-          </svg>
-        </button>
-
         <img class="lightbox__img" #img alt="" />
+      </div>
 
-        <button class="lightbox__nav lightbox__nav--next" #next aria-label="Photo suivante" (click)="navigate(1)">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-            <path d="M9 18l6-6-6-6"/>
-          </svg>
-        </button>
+      <div class="lightbox__controls">
+        <p class="lightbox__nav-row" #navRow>
+          <button class="lightbox__link" #prev aria-label="Photo précédente" (click)="navigate(-1)">Précédent</button>
+          <span aria-hidden="true"> / </span>
+          <button class="lightbox__link" #next aria-label="Photo suivante" (click)="navigate(1)">Suivant</button>
+        </p>
+        <button class="lightbox__link" #gridBtn aria-label="Retour à la grille" (click)="close()">Grille</button>
       </div>
 
     </div>
@@ -48,9 +38,10 @@ export class Lightbox {
 
   private readonly el = viewChild.required<ElementRef<HTMLElement>>('lightbox');
   private readonly img = viewChild.required<ElementRef<HTMLImageElement>>('img');
-  private readonly closeBtn = viewChild.required<ElementRef<HTMLButtonElement>>('closeBtn');
   private readonly prev = viewChild.required<ElementRef<HTMLButtonElement>>('prev');
   private readonly next = viewChild.required<ElementRef<HTMLButtonElement>>('next');
+  private readonly navRow = viewChild.required<ElementRef<HTMLElement>>('navRow');
+  private readonly gridBtn = viewChild.required<ElementRef<HTMLButtonElement>>('gridBtn');
   private readonly stage = viewChild.required<ElementRef<HTMLElement>>('stage');
   private readonly loader = viewChild.required<ElementRef<HTMLElement>>('loader');
 
@@ -143,7 +134,7 @@ export class Lightbox {
       if (e.key === 'ArrowLeft') { this.navigate(-1); return; }
       if (e.key === 'ArrowRight') { this.navigate(1); return; }
       if (e.key === 'Tab') {
-        const focusable = [this.closeBtn().nativeElement, this.prev().nativeElement, this.next().nativeElement]
+        const focusable = [this.prev().nativeElement, this.next().nativeElement, this.gridBtn().nativeElement]
           .filter(el => !el.hidden);
         trapTabFocus(focusable, e);
       }
@@ -189,7 +180,10 @@ export class Lightbox {
     img.src = p.full;
     if (img.complete && img.naturalWidth) onLoad();
 
-    this.prev().nativeElement.hidden = this.next().nativeElement.hidden = this.total < 2;
+    this.navRow().nativeElement.hidden =
+      this.prev().nativeElement.hidden =
+      this.next().nativeElement.hidden =
+      this.total < 2;
   }
 
   private open(index: number): void {
@@ -199,7 +193,7 @@ export class Lightbox {
     this.el().nativeElement.classList.add('is-open');
     this.el().nativeElement.removeAttribute('aria-hidden');
     document.body.style.overflow = 'hidden';
-    this.closeBtn().nativeElement.focus();
+    this.gridBtn().nativeElement.focus();
   }
 
   private clearTimeouts(): void {
