@@ -134,8 +134,12 @@ export class Lightbox {
       if (e.key === 'ArrowLeft') { this.navigate(-1); return; }
       if (e.key === 'ArrowRight') { this.navigate(1); return; }
       if (e.key === 'Tab') {
+        // `offsetParent === null` couvre à la fois `.hidden` (total < 2) et le
+        // `display: none` posé par le media query mobile sur `.lightbox__nav-row` —
+        // un seul test de focusabilité réelle au lieu de deux mécanismes qui
+        // pouvaient diverger (le second ne touchait jamais `.hidden`).
         const focusable = [this.prev().nativeElement, this.next().nativeElement, this.gridBtn().nativeElement]
-          .filter(el => !el.hidden);
+          .filter(el => el.offsetParent !== null);
         trapTabFocus(focusable, e);
       }
     });

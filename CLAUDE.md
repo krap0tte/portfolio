@@ -44,7 +44,7 @@ Tous standalone, templates inline, **aucun style par composant** — le SCSS est
 
 - `app.ts` (App) — composition minimale : header, grille, lightbox.
 - `site-header.ts` — petit header, marque « Demo » centrée, cliquable (`scrollTo({ top: 0, behavior: 'smooth' })`) pour remonter en haut de la grille. Pas de routage (le site n'a qu'une page) : « retour à l'accueil » signifie remonter en haut, pas une navigation.
-- `gallery-grid.ts` — boucle plate unique sur `PHOTOS`, aucune animation de filtre (il n'y a plus de filtre). Grille en masonry (CSS `columns`, pas `grid`) : chaque miniature garde son ratio naturel (pas de crop carré), `break-inside: avoid` sur `.gallery-card` évite qu'une image soit coupée entre deux colonnes.
+- `gallery-grid.ts` — boucle plate unique sur `PHOTOS`, aucune animation de filtre (il n'y a plus de filtre). Grille en masonry (CSS `columns`, pas `grid`) : chaque miniature garde son ratio naturel (pas de crop carré), `break-inside: avoid` sur `.gallery-card` évite qu'une image soit coupée entre deux colonnes. Compromis assumé de ce choix : `PHOTOS` ne porte pas les dimensions intrinsèques de chaque photo, donc `.gallery-card__img-wrap` n'a pas de hauteur réservée avant chargement (pas d'`aspect-ratio` ni de `width`/`height` HTML) — le shimmer de chargement peut apparaître avec une hauteur quasi nulle et la colonne se réajuste quand l'image finit de charger. Accepté au profit de ratios non tronqués ; à revisiter seulement si ça devient gênant en usage réel.
 - `lightbox.ts` — visionneuse ; navigation par index global sur `PHOTOS` (modulo la longueur totale), swipe tactile, clavier, focus trap, dimensionnement DPR. Écouteurs touch bindés manuellement (`passive: true` requis). `navTimeout` (nav clic/clavier) et `swipeTimeout` (nav swipe) sont annulés ensemble via `clearTimeouts()` dès qu'une nouvelle navigation démarre — sinon un swipe suivi d'un clic sur une flèche fait cohabiter deux mises à jour de `current`. `isOpen` est un getter dérivé de la classe DOM `is-open`, pas un champ à synchroniser. Contrôles en liens texte (pas de boutons icônes/cercles, pas de compteur, pas de scrim sombre) fixés en bas à gauche : « Précédent / Suivant » (masqué sous `$bp-md`, swipe uniquement) et « Grille » (ferme la visionneuse, seul contrôle toujours visible). Fond de la visionneuse = `var(--bg)`, aligné sur le thème clair du site — plus de fond sombre dédié.
 
 `focus-trap.ts` (`trapTabFocus()`) est partagé — ne pas redupliquer la logique de piège de focus Tab dans un nouveau composant modal, importer depuis ce fichier.
@@ -53,7 +53,7 @@ Règle générale : l'état partagé et les états de boutons sont déclaratifs 
 
 ### CSS
 
-Point d'entrée : `src/styles/main.scss` (déclaré dans `angular.json`). Chaque partiel commence par `@use 'variables' as *` pour accéder aux tokens sans préfixe. Convention BEM (`.gallery-card__img-wrap`, `.lightbox__nav--prev`).
+Point d'entrée : `src/styles/main.scss` (déclaré dans `angular.json`). Chaque partiel commence par `@use 'variables' as *` pour accéder aux tokens sans préfixe. Convention BEM (`.gallery-card__img-wrap`, `.lightbox__nav-row`).
 
 Partiels SCSS et leur périmètre :
 - `_base.scss` — reset (y compris `display: contents` sur **tous** les hôtes Angular, `app-root` inclus) + custom properties uniquement, aucun composant.
@@ -70,7 +70,7 @@ Point de rupture unique : `$bp-md = 768px`. En dessous (≤ 767px) : grille maso
 
 Variables de typographie dans `_variables.scss` : `$size-xs` (0.75rem).
 
-Le thème est clair fixe (palette `_variables.scss` : `$bg` blanc, `$text` quasi-noir). Les propriétés CSS (`--bg`, `--bg-surface`, `--text`, `--text-muted`, `--shimmer-color`) sont déclarées dans `_base.scss` sous `:root` uniquement — pas de bascule, pas de `localStorage`. La lightbox reste sur un fond sombre fixe (`$color-void`, `_variables.scss`) indépendamment du thème du site — choix délibéré pour le contraste des photos, pas un oubli.
+Le thème est clair fixe (palette `_variables.scss` : `$bg` blanc, `$text` quasi-noir). Les propriétés CSS (`--bg`, `--bg-surface`, `--text`, `--text-muted`, `--shimmer-color`) sont déclarées dans `_base.scss` sous `:root` uniquement — pas de bascule, pas de `localStorage`. La lightbox utilise `var(--bg)`, comme le reste du site — plus de fond sombre dédié (`$color-void` a été retiré de `_variables.scss`).
 
 ### `src/index.html`
 
