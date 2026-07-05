@@ -3,7 +3,7 @@
 // ─── Grid ────────────────────────────────────────────────────────────────────
 
 .gallery-grid {
-  padding: clamp(1rem, 3vw, 2.5rem);
+  padding: 0 clamp(1rem, 3vw, 2.5rem) clamp(1rem, 3vw, 2.5rem);
 
   &__container {
     columns: 2;
