@@ -1,0 +1,90 @@
+@use 'variables' as *;
+
+.cover {
+  position: fixed;
+  inset: 0;
+  z-index: $z-cover;
+  background: $color-void; // fond solide dès le rendu HTML, avant tout JS
+  transition: opacity 0.7s ease;
+
+  &.is-leaving {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  // Vignettes haute et basse pour la lisibilité du bouton
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  &::before {
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.45) 0%,
+      rgba(0, 0, 0, 0.08) 28%,
+      transparent 55%
+    );
+  }
+
+  &::after {
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.50) 0%,
+      rgba(0, 0, 0, 0.10) 30%,
+      transparent 60%
+    );
+  }
+
+  // La photo s'affiche en fondu une fois chargée
+  &__picture {
+    position: absolute;
+    inset: 0;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.7s ease;
+
+    &.is-visible { opacity: 1; }
+  }
+
+  &__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &__enter {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    z-index: 2;
+    border-radius: $radius-pill;
+    padding: 0.5rem 1.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    font-size: $size-base;
+    font-weight: $weight-ui;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+
+    &.is-visible {
+      opacity: 1;
+      transform: translateX(-50%);
+      pointer-events: auto;
+    }
+
+    &.is-visible:hover {
+      border-color: rgba(255, 255, 255, 0.85);
+      color: #fff;
+    }
+  }
+}

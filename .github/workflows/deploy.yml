@@ -1,4 +1,4 @@
-name: Deploy Jekyll to GitHub Pages
+name: Deploy Angular to GitHub Pages
 
 on:
   push:
@@ -25,28 +25,25 @@ jobs:
         id: pages
         uses: actions/configure-pages@v5
 
-      - name: Install image tools
-        run: sudo apt-get install -y imagemagick webp
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Optimise images
-        run: bash bin/build-webp.sh
+        run: npm run build:webp
 
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.3'
-          bundler-cache: true
-
-      - name: Build with Jekyll
-        run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
-        env:
-          JEKYLL_ENV: production
-
-      - name: Minify JavaScript
-        run: npx --yes terser _site/assets/js/main.js --compress "passes=2" --mangle --comments false --ecma 2022 --output _site/assets/js/main.js
+      - name: Build with Angular
+        run: npx ng build --base-href "${{ steps.pages.outputs.base_path }}/"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/portfolio/browser
 
   deploy:
     environment:

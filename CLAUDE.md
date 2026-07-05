@@ -4,62 +4,73 @@ Ce fichier fournit des instructions à Claude Code (claude.ai/code) pour travail
 
 ## Stack
 
-Site statique Jekyll 4.3 (Ruby/Bundler), Dart Sass, JS vanilla (champs privés ES2022). Aucune dépendance Node en développement — terser s'exécute uniquement en CI via `npx --yes`.
+SPA Angular 22 (standalone, zoneless, signals), TypeScript strict (`strict` + `strictTemplates`), SCSS global (Dart Sass). Pas de router, pas de forms, pas de SSR — page unique rendue côté client. Node ≥ 20 requis en développement. Déploiement GitHub Pages en **sous-chemin** (dépôt projet, pas `username.github.io`) — voir la section CSS pour les implications sur les chemins d'assets.
 
 ## Commandes
 
 ```bash
 # Installer les dépendances
-bundle install
+npm install
 
-# Serveur de développement avec rechargement automatique
-bundle exec jekyll serve --livereload
+# Serveur de développement (rechargement automatique inclus)
+npm start
 
 # Normaliser les photos si un JPEG dépasse 4K (optionnel — covers exclues)
-bash bin/normalize.sh
+npm run normalize
 
 # Build de production (génère les WebP puis compile)
-bash bin/build-webp.sh && JEKYLL_ENV=production bundle exec jekyll build
+npm run build:webp && npm run build
 ```
 
 ## Architecture
 
-### Modèle de contenu — `_series/`
+### Modèle de contenu — `src/app/series.ts`
 
-`_series/*.md` est la source unique de vérité. Chaque fichier déclare `title` et une liste ordonnée `photos:` (noms de fichiers sans extension). Le slug du nom de fichier devient l'identifiant de la série utilisé dans les templates et le JS. Ajouter un fichier ici génère automatiquement un bouton de filtre, sans autre configuration.
+`SERIES` dans `src/app/series.ts` est la source unique de vérité. Chaque entrée déclare `slug` (= nom du dossier dans `assets/images/photos/`), `title` et une liste ordonnée `photos` (noms de fichiers sans extension). Ajouter une entrée génère automatiquement un bouton de filtre, sans autre configuration. `SORTED_SERIES` trie par titre (équivalent de l'ancien `site.series | sort: "title"` Jekyll) et `PHOTOS` aplatit les séries en une liste globale indexée — l'index de position est celui que la lightbox utilise pour naviguer.
 
-### Flux de données : Liquid → JSON → JS
+Les chemins d'images sont construits dans `series.ts` selon `isDevMode()` : JPEG originaux en développement, variantes WebP en production. C'est le seul endroit où cette distinction existe.
 
-Jekyll ne peut pas transmettre de données complexes au JS à l'exécution. `gallery-grid.html` intègre un bloc `<script type="application/json" id="photo-data">` que Liquid compile en données structurées. Le JS lit ce bloc à l'initialisation pour obtenir la liste complète des photos avec leurs chemins src. Ce schéma évite tout appel Ajax.
+### État partagé : `GalleryState` (signals)
 
-### Hiérarchie des classes JS
+`src/app/gallery-state.ts` est le hub central — il remplace l'ancienne classe `Gallery extends EventTarget` et ses événements `filterchange`/`aboutstate`. Signals :
 
-`Gallery` étend `EventTarget` et sert de hub central. Elle émet deux événements :
-- `filterchange { visible: number[], filter: string|null, label }` — filtre appliqué (null = Tout).
-- `aboutstate { active: bool, label? }` — entrée/sortie de l'état "À propos".
+- `filter` (`string | null`, null = Tout) — filtre courant, seule source de vérité.
+- `label` (computed) — dérivé de `filter` par lookup dans `SORTED_SERIES` ; pas de champ à synchroniser séparément. `setFilter(slug)` ne prend qu'un slug.
+- `isAbout` — état « À propos » (footer plein écran).
+- `lightboxIndex` (`number | null`) — demande d'ouverture de la lightbox ; remis à null à la fermeture (sinon rouvrir la même photo ne notifierait pas).
+- `visible` (computed) — indices globaux des photos visibles sous le filtre courant.
 
-`Lightbox` et `FilterMobileMenu` s'abonnent à ces événements — ils ne sont jamais couplés entre eux. L'ordre d'instanciation dans `main.js` est important : `Gallery` doit être créé avant d'être passé aux autres constructeurs.
+L'état visuel des boutons (`is-active`, `aria-pressed`) **dérive** de `(isAbout, filter)` via `isAll()`/`isActive(slug)` — il n'y a aucune restauration manuelle d'état à la sortie d'À propos, contrairement à l'ancien JS. `setFilter()` scrolle vers le haut si on était en mode À propos.
 
-`PillScroller` est une classe autonome (pas d'accès à `Gallery`). Elle gère les flèches de défilement du sélecteur desktop (`.filter-pill-wrap__arrow--prev/next`) : visibilité pilotée par `ResizeObserver` + `scroll`, défilement de `clientWidth / 2` au clic, interception `wheel` non passive pour que la molette/trackpad scrolle la pill sans scroller la page. Elle est instanciée avant `Gallery` (pas de dépendance). La constante `BP_MD = 768` est déclarée en tête de `main.js` et partagée entre `Gallery` et `PillScroller` — ne pas dupliquer.
+### Composants (`src/app/`)
 
-`Gallery.enterAbout()` est une méthode publique appelable depuis `FilterMobileMenu` (bouton "À propos" mobile). Le clic sur le bouton desktop "À propos" (`.filter-bar__about`) est bindé dans `Gallery` directement. `FilterMobileMenu` ne connaît que son propre DOM mobile.
+Tous standalone, templates inline, **aucun style par composant** — le SCSS est global et les éléments hôtes (`app-cover`, etc.) sont neutralisés par `display: contents` dans `_base.scss`, donc le CSS voit la même arborescence qu'avant la migration.
 
-La position de l'indicateur de la pill est mesurée après `document.fonts.ready` car `font-display: block` (intentionnel) garantit que les métriques sont stables seulement une fois les fontes chargées.
+- `app.ts` (App) — composition + footer « À propos » ; possède l'`IntersectionObserver` (threshold 0.5) qui synchronise `isAbout` avec la visibilité du footer.
+- `cover.ts` — splash d'entrée ; chorégraphie impérative conservée (double rAF, transitionend + fallback). Media query mobile dérivée de `BP_MD` (`constants.ts`), pas de littéral dupliqué.
+- `filter-bar.ts` — barre desktop : « Tout », pill défilante, indicateur, « À propos ». Intègre l'ex-`PillScroller` (flèches, `ResizeObserver`, `wheel` non passif) — scroll/resize restent impératifs (trop fréquents pour des signals). L'indicateur est repositionné dans un `afterRenderEffect` (mesure après pose des classes `is-active`) et l'activation des transitions attend `document.fonts.ready` car `font-display: block` (intentionnel) garantit des métriques stables.
+- `filter-mobile.ts` — trigger + menu overlay mobile. L'ouverture/fermeture est impérative (`classList`) pour que le focus se pose sur un élément déjà visible ; le label et les états actifs sont déclaratifs.
+- `gallery-grid.ts` — boucle plate unique sur `PHOTOS` ; l'animation de filtre (fade 200 ms → bascule `display` → double rAF) est chorégraphiée en impératif dans un `afterRenderEffect` qui saute le premier rendu.
+- `lightbox.ts` — visionneuse ; navigation par index global restreinte à `visible`, swipe tactile, clavier, focus trap, dimensionnement DPR. Écouteurs touch bindés manuellement (`passive: true` requis). `navTimeout` (nav clic/clavier) et `swipeTimeout` (nav swipe) sont annulés ensemble via `clearTimeouts()` dès qu'une nouvelle navigation démarre — sinon un swipe suivi d'un clic sur une flèche fait cohabiter deux mises à jour de `current`. `isOpen` est un getter dérivé de la classe DOM `is-open`, pas un champ à synchroniser.
 
-### Index global vs. index par série
+`constants.ts` (`BP_MD = 768`) et `focus-trap.ts` (`trapTabFocus()`) sont partagés entre composants — ne pas redupliquer un littéral de breakpoint ou une logique de piège de focus Tab dans un nouveau composant modal, importer depuis ces fichiers.
 
-Les cards sont rendues dans une boucle plate unique sur toutes les séries (triées alphabétiquement par titre), chacune recevant un `data-index` correspondant à sa position dans le tableau JSON `photo-data`. La lightbox navigue par cet index global ; `#visible` est mis à jour sur `filterchange` pour restreindre la navigation à la série courante.
-
-Les cards portent `data-series="{{ series.slug }}"` et les boutons de filtre portent `data-series="{{ s.slug }}"` — même attribut, même valeur. Le JS lit `card.dataset.series` et `btn.dataset.series` partout.
+Règle générale : l'état partagé et les états de boutons sont déclaratifs (signals/bindings) ; les chorégraphies d'animation, mesures DOM et gestion du focus restent impératives — c'est un choix, ne pas « angulariser » ces séquences.
 
 ### CSS
 
-Point d'entrée : `assets/css/main.scss` (front matter Jekyll obligatoire). Chaque partiel commence par `@use 'variables' as *` pour accéder aux tokens sans préfixe. Convention BEM (`.gallery-card__img-wrap`, `.lightbox__nav--prev`).
+Point d'entrée : `src/styles/main.scss` (déclaré dans `angular.json`). Chaque partiel commence par `@use 'variables' as *` pour accéder aux tokens sans préfixe. Convention BEM (`.gallery-card__img-wrap`, `.lightbox__nav--prev`).
 
 Partiels SCSS et leur périmètre :
-- `_base.scss` — reset + custom properties uniquement, aucun composant.
-- `_layout.scss` — filter-bar desktop, pill, menu mobile, `.site-main`, `.site-footer`. (Anciennement `_header.scss` — renommé car le fichier ne contient aucun header.)
+- `_base.scss` — reset (y compris `display: contents` sur **tous** les hôtes Angular, `app-root` inclus) + custom properties uniquement, aucun composant.
+- `_layout.scss` — filter-bar desktop, pill, menu mobile, `.site-main`, `.site-footer`.
 - `_cover.scss`, `_gallery.scss`, `_lightbox.scss` — composants autonomes.
+
+**Chemins d'assets : toujours relatifs (jamais de `/` en tête), pour que `<base href>` (posé par `--base-href` au build CI) les résolve correctement quel que soit le sous-chemin de déploiement.** Un chemin racine-absolu (`/assets/...`) ignore `<base href>` et casse tout déploiement en dépôt projet GitHub Pages (`username.github.io/portfolio/`) — ce dépôt en est un, ce n'est pas un cas hypothétique. S'applique à `series.ts`, `cover.ts`, `src/index.html` et aux `url()` SCSS.
+
+`_fonts.scss` référence les fontes via un chemin **relatif sur disque** (`../../assets/fonts/...`, depuis `src/styles/` jusqu'à `assets/fonts/` à la racine du dépôt) — pas un chemin relatif à l'URL de la page. C'est intentionnel et différent des autres assets : le plugin CSS d'esbuild résout et copie ces `url()` comme de vraies dépendances de build (hash de contenu, sortie dans `dist/.../media/`), contrairement à un chemin racine-absolu qu'il laisse passer tel quel. Conséquence : le nom de fichier haché n'est pas prévisible depuis un document statique, donc **aucun `<link rel=preload>` pour les fontes** dans `src/index.html` — `font-display: block` évite déjà tout flash visuel, seul le lancement du fetch aurait été avancé de quelques centaines de ms. Les preloads de covers restent, eux, car les images sont référencées via des bindings de template (`<img src>`), jamais interceptées par le pipeline CSS.
+
+L'`assets` glob d'`angular.json` ne copie que `assets/images/**` (pas `assets/fonts/`) — copier les fontes brutes en plus des fichiers hachés produirait une sortie dupliquée et inutilisée.
 
 Point de rupture unique : `$bp-md = 768px`. En dessous (≤ 767px) : grille 2 colonnes plein-écran, filtre en overlay mobile, navigation lightbox au glissement uniquement. Au-dessus (≥ 768px) : grille plein-écran, pill de filtre, navigation par flèches.
 
@@ -69,13 +80,13 @@ Le sélecteur pill desktop (`.filter-pill`) a `max-width: min(52rem, 60vw)`, dé
 
 Le thème est sombre fixe. Les propriétés CSS (`--bg`, `--bg-surface`, `--border`, `--text`, `--text-muted`, `--shimmer-color`) sont déclarées dans `_base.scss` sous `:root` uniquement — pas de bascule, pas de `localStorage`.
 
-### Partials `_includes/`
+### `src/index.html`
 
-Un partial ne se justifie que s'il est inclus dans plusieurs endroits ou s'il représente un composant substantiel et autonome. Un partial à usage unique et de moins de ~20 lignes doit être inliné dans son appelant. `_includes/` contient : `head.html`, `cover.html`, `gallery-grid.html`, `lightbox.html`.
+Contient les `preload` des covers WebP de production (pas des fontes — voir section CSS). En développement les covers WebP n'existent pas : les deux preloads produisent un avertissement console bénin — c'est le compromis retenu pour éviter un `index.html` par configuration. `<base href="/">` par défaut, réécrit au build CI via `--base-href`.
 
 ### Variantes d'images
 
-Les originaux (`.jpg`) sont commités. Les variantes générées sont dans `.gitignore` :
+Les originaux (`.jpg`) sont commités dans `assets/images/` (racine du dépôt, copié tel quel dans le build via `angular.json`). Les variantes générées sont dans `.gitignore` :
 - `photo-XX-thumb.webp` — 1200 px max, miniature grille (production uniquement)
 - `photo-XX-thumb-2x.webp` — 2400 px max, miniature Retina 2× (production uniquement)
 - `photo-XX.webp` — WebP pleine résolution, lightbox (production uniquement)
@@ -83,9 +94,15 @@ Les originaux (`.jpg`) sont commités. Les variantes générées sont dans `.git
 - `cover-2x.webp` — 3840 px max, cover desktop Retina 2×
 - `cover_phone.webp` — WebP pleine résolution, cover mobile
 
-En développement, le site utilise directement les JPEG originaux — aucune variante n'est générée. `bin/build-webp.sh` génère toutes les variantes WebP avant le build de production. Relancer le script est sans risque et idempotent (`--force` pour régénérer sans tenir compte des timestamps).
+En développement, le site utilise directement les JPEG originaux — aucune variante n'est nécessaire. `bin/build-webp.mjs` et `bin/normalize.mjs` (Node + sharp, aucun outil système requis) génèrent respectivement les variantes WebP et le redimensionnement des originaux surdimensionnés ; `bin/lib/images.mjs` mutualise entre les deux la découverte récursive des JPEG (`jpgsIn`) et le test de fraîcheur par mtime (`isFresh`, équivalent strict de `[ "$out" -nt "$src" ]` — pas `>=`, sinon un mtime égal après un `git checkout`/`rsync` laisserait une variante obsolète). Les deux scripts reproduisent la sémantique ImageMagick d'origine via un unique helper `toWebp(src, out, resize)` dans `build-webp.mjs` : `resize: { width }` (ex-`"Wx>"`, covers) contraint la largeur avec hauteur proportionnelle, `resize: { width, height, fit: 'inside' }` (ex-`"WxH>"`, miniatures et `normalize.mjs`) contraint une boîte englobante, `resize: null` réencode sans redimensionner — dans tous les cas, l'image n'est jamais agrandie (`withoutEnlargement`). `bin/build-webp.mjs` est idempotent par comparaison de mtime (`--force` pour régénérer sans en tenir compte) ; `bin/normalize.mjs` l'est par construction (relance sans effet une fois les dimensions sous le seuil). `normalize.mjs` écrit par-dessus le JPEG source — bufferisé via `.toBuffer()` avant écriture, sharp ne pouvant pas transformer un fichier en flux vers lui-même.
 
-Le workflow CI (`.github/workflows/deploy.yml`) appelle `bash bin/build-webp.sh` directement — source de vérité unique. Ne pas dupliquer la logique d'optimisation inline dans le YAML. `Gemfile.lock` doit être commité (retiré du `.gitignore`) pour que `bundler-cache: true` soit efficace et les builds reproductibles.
+Ni `build-webp.mjs` ni `normalize.mjs` n'appliquent `.rotate()`/auto-orientation EXIF — comportement hérité tel quel de l'ancien `convert`/`mogrify` (qui ne l'appliquaient pas non plus sans `-auto-orient` explicite), pas une régression de cette migration. Une photo au tag EXIF Orientation non standard s'afficherait donc de travers dans les deux mondes ; à corriger séparément si constaté, pas dans le périmètre de ce refactor.
+
+Le workflow CI (`.github/workflows/deploy.yml`) installe les dépendances npm puis appelle `npm run build:webp` avant `npx ng build --base-href …`, et publie `dist/portfolio/browser` — source de vérité unique, ne pas dupliquer la logique d'optimisation inline dans le YAML. `package-lock.json` doit être commité pour que le cache npm de CI soit efficace et les builds reproductibles. Pas d'étape de minification séparée : esbuild s'en charge.
+
+### TypeScript
+
+`strict` + `strictTemplates` sont activés (`tsconfig.json`). `angular.json` fixe `schematics.component.style: "none"` — aucun composant n'a de style propre (voir plus haut), un `ng generate component` ne doit pas scaffolder de SCSS orphelin.
 
 ## Mémoire
 

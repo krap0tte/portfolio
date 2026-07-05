@@ -1,9 +1,0 @@
----
-layout: default
-title: "Galerie"
-show_filters: true
----
-{% assign all_series = site.series | sort: "title" %}
-{% include cover.html %}
-{% include gallery-grid.html series=all_series %}
-{% include lightbox.html %}

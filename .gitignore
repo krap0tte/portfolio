@@ -1,8 +1,9 @@
-_site/
-.sass-cache/
-.jekyll-cache/
-.jekyll-metadata
-vendor/
+# Angular / Node
+/node_modules
+/dist
+/.angular/cache
+npm-debug.log
+
 .DS_Store
 
 # Generated image variants (bin/build-webp.sh)
