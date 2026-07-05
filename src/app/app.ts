@@ -1,19 +1,15 @@
 import { Component, ElementRef, afterNextRender, inject, viewChild } from '@angular/core';
-import { Cover } from './cover';
-import { FilterBar } from './filter-bar';
-import { FilterMobile } from './filter-mobile';
+import { AboutButton } from './about-button';
 import { GalleryGrid } from './gallery-grid';
 import { GalleryState } from './gallery-state';
 import { Lightbox } from './lightbox';
 
 @Component({
   selector: 'app-root',
-  imports: [Cover, FilterBar, FilterMobile, GalleryGrid, Lightbox],
+  imports: [AboutButton, GalleryGrid, Lightbox],
   template: `
-    <app-filter-bar />
-    <app-filter-mobile />
+    <app-about-button />
     <main class="site-main">
-      <app-cover />
       <app-gallery-grid />
       <app-lightbox />
     </main>

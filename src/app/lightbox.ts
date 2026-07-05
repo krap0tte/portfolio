@@ -7,11 +7,9 @@ import {
   viewChild,
 } from '@angular/core';
 import { GalleryState } from './gallery-state';
-import { PHOTOS } from './series';
+import { PHOTOS } from './photos';
 import { trapTabFocus } from './focus-trap';
 
-// La liste des indices visibles est synchronisée depuis GalleryState pour que
-// la navigation reste dans le filtre actif sans interroger le DOM.
 @Component({
   selector: 'app-lightbox',
   template: `
@@ -56,9 +54,9 @@ export class Lightbox {
   private readonly stage = viewChild.required<ElementRef<HTMLElement>>('stage');
   private readonly loader = viewChild.required<ElementRef<HTMLElement>>('loader');
 
+  private readonly total = this.photos.length;
   private current = 0;
   private lastFocused: Element | null = null;
-  private visible: number[] = [];
   private navTimeout: ReturnType<typeof setTimeout> | null = null;
   private swipeTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -68,13 +66,6 @@ export class Lightbox {
   }
 
   constructor() {
-    effect(() => {
-      this.visible = this.state.visible();
-      if (this.isOpen) {
-        this.prev().nativeElement.hidden = this.next().nativeElement.hidden = this.visible.length < 2;
-      }
-    });
-
     effect(() => {
       const index = this.state.lightboxIndex();
       if (index !== null) this.open(index);
@@ -109,7 +100,7 @@ export class Lightbox {
     stage.addEventListener('touchmove', e => {
       const delta = e.touches[0].clientX - swipeStartX;
       if (!swipeDragging && Math.abs(delta) > 6) swipeDragging = true;
-      if (swipeDragging && this.visible.length > 1) {
+      if (swipeDragging && this.total > 1) {
         img.style.transform = `translateX(${delta}px)`;
         img.style.opacity = String(Math.max(0, 1 - Math.abs(delta) / (window.innerWidth * 0.6)));
       }
@@ -120,7 +111,7 @@ export class Lightbox {
       const delta = e.changedTouches[0].clientX - swipeStartX;
       const threshold = window.innerWidth * 0.25;
 
-      if (this.visible.length > 1 && Math.abs(delta) > threshold) {
+      if (this.total > 1 && Math.abs(delta) > threshold) {
         const dir = delta < 0 ? 1 : -1;
         const exit = delta < 0 ? '-110%' : '110%';
         img.style.transition = 'transform 0.22s ease-out, opacity 0.22s ease-out';
@@ -128,8 +119,7 @@ export class Lightbox {
         img.style.opacity = '0';
         this.swipeTimeout = setTimeout(() => {
           this.swipeTimeout = null;
-          const pos = this.visible.indexOf(this.current);
-          this.current = this.visible[(pos + dir + this.visible.length) % this.visible.length];
+          this.current = (this.current + dir + this.total) % this.total;
           img.style.transition = 'none';
           img.style.transform = '';
           img.style.opacity = '';
@@ -199,7 +189,7 @@ export class Lightbox {
     img.src = p.full;
     if (img.complete && img.naturalWidth) onLoad();
 
-    this.prev().nativeElement.hidden = this.next().nativeElement.hidden = this.visible.length < 2;
+    this.prev().nativeElement.hidden = this.next().nativeElement.hidden = this.total < 2;
   }
 
   private open(index: number): void {
@@ -231,8 +221,7 @@ export class Lightbox {
     this.clearTimeouts();
 
     const img = this.img().nativeElement;
-    const pos = this.visible.indexOf(this.current);
-    const next = this.visible[(pos + dir + this.visible.length) % this.visible.length];
+    const next = (this.current + dir + this.total) % this.total;
 
     if (hadPendingSwipe) {
       // Un swipe était en cours de sortie : on annule son déplacement

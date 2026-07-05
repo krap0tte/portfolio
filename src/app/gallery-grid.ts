@@ -1,24 +1,16 @@
-import {
-  Component,
-  ElementRef,
-  afterRenderEffect,
-  inject,
-  viewChildren,
-} from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { GalleryState } from './gallery-state';
-import { PHOTOS } from './series';
+import { PHOTOS } from './photos';
 
-// Grille plate sur toutes les séries : chaque card garde son index global
-// (position dans PHOTOS) — c'est cet index que la lightbox utilise pour
-// naviguer. Le filtrage est chorégraphié en impératif (fade 200 ms puis
-// bascule display) pour reproduire l'animation d'origine.
+// Grille plate : chaque card garde son index global (position dans PHOTOS) —
+// c'est cet index que la lightbox utilise pour naviguer.
 @Component({
   selector: 'app-gallery-grid',
   template: `
     <section class="gallery-grid">
       <div class="gallery-grid__container">
         @for (p of photos; track $index; let i = $index) {
-          <a [href]="p.full" class="gallery-card" #card (click)="open($event, i)">
+          <a [href]="p.full" class="gallery-card" (click)="open($event, i)">
             <div class="gallery-card__img-wrap">
               <img
                 [src]="p.thumb"
@@ -44,18 +36,6 @@ export class GalleryGrid {
     '(max-width: 1023px) 50vw, (max-width: 1279px) 33vw, (max-width: 1599px) 25vw, (max-width: 1999px) 20vw, 17vw';
 
   private readonly state = inject(GalleryState);
-  private readonly cards = viewChildren<ElementRef<HTMLElement>>('card');
-  private filterTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  constructor() {
-    // Premier rendu : toutes les cards sont visibles, aucune animation.
-    let first = true;
-    afterRenderEffect(() => {
-      const filter = this.state.filter();
-      if (first) { first = false; return; }
-      this.apply(filter);
-    });
-  }
 
   protected open(e: Event, index: number): void {
     e.preventDefault();
@@ -66,33 +46,5 @@ export class GalleryGrid {
     const img = e.target as HTMLElement;
     img.classList.add('is-loaded');
     img.closest('.gallery-card__img-wrap')?.classList.add('is-loaded');
-  }
-
-  // filter === null → affiche tout ; sinon filtre par série.
-  private apply(filter: string | null): void {
-    if (this.filterTimeout) { clearTimeout(this.filterTimeout); this.filterTimeout = null; }
-    const cards = this.cards().map(c => c.nativeElement);
-
-    cards.forEach(card => {
-      if (card.style.display !== 'none') card.style.opacity = '0';
-    });
-
-    this.filterTimeout = setTimeout(() => {
-      this.filterTimeout = null;
-      cards.forEach((card, i) => {
-        if (filter === null || this.photos[i].series === filter) {
-          card.style.display = '';
-          card.style.opacity = '0';
-        } else {
-          card.style.display = 'none';
-          card.style.opacity = '';
-        }
-      });
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        cards.forEach(card => {
-          if (card.style.display !== 'none') card.style.opacity = '';
-        });
-      }));
-    }, 200);
   }
 }

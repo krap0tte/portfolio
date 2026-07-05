@@ -16,7 +16,7 @@
 
 // Les éléments hôtes Angular sont retirés du layout : le CSS voit exactement
 // la même arborescence qu'avant la migration (pas de wrapper intercalé).
-app-root, app-cover, app-filter-bar, app-filter-mobile, app-gallery-grid, app-lightbox {
+app-root, app-about-button, app-gallery-grid, app-lightbox {
   display: contents;
 }
 

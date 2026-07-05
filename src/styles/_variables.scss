@@ -6,7 +6,7 @@ $border:     #2e2e2b;
 $text:       #efefed;
 $text-muted: #8a8a87;
 
-$color-void: #0a0a09; // fond sombre absolu — cover et lightbox
+$color-void: #0a0a09; // fond sombre absolu — lightbox
 
 // ─── Typography ─────────────────────────────────────────────────────────────
 $font-body:  'Jost', 'Helvetica Neue', sans-serif;
@@ -15,7 +15,6 @@ $weight-ui:  400;
 
 $size-xs:   0.75rem;
 $size-base: 1rem;
-$size-lg:   1.5rem;
 
 // ─── Layout ─────────────────────────────────────────────────────────────────
 $radius-pill: 999px;
@@ -23,9 +22,7 @@ $ui-bottom:   2rem;
 
 // ─── Z-index ────────────────────────────────────────────────────────────────
 $z-ui:       100;
-$z-overlay:  150;
 $z-lightbox: 200;
-$z-cover:    300;
 
 // ─── Breakpoints ────────────────────────────────────────────────────────────
 $bp-md:  768px;

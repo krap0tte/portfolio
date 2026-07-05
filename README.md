@@ -1,6 +1,6 @@
 # Portfolio Photographique — Angular
 
-Portfolio minimaliste hébergeable sur GitHub Pages. Galerie plein-écran, visionneuse lightbox au clavier et au glissement, sélecteur de série avec pill animé, thème sombre fixe, images optimisées automatiquement au build.
+Portfolio minimaliste hébergeable sur GitHub Pages. Galerie plein-écran, visionneuse lightbox au clavier et au glissement, thème sombre fixe, images optimisées automatiquement au build.
 
 ---
 
@@ -58,19 +58,16 @@ portfolio/
 ├── tsconfig.json            ← Configuration TypeScript (strict)
 │
 ├── src/
-│   ├── index.html           ← Coquille HTML : meta, preloads covers (pas les fontes)
+│   ├── index.html           ← Coquille HTML : meta (pas de preloads)
 │   ├── main.ts              ← Bootstrap de l'application (zoneless)
 │   │
 │   ├── app/
-│   │   ├── series.ts        ← Séries et photos — source unique de vérité
-│   │   ├── gallery-state.ts ← État partagé (signals) : filtre, À propos, lightbox
-│   │   ├── constants.ts     ← BP_MD (768) — partagé filter-bar.ts / cover.ts
-│   │   ├── focus-trap.ts    ← trapTabFocus() — partagé lightbox.ts / filter-mobile.ts
+│   │   ├── photos.ts        ← Photos — source unique de vérité
+│   │   ├── gallery-state.ts ← État partagé (signals) : À propos, lightbox
+│   │   ├── focus-trap.ts    ← trapTabFocus() — partagé lightbox.ts
 │   │   ├── app.ts           ← Composant racine : composition + footer À propos
-│   │   ├── cover.ts         ← Splash plein-écran avec photo de couverture
-│   │   ├── filter-bar.ts    ← Filter-bar desktop : pill défilante, indicateur, flèches
-│   │   ├── filter-mobile.ts ← Sélecteur de série mobile (overlay)
-│   │   ├── gallery-grid.ts  ← Grille de cards + animation de filtre
+│   │   ├── about-button.ts  ← Bouton À propos (même rendu à tous les breakpoints)
+│   │   ├── gallery-grid.ts  ← Grille de cards
 │   │   └── lightbox.ts      ← Visionneuse plein écran (clavier, swipe, focus trap)
 │   │
 │   └── styles/              ← Styles SCSS globaux (Dart Sass, @use)
@@ -79,28 +76,18 @@ portfolio/
 │       ├── _variables.scss  ← Tokens : typographie, tailles, breakpoints, z-index
 │       ├── _mixins.scss     ← Mixin surface (surfaces flottantes)
 │       ├── _base.scss       ← Reset + CSS custom properties (thème sombre fixe)
-│       ├── _cover.scss      ← Splash de couverture
-│       ├── _layout.scss     ← Filter-bar, pill, menu mobile, site-main, site-footer
+│       ├── _layout.scss     ← Bouton À propos, site-main, site-footer
 │       ├── _gallery.scss    ← Grille responsive, cards, shimmer
 │       └── _lightbox.scss   ← Visionneuse plein écran
 │
 ├── assets/
 │   ├── fonts/               ← WOFF2 auto-hébergés ; référencés via url() SCSS (esbuild les copie, hachés, dans dist/.../media/ — pas via le glob assets d'angular.json)
 │   └── images/               ← Copiées telles quelles dans le build (glob assets d'angular.json)
-│       ├── cover/           ← Photos de couverture
-│       │   ├── cover.jpg          ← Original commité
-│       │   ├── cover.webp         ← Généré 1920 px (1×) — gitignored
-│       │   ├── cover-2x.webp      ← Généré 3840 px max (Retina 2×) — gitignored
-│       │   ├── cover_phone.jpg    ← Variante mobile commitée
-│       │   └── cover_phone.webp   ← Généré — gitignored
-│       └── photos/          ← Photos de galerie, un sous-dossier par série
-│           ├── architecture/
-│           │   ├── photo-03.jpg            ← Original commité
-│           │   ├── photo-03.webp           ← Généré pleine résolution — gitignored
-│           │   ├── photo-03-thumb.webp     ← Généré 1200 px — gitignored
-│           │   └── photo-03-thumb-2x.webp  ← Généré 2400 px (Retina 2×) — gitignored
-│           ├── paysage/
-│           └── portrait/
+│       └── photos/          ← Photos de galerie, toutes à plat
+│           ├── photo-03.jpg            ← Original commité
+│           ├── photo-03.webp           ← Généré pleine résolution — gitignored
+│           ├── photo-03-thumb.webp     ← Généré 1200 px — gitignored
+│           └── photo-03-thumb-2x.webp  ← Généré 2400 px (Retina 2×) — gitignored
 │
 └── bin/
     ├── lib/images.mjs       ← Helpers partagés : recherche JPEG récursive, test de fraîcheur (mtime)
@@ -112,30 +99,18 @@ portfolio/
 
 ## Ajouter du contenu
 
-### Ajouter une photo à une série existante
+### Ajouter une photo
 
-1. Placez le fichier image dans `assets/images/photos/<serie>/` (JPG, recommandé ≥ 2000 px de large)
-2. Ajoutez son nom (sans extension) dans la liste `photos` de la série correspondante :
-
-```ts
-// src/app/series.ts
-{ slug: 'paysage', title: 'Paysage', photos: ['photo-06', 'photo-01', 'photo-07', 'photo-10'] },
-//                                                                       nouvelle photo ↑
-```
-
-L'ordre dans la liste détermine l'ordre d'affichage dans la galerie et de navigation dans la lightbox.
-
-### Créer une nouvelle série
-
-1. Ajoutez une entrée dans `SERIES` (`src/app/series.ts`) — le `slug` doit correspondre au nom du dossier d'images :
+1. Placez le fichier image dans `assets/images/photos/` (JPG, recommandé ≥ 2000 px de large)
+2. Ajoutez son nom (sans extension) dans `FILES` :
 
 ```ts
-{ slug: 'ma-serie', title: 'Ma série', photos: ['photo-11', 'photo-12'] },
+// src/app/photos.ts
+const FILES = ['photo-01', 'photo-02', /* … */, 'photo-10'].sort();
+//                                                ↑ nouvelle photo
 ```
 
-2. Créez le sous-dossier `assets/images/photos/ma-serie/` et placez-y les images
-
-Les boutons du sélecteur de série sont générés automatiquement à partir de `SERIES` (triés par titre) — aucune autre configuration n'est requise.
+L'affichage est trié par nom de fichier (galerie et navigation dans la lightbox).
 
 ---
 
@@ -149,15 +124,13 @@ Pour la production :
 npm run build:webp
 ```
 
-Pour chaque photo dans `assets/images/photos/<serie>/`, le script génère :
+Pour chaque photo dans `assets/images/photos/`, le script génère :
 
 | Fichier | Taille max | Usage |
 |---|---|---|
 | `photo-XX-thumb.webp` | 1200 px | Miniature grille galerie |
 | `photo-XX-thumb-2x.webp` | 2400 px | Miniature Retina 2× |
 | `photo-XX.webp` | Résolution native | Lightbox |
-
-Pour les covers desktop, deux variantes sont générées : `cover.webp` (1920 px, affichage standard) et `cover-2x.webp` (3840 px max, Retina 2×). Les covers mobiles (`*_phone`) génèrent une seule variante WebP.
 
 Les fichiers générés sont listés dans `.gitignore` et ne sont **pas** commités. En CI, le workflow les régénère à chaque build.
 
@@ -169,7 +142,7 @@ Les fichiers générés sont listés dans `.gitignore` et ne sont **pas** commit
 
 - **Titre et description** : dans `src/index.html` (`<title>`, `<meta name="description">`) et le footer de `src/app/app.ts`.
 - **Langue** : attribut `lang` de `src/index.html`.
-- **Séries et photos** : `src/app/series.ts`.
+- **Photos** : `src/app/photos.ts`.
 
 Le site fonctionne aussi bien déployé à la racine d'un domaine (`username.github.io`) que sous un sous-chemin (dépôt projet, `username.github.io/nom-du-repo/`) : tous les chemins d'assets sont relatifs et résolus via `<base href>`, posé au build par `--base-href` (voir Déploiement). Aucun ajustement manuel de chemin n'est nécessaire.
 
@@ -185,24 +158,23 @@ src/styles/main.scss   ← Point d'entrée (déclaré dans angular.json)
   @use "variables"     ← Tokens Sass : typo, tailles, breakpoints, z-index
   @use "mixins"        ← Mixin surface (surfaces flottantes)
   @use "base"          ← Reset, CSS custom properties (thème sombre fixe)
-  @use "cover"         ← Splash de couverture
-  @use "layout"        ← Filter-bar, pill, menu mobile, site-main, site-footer
+  @use "layout"        ← Bouton À propos, site-main, site-footer
   @use "gallery"       ← Grille responsive, cards, shimmer
   @use "lightbox"      ← Visionneuse plein écran
 ```
 
 Chaque partiel commence par `@use 'variables' as *;` pour accéder aux tokens sans préfixe.
 
-Les fontes Jost et Climate Crisis sont **auto-hébergées** dans `assets/fonts/` (WOFF2, subsets latin et latin-ext). Le `font-display: block` est intentionnel : il garantit que les mesures JavaScript de l'indicateur de filtre s'effectuent avec les métriques réelles de la fonte, sans reflow de layout après chargement.
+Les fontes Jost et Climate Crisis sont **auto-hébergées** dans `assets/fonts/` (WOFF2, subsets latin et latin-ext). Le `font-display: block` est intentionnel : il supprime le swap de police, sans reflow de layout après chargement.
 
-Les composants suivent la convention **BEM** (`.gallery-card__img-wrap`, `.lightbox__nav--prev`, etc.). Les éléments hôtes Angular (`app-cover`, `app-gallery-grid`…) sont neutralisés par `display: contents` dans `_base.scss` : le CSS voit la même arborescence qu'un document statique.
+Les composants suivent la convention **BEM** (`.gallery-card__img-wrap`, `.lightbox__nav--prev`, etc.). Les éléments hôtes Angular (`app-gallery-grid`, `app-lightbox`…) sont neutralisés par `display: contents` dans `_base.scss` : le CSS voit la même arborescence qu'un document statique.
 
 ### Layout desktop / mobile
 
 Le seuil unique est **768 px** (`$bp-md`) :
 
-- **< 768 px (mobile)** : grille 2 colonnes plein-écran, sélecteur de série en overlay, flèches lightbox masquées (navigation au glissement).
-- **≥ 768 px (desktop)** : grille plein-écran, pill de filtre centré en bas, flèches lightbox visibles.
+- **< 768 px (mobile)** : grille 2 colonnes plein-écran, flèches lightbox masquées (navigation au glissement).
+- **≥ 768 px (desktop)** : grille plein-écran, flèches lightbox visibles.
 
 ### Thème
 

@@ -1,9 +1,8 @@
 // ─── Fontes auto-hébergées ───────────────────────────────────────────────────
 // font-display: block supprime le swap de police : le navigateur retient le
 // rendu jusqu'à ce que la fonte soit prête, sans reflow de layout après coup.
-// Cela garantit que document.fonts.ready et les mesures JS sont cohérentes.
 
-// Climate Crisis — variable font (cover uniquement)
+// Climate Crisis — variable font (nom en footer uniquement)
 @font-face {
   font-family: 'Climate Crisis';
   font-style: normal;

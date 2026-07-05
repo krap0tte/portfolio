@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Redimensionne les JPEG photo > 4K en place (covers exclues — gérées par build-webp.mjs).
+// Redimensionne les JPEG photo > 4K en place.
 // Usage : node bin/normalize.mjs
 import { existsSync, writeFileSync } from 'node:fs';
 import { basename } from 'node:path';
