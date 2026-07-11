@@ -4,94 +4,60 @@ Ce fichier fournit des instructions à Claude Code (claude.ai/code) pour travail
 
 ## Stack
 
-SPA Angular 22 (standalone, zoneless, signals), TypeScript strict (`strict` + `strictTemplates`), SCSS global (Dart Sass). Pas de router, pas de forms, pas de SSR — page unique rendue côté client. Node ≥ 20 requis en développement. Déploiement GitHub Pages en **sous-chemin** (dépôt projet, pas `username.github.io`) — voir la section CSS pour les implications sur les chemins d'assets.
+Site statique en **HTML / CSS / JavaScript vanilla**. Aucun framework, aucun bundler, aucune étape de build, aucun TypeScript. Page unique rendue côté client par un unique script classique (pas de module ES). SCSS abandonné au profit de CSS natif (custom properties). Déploiement GitHub Pages en **sous-chemin** (dépôt projet, pas `username.github.io`) — d'où l'importance des chemins d'assets relatifs (voir la section CSS).
+
+Le site n'a **aucune dépendance**, ni d'exécution ni de développement : pas de `package.json`, pas de `node_modules`. `index.html` s'ouvre directement dans un navigateur (y compris en `file://`) ou se sert via n'importe quel serveur statique.
 
 ## Commandes
 
 ```bash
-# Installer les dépendances
-npm install
-
-# Serveur de développement (rechargement automatique inclus)
-npm start
-
-# Normaliser les photos si un JPEG dépasse 4K (optionnel)
-npm run normalize
-
-# Build de production (génère les WebP puis compile)
-npm run build:webp && npm run build
+# Servir le site en local (n'importe quel serveur statique fait l'affaire)
+python3 -m http.server 4200        # → http://localhost:4200
 ```
+
+Il n'y a **pas** de build ni de test à lancer : les fichiers servis (`index.html`, `css/`, `js/`, `assets/`) sont la source ET la sortie.
 
 ## Architecture
 
-### Modèle de contenu — `src/app/photos.ts`
+### Modèle de contenu — `js/gallery.js`
 
-`PHOTOS` dans `src/app/photos.ts` est la source unique de vérité : une liste plate de photos (pas de regroupement), triée par nom de fichier. Ajouter une photo = déposer le fichier dans `assets/images/photos/` et ajouter son nom (sans extension) à `FILES`. L'index de position dans `PHOTOS` est celui que la lightbox utilise pour naviguer.
+`PHOTOS` (dérivé de `FILES` en haut de `js/gallery.js`) est la source unique de vérité : une liste plate de photos, triée par nom de fichier. Ajouter une photo = déposer le **WebP** dans `assets/images/photos/` et ajouter son nom (sans extension) à `FILES`. L'index de position dans `PHOTOS` est celui que la lightbox utilise pour naviguer, et c'est à partir de cette même liste que la grille est générée — grille et lightbox ne peuvent donc pas diverger.
 
-Les chemins d'images sont construits dans `photos.ts` selon `isDevMode()` : JPEG originaux en développement, variantes WebP en production. C'est le seul endroit où cette distinction existe.
+Toutes les images sont des **WebP** commités et servis directement (`assets/images/photos/photo-XX.webp`), le même fichier servant à la fois de vignette de grille et de vue pleine résolution en lightbox. Pas de pipeline, pas de variantes générées, pas de distinction dev/prod : le WebP est le format définitif du dépôt (conversion faite une fois avec `cwebp -q 82`, l'ancien `bin/build-webp.mjs` a été supprimé). Une nouvelle photo à ajouter se convertit donc manuellement (`cwebp -q 82 -m 6 photo.jpg -o photo.webp`) avant dépôt.
 
-### État partagé : `GalleryState` (signals)
+### `js/gallery.js`
 
-`src/app/gallery-state.ts` est le hub central — il remplace l'ancienne classe `Gallery extends EventTarget` et ses événements `filterchange`/`aboutstate`. Signal :
+Un seul fichier, encapsulé dans une IIFE (`'use strict'`), chargé via `<script src>` classique (pas `type="module"`, pour rester ouvrable en `file://`). Trois responsabilités :
 
-- `lightboxIndex` (`number | null`) — demande d'ouverture de la lightbox ; remis à null à la fermeture (sinon rouvrir la même photo ne notifierait pas).
+- **`renderGrid()`** — génère les `<a class="gallery-card">` à partir de `PHOTOS` et les injecte dans `.gallery-grid__container`. Chaque card est un lien vers le JPEG pleine résolution (progressive enhancement : si le JS échoue, le lien ouvre quand même l'image), dont le clic est intercepté (`preventDefault`) pour ouvrir la lightbox à l'index global. Les listeners `load`/`error` sont posés **avant** d'assigner `src` (couvre le cas d'une image déjà en cache).
+- **`lightbox`** (IIFE fermée) — visionneuse : navigation par index global sur `PHOTOS` (modulo la longueur totale), swipe tactile, clavier, focus trap, dimensionnement DPR, loader. `navTimeout` (nav clic/clavier) et `swipeTimeout` (nav swipe) sont annulés ensemble via `clearTimeouts()` dès qu'une nouvelle navigation démarre — sinon un swipe suivi d'un clic sur une flèche fait cohabiter deux mises à jour de `current`. `isOpen()` est dérivé de la classe DOM `is-open`, pas un champ à synchroniser. Écouteurs touch en `{ passive: true }`. La coquille HTML de la lightbox est statique dans `index.html` ; le JS ne fait que la câbler (`init()` requête les éléments, `bind()` pose les écouteurs).
+- **`wireHeader()`** — la marque « Demo » du header remonte en haut de page (`scrollTo({ top: 0, behavior: 'smooth' })`). Pas de routage (le site n'a qu'une page) : « retour à l'accueil » = remonter en haut, pas une navigation.
 
-Il n'y a plus de section « À propos » ni d'état associé (`isAbout`, `about-button.ts`) — supprimés intentionnellement, le site n'est plus que le header, la grille et la lightbox.
+`trapTabFocus()` est une fonction locale à `gallery.js` (piège du focus Tab/Shift+Tab dans la lightbox). S'il fallait un jour un second modal, l'extraire plutôt que la redupliquer.
 
-### Composants (`src/app/`)
+Contrôles de la lightbox en liens texte (pas de boutons icônes/cercles, pas de compteur, pas de scrim sombre) fixés en bas à gauche : « Précédent / Suivant » (masqué sous 768 px, swipe uniquement) et « Grille » (ferme la visionneuse, seul contrôle toujours visible). Fond de la visionneuse = `var(--bg)`, aligné sur le thème clair du site.
 
-Tous standalone, templates inline, **aucun style par composant** — le SCSS est global et les éléments hôtes (`app-gallery-grid`, etc.) sont neutralisés par `display: contents` dans `_base.scss`, donc le CSS voit la même arborescence qu'avant la migration.
+Règle générale : les chorégraphies d'animation, mesures DOM et gestion du focus sont impératives — c'est un choix assumé, hérité du portage depuis Angular ; ne pas chercher à les « abstraire » prématurément.
 
-- `app.ts` (App) — composition minimale : header, grille, lightbox.
-- `site-header.ts` — petit header, marque « Demo » centrée, cliquable (`scrollTo({ top: 0, behavior: 'smooth' })`) pour remonter en haut de la grille. Pas de routage (le site n'a qu'une page) : « retour à l'accueil » signifie remonter en haut, pas une navigation.
-- `gallery-grid.ts` — boucle plate unique sur `PHOTOS`, aucune animation de filtre (il n'y a plus de filtre). Grille en masonry (CSS `columns`, pas `grid`) : chaque miniature garde son ratio naturel (pas de crop carré), `break-inside: avoid` sur `.gallery-card` évite qu'une image soit coupée entre deux colonnes. Compromis assumé de ce choix : `PHOTOS` ne porte pas les dimensions intrinsèques de chaque photo, donc `.gallery-card__img-wrap` n'a pas de hauteur réservée avant chargement (pas d'`aspect-ratio` ni de `width`/`height` HTML) — le shimmer de chargement peut apparaître avec une hauteur quasi nulle et la colonne se réajuste quand l'image finit de charger. Accepté au profit de ratios non tronqués ; à revisiter seulement si ça devient gênant en usage réel.
-- `lightbox.ts` — visionneuse ; navigation par index global sur `PHOTOS` (modulo la longueur totale), swipe tactile, clavier, focus trap, dimensionnement DPR. Écouteurs touch bindés manuellement (`passive: true` requis). `navTimeout` (nav clic/clavier) et `swipeTimeout` (nav swipe) sont annulés ensemble via `clearTimeouts()` dès qu'une nouvelle navigation démarre — sinon un swipe suivi d'un clic sur une flèche fait cohabiter deux mises à jour de `current`. `isOpen` est un getter dérivé de la classe DOM `is-open`, pas un champ à synchroniser. Contrôles en liens texte (pas de boutons icônes/cercles, pas de compteur, pas de scrim sombre) fixés en bas à gauche : « Précédent / Suivant » (masqué sous `$bp-md`, swipe uniquement) et « Grille » (ferme la visionneuse, seul contrôle toujours visible). Fond de la visionneuse = `var(--bg)`, aligné sur le thème clair du site — plus de fond sombre dédié.
+### `index.html`
 
-`focus-trap.ts` (`trapTabFocus()`) est partagé — ne pas redupliquer la logique de piège de focus Tab dans un nouveau composant modal, importer depuis ce fichier.
+Page unique : `<header>` avec la marque, `<main>` contenant la `.gallery-grid` (conteneur vide, peuplé par le JS) et la coquille `.lightbox`. Pas de `<base href>` (les chemins relatifs se résolvent seuls sous un sous-chemin). Pas de `<link rel=preload>` — `font-display: block` évite déjà tout flash. Le `<script>` est en fin de `<body>` ; l'amorçage est en plus gardé par un test `document.readyState`.
 
-Règle générale : l'état partagé et les états de boutons sont déclaratifs (signals/bindings) ; les chorégraphies d'animation, mesures DOM et gestion du focus restent impératives — c'est un choix, ne pas « angulariser » ces séquences.
+### CSS — `css/style.css`
 
-### CSS
+Un seul fichier, CSS natif. Ordre : `@font-face` → `:root` (custom properties) → reset → header → grille → lightbox. Pas de préprocesseur, pas de nesting concaténant (les sélecteurs BEM sont écrits en toutes lettres). Convention BEM (`.gallery-card__img-wrap`, `.lightbox__nav-row`).
 
-Point d'entrée : `src/styles/main.scss` (déclaré dans `angular.json`). Chaque partiel commence par `@use 'variables' as *` pour accéder aux tokens sans préfixe. Convention BEM (`.gallery-card__img-wrap`, `.lightbox__nav-row`).
+**Chemins d'assets : toujours relatifs (jamais de `/` en tête).** Un chemin racine-absolu (`/assets/...`) casserait le déploiement en dépôt projet GitHub Pages (`username.github.io/portfolio/`) — ce dépôt en est un. Les `url()` de `@font-face` pointent `../assets/fonts/...` (depuis `css/` vers `assets/fonts/` à la racine).
 
-Partiels SCSS et leur périmètre :
-- `_base.scss` — reset (y compris `display: contents` sur **tous** les hôtes Angular, `app-root` inclus) + custom properties uniquement, aucun composant.
-- `_layout.scss` — `.site-header`, `.site-main`.
-- `_gallery.scss`, `_lightbox.scss` — composants autonomes.
+Point de rupture unique **768 px**. En dessous (≤ 767 px) : grille masonry 2 colonnes, navigation lightbox au glissement uniquement, flèches masquées. Au-dessus : grille masonry (3 à 6 colonnes selon la largeur), navigation par flèches. Grille en masonry via CSS `columns` (pas `grid`) : chaque miniature garde son ratio naturel (`break-inside: avoid` sur `.gallery-card`). Compromis assumé : `PHOTOS` ne porte pas les dimensions intrinsèques, donc pas de hauteur réservée avant chargement — le shimmer peut apparaître avec une hauteur quasi nulle et la colonne se réajuste au chargement.
 
-**Chemins d'assets : toujours relatifs (jamais de `/` en tête), pour que `<base href>` (posé par `--base-href` au build CI) les résolve correctement quel que soit le sous-chemin de déploiement.** Un chemin racine-absolu (`/assets/...`) ignore `<base href>` et casse tout déploiement en dépôt projet GitHub Pages (`username.github.io/portfolio/`) — ce dépôt en est un, ce n'est pas un cas hypothétique. S'applique à `photos.ts`, `src/index.html` et aux `url()` SCSS.
+Thème **clair fixe** — custom properties (`--bg`, `--bg-surface`, `--text`, `--text-muted`, `--shimmer-color`) déclarées sous `:root` uniquement, pas de bascule, pas de `localStorage`. La lightbox utilise `var(--bg)`, comme le reste du site.
 
-`_fonts.scss` référence les fontes via un chemin **relatif sur disque** (`../../assets/fonts/...`, depuis `src/styles/` jusqu'à `assets/fonts/` à la racine du dépôt) — pas un chemin relatif à l'URL de la page. C'est intentionnel et différent des autres assets : le plugin CSS d'esbuild résout et copie ces `url()` comme de vraies dépendances de build (hash de contenu, sortie dans `dist/.../media/`), contrairement à un chemin racine-absolu qu'il laisse passer tel quel. Conséquence : le nom de fichier haché n'est pas prévisible depuis un document statique, donc **aucun `<link rel=preload>` pour les fontes** dans `src/index.html` — `font-display: block` évite déjà tout flash visuel, seul le lancement du fetch aurait été avancé de quelques centaines de ms.
+Fontes **auto-hébergées** dans `assets/fonts/` (WOFF2, Jost + Climate Crisis, subsets latin/latin-ext). `font-display: block` supprime le swap de police sans reflow après coup.
 
-L'`assets` glob d'`angular.json` ne copie que `assets/images/**` (pas `assets/fonts/`) — copier les fontes brutes en plus des fichiers hachés produirait une sortie dupliquée et inutilisée.
+### Déploiement — `.github/workflows/deploy.yml`
 
-Point de rupture unique : `$bp-md = 768px`. En dessous (≤ 767px) : grille masonry 2 colonnes, navigation lightbox au glissement uniquement. Au-dessus (≥ 768px) : grille masonry (3 à 6 colonnes selon la largeur, `_gallery.scss`), navigation par flèches. `.gallery-grid` a un padding fluide (`clamp(1rem, 3vw, 2.5rem)`) à tous les breakpoints — plus de grille bord-à-bord.
-
-Variables de typographie dans `_variables.scss` : `$size-xs` (0.75rem).
-
-Le thème est clair fixe (palette `_variables.scss` : `$bg` blanc, `$text` quasi-noir). Les propriétés CSS (`--bg`, `--bg-surface`, `--text`, `--text-muted`, `--shimmer-color`) sont déclarées dans `_base.scss` sous `:root` uniquement — pas de bascule, pas de `localStorage`. La lightbox utilise `var(--bg)`, comme le reste du site — plus de fond sombre dédié (`$color-void` a été retiré de `_variables.scss`).
-
-### `src/index.html`
-
-Pas de `<link rel=preload>` (ni fontes, ni images — voir section CSS). `<base href="/">` par défaut, réécrit au build CI via `--base-href`.
-
-### Variantes d'images
-
-Les originaux (`.jpg`) sont commités dans `assets/images/` (racine du dépôt, copié tel quel dans le build via `angular.json`) ; les photos de galerie sont toutes à plat dans `assets/images/photos/` (pas de sous-dossier par photo). Les variantes générées sont dans `.gitignore` :
-- `photo-XX-thumb.webp` — 1200 px max, miniature grille (production uniquement)
-- `photo-XX-thumb-2x.webp` — 2400 px max, miniature Retina 2× (production uniquement)
-- `photo-XX.webp` — WebP pleine résolution, lightbox (production uniquement)
-
-En développement, le site utilise directement les JPEG originaux — aucune variante n'est nécessaire. `bin/build-webp.mjs` et `bin/normalize.mjs` (Node + sharp, aucun outil système requis) génèrent respectivement les variantes WebP et le redimensionnement des originaux surdimensionnés ; `bin/lib/images.mjs` mutualise entre les deux la découverte récursive des JPEG (`jpgsIn`) et le test de fraîcheur par mtime (`isFresh`, équivalent strict de `[ "$out" -nt "$src" ]` — pas `>=`, sinon un mtime égal après un `git checkout`/`rsync` laisserait une variante obsolète). Le helper `toWebp(src, out, resize)` dans `build-webp.mjs` reproduit la sémantique ImageMagick d'origine : `resize: { width, height, fit: 'inside' }` (ex-`"WxH>"`, miniatures et `normalize.mjs`) contraint une boîte englobante, `resize: null` réencode sans redimensionner — dans tous les cas, l'image n'est jamais agrandie (`withoutEnlargement`). `bin/build-webp.mjs` est idempotent par comparaison de mtime (`--force` pour régénérer sans en tenir compte) ; `bin/normalize.mjs` l'est par construction (relance sans effet une fois les dimensions sous le seuil). `normalize.mjs` écrit par-dessus le JPEG source — bufferisé via `.toBuffer()` avant écriture, sharp ne pouvant pas transformer un fichier en flux vers lui-même.
-
-Ni `build-webp.mjs` ni `normalize.mjs` n'appliquent `.rotate()`/auto-orientation EXIF — comportement hérité tel quel de l'ancien `convert`/`mogrify` (qui ne l'appliquaient pas non plus sans `-auto-orient` explicite), pas une régression de cette migration. Une photo au tag EXIF Orientation non standard s'afficherait donc de travers dans les deux mondes ; à corriger séparément si constaté, pas dans le périmètre de ce refactor.
-
-Le workflow CI (`.github/workflows/deploy.yml`) installe les dépendances npm puis appelle `npm run build:webp` avant `npx ng build --base-href …`, et publie `dist/portfolio/browser` — source de vérité unique, ne pas dupliquer la logique d'optimisation inline dans le YAML. `package-lock.json` doit être commité pour que le cache npm de CI soit efficace et les builds reproductibles. Pas d'étape de minification séparée : esbuild s'en charge.
-
-### TypeScript
-
-`strict` + `strictTemplates` sont activés (`tsconfig.json`). `angular.json` fixe `schematics.component.style: "none"` — aucun composant n'a de style propre (voir plus haut), un `ng generate component` ne doit pas scaffolder de SCSS orphelin.
+Site statique : **aucun build**. Le workflow assemble les fichiers servis (`index.html`, `css/`, `js/`, `assets/`) dans `_site/` et les publie via `actions/upload-pages-artifact` + `actions/deploy-pages`. Les chemins étant relatifs, pas de `--base-href` à injecter. Pas de `npm ci`, pas de Node.
 
 ## Mémoire
 

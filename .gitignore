@@ -1,18 +1,7 @@
-# Angular / Node
-/node_modules
-/dist
-/.angular/cache
-npm-debug.log
-
 .DS_Store
 
-# Generated image variants (bin/build-webp.sh)
-assets/images/**/*.webp
+# Assets lourds non référencés (restes de l'ère Jekyll)
+assets/images/cover/
 
-# Playwright
-node_modules/
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-/playwright/.auth/
+# Sortie assemblée pour le déploiement GitHub Pages
+/_site

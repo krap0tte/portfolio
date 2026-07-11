@@ -1,0 +1,271 @@
+/* ─── Fontes auto-hébergées ───────────────────────────────────────────────────
+   font-display: block supprime le swap de police : le navigateur retient le
+   rendu jusqu'à ce que la fonte soit prête, sans reflow de layout après coup.
+   Chemins relatifs depuis css/ vers assets/fonts/ à la racine du dépôt. */
+
+/* Climate Crisis — variable font (marque du header uniquement) */
+@font-face {
+  font-family: 'Climate Crisis';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url('../assets/fonts/climate-crisis-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+                 U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+                 U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Climate Crisis';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url('../assets/fonts/climate-crisis-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                 U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Jost — variable font (interface complète) */
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url('../assets/fonts/jost-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+                 U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+                 U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Jost';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url('../assets/fonts/jost-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                 U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ─── Thème ────────────────────────────────────────────────────────────────────
+   Thème clair fixe, pas de bascule. */
+:root {
+  --bg:            #ffffff;
+  --bg-surface:    #f0f0ee;
+  --text:          #1a1a18;
+  --text-muted:    #6e6e6b;
+  --shimmer-color: rgba(0, 0, 0, 0.06);
+}
+
+/* ─── Reset ────────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Jost', 'Helvetica Neue', sans-serif;
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul, ol { list-style: none; }
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ─── Header ───────────────────────────────────────────────────────────────── */
+.site-header {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.site-header__brand {
+  font-family: 'Climate Crisis', sans-serif;
+  font-size: clamp(1rem, 3vw, 1.5rem);
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+
+/* ─── Grille ───────────────────────────────────────────────────────────────────
+   Masonry en colonnes CSS : chaque miniature garde son ratio naturel.
+   Point de rupture unique 768px ; 2 → 6 colonnes selon la largeur. */
+.gallery-grid {
+  padding: 0 clamp(1rem, 3vw, 2.5rem) clamp(1rem, 3vw, 2.5rem);
+}
+
+.gallery-grid__container {
+  columns: 2;
+  column-gap: 1rem;
+}
+
+@media (min-width: 1024px) { .gallery-grid__container { columns: 3; } }
+@media (min-width: 1280px) { .gallery-grid__container { columns: 4; } }
+@media (min-width: 1600px) { .gallery-grid__container { columns: 5; } }
+@media (min-width: 2000px) { .gallery-grid__container { columns: 6; } }
+
+/* ─── Carte ────────────────────────────────────────────────────────────────── */
+.gallery-card {
+  display: block;
+  break-inside: avoid;
+  margin-bottom: 1rem;
+  transition: opacity 0.2s ease;
+}
+
+.gallery-card__img-wrap {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-surface);
+}
+
+.gallery-card__img-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--shimmer-color) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: card-shimmer 1.5s ease-in-out infinite;
+  transition: opacity 0.3s;
+}
+
+.gallery-card__img-wrap.is-loaded::after { opacity: 0; }
+
+.gallery-card__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.gallery-card__img.is-loaded { opacity: 1; }
+.gallery-card__img.is-loaded:hover { opacity: 0.88; }
+
+@keyframes card-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Lightbox ─────────────────────────────────────────────────────────────────
+   Fond aligné sur le thème clair du site (var(--bg)), pas de scrim sombre. */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.lightbox.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.lightbox__stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1rem, 3vw, 2.5rem);
+}
+
+.lightbox__img {
+  max-width: 100%;
+  max-height: 100%;
+  transition: opacity 0.2s ease;
+}
+
+.lightbox__img.is-loading { opacity: 0; }
+
+.lightbox__loader {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
+  border-top-color: rgba(0, 0, 0, 0.55);
+  border-radius: 50%;
+  animation: lb-spin 0.7s linear infinite;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.lightbox__loader.is-visible { opacity: 1; }
+
+.lightbox__controls {
+  position: fixed;
+  left: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.lightbox__nav-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Sous 768px : navigation au glissement uniquement, flèches masquées. */
+@media (max-width: 767px) {
+  .lightbox__nav-row { display: none; }
+}
+
+.lightbox__link {
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: color 0.15s;
+}
+
+.lightbox__link:hover { color: var(--text); }
+
+@keyframes lb-spin {
+  to { transform: rotate(360deg); }
+}
