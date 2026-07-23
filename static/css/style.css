@@ -103,7 +103,9 @@ button {
 /* ─── Header ───────────────────────────────────────────────────────────────── */
 .site-header {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
   padding: 1.5rem;
 }
 
@@ -113,6 +115,45 @@ button {
   letter-spacing: 0.02em;
   color: var(--text);
 }
+
+.site-header__nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem 1rem;
+}
+
+.site-header__nav-link {
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: color 0.15s;
+}
+
+.site-header__nav-link:hover { color: var(--text); }
+
+/* ─── Liste de catégories ──────────────────────────────────────────────────── */
+.categories-list {
+  padding: clamp(1rem, 3vw, 2.5rem);
+  display: flex;
+  justify-content: center;
+}
+
+.categories-list__items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.categories-list__link {
+  font-size: 1rem;
+  color: var(--text);
+  transition: color 0.15s;
+}
+
+.categories-list__link:hover { color: var(--text-muted); }
 
 /* ─── Grille ───────────────────────────────────────────────────────────────────
    Masonry en colonnes CSS : chaque miniature garde son ratio naturel.

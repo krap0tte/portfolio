@@ -4,19 +4,11 @@
   'use strict';
 
   // ─── Photos — source unique de vérité ──────────────────────────────────────
-  // Noms de fichiers (sans extension) dans assets/images/photos/, triés par nom.
-  // L'index de position dans PHOTOS est celui que la lightbox utilise pour naviguer.
-  // Ajouter une photo = déposer le JPEG et ajouter son nom ci-dessous.
-  var FILES = [
-    'photo-01', 'photo-02', 'photo-03', 'photo-04', 'photo-05',
-    'photo-06', 'photo-07', 'photo-08', 'photo-09'
-  ].sort();
-
-  var PHOTOS = FILES.map(function (name) {
-    // Chemins relatifs au document : fonctionne sous un sous-chemin GitHub Pages.
-    var src = 'assets/images/photos/' + name + '.webp';
-    return { full: src, thumb: src };
-  });
+  // Fournie par le template Zola (templates/base.html, bloc `photos`), déjà
+  // triée (plus récentes en premier) et déjà sous la forme {full, thumb}.
+  // Ne pas éditer à la main : dérivée de data/photos.toml, régénéré par
+  // bin/add-photo.sh.
+  var PHOTOS = window.PHOTOS || [];
 
   var TOTAL = PHOTOS.length;
 
@@ -278,12 +270,17 @@
   }
 
   // ─── Header ─────────────────────────────────────────────────────────────────
-  // Pas de routage : « retour à l'accueil » = remonter en haut de la grille.
+  // La marque est un vrai lien vers l'accueil (plusieurs pages désormais, avec
+  // les catégories). Si on est déjà sur l'accueil, on remonte en haut en douceur
+  // plutôt que de recharger la page — progressive enhancement au-dessus du lien.
   function wireHeader() {
     var brand = document.querySelector('.site-header__brand');
     if (brand) {
-      brand.addEventListener('click', function () {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+      brand.addEventListener('click', function (e) {
+        if (brand.pathname === window.location.pathname) {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
       });
     }
   }

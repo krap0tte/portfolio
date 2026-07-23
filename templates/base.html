@@ -3,19 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Galerie — Demo</title>
-  <meta name="description" content="Photographe — Portrait · Paysage · Architecture" />
-  <!-- Chemins relatifs (jamais de / en tête) : le site se déploie tel quel sous
-       un sous-chemin GitHub Pages (username.github.io/portfolio/) sans <base href>. -->
-  <link rel="stylesheet" href="css/style.css" />
+  <title>{% block title %}krapotte{% endblock title %}</title>
+  <meta name="description" content="{% block description %}Galerie de photographie{% endblock description %}" />
+  <link rel="stylesheet" href="{{ get_url(path="css/style.css") }}" />
 </head>
 <body>
   <header class="site-header">
-    <button class="site-header__brand" type="button">Demo</button>
+    <a class="site-header__brand" href="{{ config.base_url | safe }}/">krapotte</a>
+    {% set categories_section = get_section(path="categories/_index.md") %}
+    {% if categories_section.pages %}
+    <nav class="site-header__nav">
+      {% for cat in categories_section.pages %}<a class="site-header__nav-link" href="{{ cat.permalink | safe }}">{{ cat.title }}</a>{% endfor %}
+    </nav>
+    {% endif %}
   </header>
 
   <main class="site-main">
-    <!-- Grille : cartes générées par js/gallery.js à partir de la liste PHOTOS. -->
+    {% block main %}
     <section class="gallery-grid">
       <div class="gallery-grid__container"></div>
     </section>
@@ -35,8 +39,14 @@
         <button class="lightbox__link" type="button" data-lb="grid" aria-label="Retour à la grille">Grille</button>
       </div>
     </div>
+    {% endblock main %}
   </main>
 
-  <script src="js/gallery.js"></script>
+  {% block scripts %}
+  <script>
+    window.PHOTOS = [{% block photos %}{% endblock photos %}];
+  </script>
+  <script src="{{ get_url(path="js/gallery.js") }}"></script>
+  {% endblock scripts %}
 </body>
 </html>

@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }} — krapotte{% endblock title %}
+{% block description %}{{ page.title }}{% endblock description %}
+{% block photos %}{% set data = load_data(path="data/photos.toml") %}{% set cat = data.categories | filter(attribute="slug", value=page.slug) | first %}{% for name in cat.photos | reverse %}{ "full": "{{ get_url(path="assets/images/photos/" ~ page.slug ~ "/" ~ name ~ ".webp") }}", "thumb": "{{ get_url(path="assets/images/photos/" ~ page.slug ~ "/" ~ name ~ ".webp") }}" }{% if not loop.last %},{% endif %}
+{% endfor %}{% endblock photos %}

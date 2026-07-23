@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Catégories — krapotte{% endblock title %}
+{% block description %}Catégories de la galerie{% endblock description %}
+{% block main %}
+<section class="categories-list">
+  <ul class="categories-list__items">
+    {% for cat in section.pages %}
+    <li><a class="categories-list__link" href="{{ cat.permalink | safe }}">{{ cat.title }}</a></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock main %}
+{% block scripts %}{% endblock scripts %}

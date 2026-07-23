@@ -1,7 +1,4 @@
 .DS_Store
 
-# Assets lourds non référencés (restes de l'ère Jekyll)
-assets/images/cover/
-
-# Sortie assemblée pour le déploiement GitHub Pages
-/_site
+# Sortie générée par `zola build`
+/public

@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}krapotte{% endblock title %}
+{% block description %}Galerie de photographie{% endblock description %}
+{% block photos %}{% set data = load_data(path="data/photos.toml") %}{% for p in data.all | reverse %}{ "full": "{{ get_url(path="assets/images/photos/" ~ p.slug ~ "/" ~ p.file ~ ".webp") }}", "thumb": "{{ get_url(path="assets/images/photos/" ~ p.slug ~ "/" ~ p.file ~ ".webp") }}" }{% if not loop.last %},{% endif %}
+{% endfor %}{% endblock photos %}
