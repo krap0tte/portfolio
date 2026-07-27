@@ -3,19 +3,63 @@
 (function () {
   'use strict';
 
-  // ─── Photos — source unique de vérité ──────────────────────────────────────
-  // Fournie par le template Zola (templates/base.html, bloc `photos`), déjà
-  // triée (plus récentes en premier) et déjà sous la forme {full, thumb, thumb2x}.
-  // Ne pas éditer à la main : dérivée de data/photos.toml, régénéré par
-  // bin/add-photo.sh.
-  var PHOTOS = window.PHOTOS || [];
+  // ─── Séries — source unique de vérité ──────────────────────────────────────
+  // TOUTES les séries sont embarquées dans chaque page (templates/partials/
+  // serie.html), dans l'ordre chronologique décroissant, ce qui permet de
+  // basculer de l'une à l'autre sans aller chercher le serveur. Déjà triées et
+  // déjà sous la forme {full, thumb, thumb2x} — dérivées de data/photos.toml,
+  // régénéré par bin/add-photo.sh, jamais éditées à la main.
+  function readJSON(id) {
+    var el = document.getElementById(id);
+    if (!el) return null;
+    try { return JSON.parse(el.textContent); } catch (e) { return null; }
+  }
 
-  var TOTAL = PHOTOS.length;
+  var SERIES = readJSON('series-data') || [];
+  var CURRENT_SLUG = readJSON('series-current') || '';
 
-  // Largeur occupée par une miniature de la grille, par palier — doit suivre le
-  // nombre de colonnes de `.gallery-grid__container` dans style.css (2 → 6).
-  var GRID_SIZES = '(min-width: 2000px) 16vw, (min-width: 1600px) 19vw, ' +
-                   '(min-width: 1280px) 24vw, (min-width: 1024px) 32vw, 46vw';
+  function indexOfSlug(slug) {
+    for (var i = 0; i < SERIES.length; i++) {
+      if (SERIES[i].slug === slug) return i;
+    }
+    return -1;
+  }
+
+  // Chemin d'une URL de série, sans barre oblique finale. Comparer des
+  // `pathname` normalisés plutôt que des suffixes de chaînes : deux slugs dont
+  // l'un se termine comme l'autre (« her-friends » et « lotus-and-her-friends »)
+  // se confondraient sur une comparaison de fin de chaîne.
+  function pathOf(url) {
+    var a = document.createElement('a');
+    a.href = url;
+    return a.pathname.replace(/\/+$/, '');
+  }
+
+  function indexOfPath(pathname) {
+    var path = pathname.replace(/\/+$/, '');
+    for (var i = 0; i < SERIES.length; i++) {
+      if (pathOf(SERIES[i].url) === path) return i;
+    }
+    return -1;
+  }
+
+  var currentSerie = Math.max(0, indexOfSlug(CURRENT_SLUG));
+
+  // Photos de la série affichée. Réaffectée à chaque bascule — d'où l'absence
+  // d'un `TOTAL` figé : la lightbox lit `PHOTOS.length` à chaque usage.
+  var PHOTOS = SERIES.length ? SERIES[currentSerie].photos : [];
+
+  // Le `sizes` de la grille n'est pas écrit ici : il est posé par le template
+  // sur `.gallery-grid__container` (`data-grid-sizes`) et relu au besoin. La
+  // liste de paliers double déjà les points de rupture du CSS, la dupliquer en
+  // plus entre template et script en ferait une troisième copie à maintenir.
+
+  // Un clic « ordinaire », par opposition à ceux que le navigateur doit traiter
+  // lui-même : Ctrl/Cmd/Maj ouvrent dans un nouvel onglet ou une nouvelle
+  // fenêtre, le clic milieu aussi. Ne jamais les intercepter.
+  function isPlainClick(e) {
+    return !e.metaKey && !e.ctrlKey && !e.shiftKey && e.button === 0;
+  }
 
   // ─── Piège de focus Tab/Shift+Tab (dialog modale) ──────────────────────────
   function trapTabFocus(focusable, e) {
@@ -85,7 +129,7 @@
       img.src = p.full;
       if (img.complete && img.naturalWidth) onLoad();
 
-      var hide = TOTAL < 2;
+      var hide = PHOTOS.length < 2;
       navRow.hidden = prevBtn.hidden = nextBtn.hidden = hide;
     }
 
@@ -112,7 +156,7 @@
       var hadPendingSwipe = swipeTimeout !== null;
       clearTimeouts();
 
-      var next = (current + dir + TOTAL) % TOTAL;
+      var next = (current + dir + PHOTOS.length) % PHOTOS.length;
 
       if (hadPendingSwipe) {
         // Un swipe était en cours de sortie : on annule son déplacement
@@ -157,7 +201,7 @@
       stage.addEventListener('touchmove', function (e) {
         var delta = e.touches[0].clientX - swipeStartX;
         if (!swipeDragging && Math.abs(delta) > 6) swipeDragging = true;
-        if (swipeDragging && TOTAL > 1) {
+        if (swipeDragging && PHOTOS.length > 1) {
           img.style.transform = 'translateX(' + delta + 'px)';
           img.style.opacity = String(Math.max(0, 1 - Math.abs(delta) / (window.innerWidth * 0.6)));
         }
@@ -168,7 +212,7 @@
         var delta = e.changedTouches[0].clientX - swipeStartX;
         var threshold = window.innerWidth * 0.25;
 
-        if (TOTAL > 1 && Math.abs(delta) > threshold) {
+        if (PHOTOS.length > 1 && Math.abs(delta) > threshold) {
           var dir = delta < 0 ? 1 : -1;
           var exit = delta < 0 ? '-110%' : '110%';
           img.style.transition = 'transform 0.22s ease-out, opacity 0.22s ease-out';
@@ -176,7 +220,7 @@
           img.style.opacity = '0';
           swipeTimeout = setTimeout(function () {
             swipeTimeout = null;
-            current = (current + dir + TOTAL) % TOTAL;
+            current = (current + dir + PHOTOS.length) % PHOTOS.length;
             img.style.transition = 'none';
             img.style.transform = '';
             img.style.opacity = '';
@@ -236,19 +280,73 @@
       bind();
     }
 
-    return { init: init, open: open };
+    // `close` est exposée pour la bascule de série : changer de série pendant
+    // que la visionneuse est ouverte la laisserait sur les photos de l'ancienne.
+    function closeIfOpen() {
+      if (root && isOpen()) close();
+    }
+
+    return { init: init, open: open, closeIfOpen: closeIfOpen };
   })();
 
   // ─── Grille ─────────────────────────────────────────────────────────────────
+  // La grille du chargement initial vient du TEMPLATE, pas d'ici : le scanner de
+  // préchargement du navigateur ne voit que le HTML, pas ce que le JS créera.
+  // `renderGrid()` ne sert donc plus qu'aux bascules de série.
+
+  function markLoaded(img) {
+    img.classList.add('is-loaded');
+    if (img.parentNode) img.parentNode.classList.add('is-loaded');
+  }
+
+  // Lève le shimmer quand la miniature est arrivée. Vaut pour les cartes venues
+  // du serveur comme pour celles créées ici. `complete` est le point clé : une
+  // image rendue par le template peut avoir FINI de charger avant que ce script
+  // s'exécute, auquel cas plus aucun `load` ne sera émis et la carte resterait
+  // bloquée sous le shimmer. Il est vrai aussi après une erreur — voulu, le
+  // shimmer doit disparaître dans les deux cas.
+  function watchImages(root) {
+    var imgs = root.querySelectorAll('.gallery-card__img');
+    for (var i = 0; i < imgs.length; i++) {
+      var img = imgs[i];
+      if (img.complete) { markLoaded(img); continue; }
+      img.addEventListener('load', function () { markLoaded(this); });
+      img.addEventListener('error', function () { markLoaded(this); });
+    }
+  }
+
+  // Ouverture de la lightbox par DÉLÉGATION sur le conteneur : un seul écouteur,
+  // qui couvre indifféremment les cartes du template et celles regénérées à la
+  // bascule. Poser un écouteur par carte à la création ne couvrait, par
+  // construction, que les secondes.
+  function wireGrid() {
+    var container = document.querySelector('.gallery-grid__container');
+    if (!container) return;
+    container.addEventListener('click', function (e) {
+      if (!isPlainClick(e)) return;
+      var card = e.target.closest('.gallery-card');
+      if (!card) return;
+      e.preventDefault();
+      var cards = container.querySelectorAll('.gallery-card');
+      var i = Array.prototype.indexOf.call(cards, card);
+      if (i >= 0) lightbox.open(i);
+    });
+  }
+
+  // ATTENTION : produit le MÊME balisage que `partials/serie.html`. Toute
+  // modification de l'un doit être reportée dans l'autre.
   function renderGrid() {
     var container = document.querySelector('.gallery-grid__container');
     if (!container) return;
+    container.textContent = '';
+    // Même valeur que celle posée par le template sur ses propres images.
+    var sizes = container.getAttribute('data-grid-sizes') || '';
     var frag = document.createDocumentFragment();
 
-    PHOTOS.forEach(function (p, i) {
+    PHOTOS.forEach(function (p) {
       var card = document.createElement('a');
       card.className = 'gallery-card';
-      card.href = p.full; // progressive enhancement : ouvre le JPEG si JS échoue
+      card.href = p.full; // progressive enhancement : ouvre la photo si JS échoue
 
       var wrap = document.createElement('div');
       wrap.className = 'gallery-card__img-wrap';
@@ -258,37 +356,130 @@
       img.alt = '';
       img.loading = 'lazy';
       img.decoding = 'async';
-
-      // Listeners posés avant `src` : couvre le cas d'une image déjà en cache.
-      var markLoaded = function () {
-        img.classList.add('is-loaded');
-        wrap.classList.add('is-loaded');
-      };
-      img.addEventListener('load', markLoaded);
-      img.addEventListener('error', markLoaded);
       // La grille n'est jamais en plein écran : on sert la miniature, et son
       // doublon 2x aux écrans denses. La pleine résolution reste pour la
       // lightbox (`p.full`), qui elle occupe tout l'écran.
       img.srcset = p.thumb + ' 1200w, ' + p.thumb2x + ' 2400w';
-      img.sizes = GRID_SIZES;
+      img.sizes = sizes;
       img.src = p.thumb;
 
       wrap.appendChild(img);
       card.appendChild(wrap);
-      card.addEventListener('click', function (e) {
-        e.preventDefault();
-        lightbox.open(i);
-      });
       frag.appendChild(card);
     });
 
     container.appendChild(frag);
+    watchImages(container);
+  }
+
+  // ─── Bascule de série, sans rechargement ────────────────────────────────────
+  // Le site est un single-page : toutes les séries sont dans la page, on échange
+  // le contenu et on pousse la nouvelle URL. Les liens Précédente/Suivante
+  // restent de VRAIS liens vers des pages réellement générées par Zola — sans
+  // JS, ou si quelque chose échoue ici, ils rechargent simplement la page.
+  var serieNav = (function () {
+    var heroImg, heroTitle, titleEl, intro, prevLink, nextLink;
+
+    // Les deux liens existent toujours dans le DOM ; c'est l'attribut `hidden`
+    // qui les fait apparaître ou non. Les garder présents évite de créer et
+    // détruire des nœuds à chaque bascule, et le rendu serveur pose déjà le
+    // `hidden` correct pour le cas sans JS.
+    function setLink(el, i) {
+      if (!el) return;
+      var s = SERIES[i];
+      if (!s) { el.hidden = true; return; }
+      el.hidden = false;
+      el.href = s.url;
+    }
+
+    function render(i) {
+      var s = SERIES[i];
+      if (!s) return;
+      currentSerie = i;
+      PHOTOS = s.photos;
+
+      lightbox.closeIfOpen();
+
+      heroImg.src = s.hero;
+      heroTitle.textContent = s.title;
+      titleEl.textContent = s.title + ' — krapotte';
+
+      // Le texte d'intro vient d'un <template> et non du JSON : c'est du HTML,
+      // l'embarquer en chaîne obligeait à échapper `</script>` à la main.
+      // La section est vidée et masquée plutôt que supprimée, pour que la
+      // bascule suivante la retrouve.
+      if (intro) {
+        var tpl = document.querySelector('[data-serie-intro="' + s.slug + '"]');
+        intro.innerHTML = tpl ? tpl.innerHTML : '';
+        intro.hidden = !tpl;
+      }
+
+      // Indices voisins : la liste est triée de la plus récente à la plus
+      // ancienne, donc « précédente » (plus ancienne) est i + 1.
+      setLink(prevLink, i + 1);
+      setLink(nextLink, i - 1);
+
+      renderGrid();
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+
+    function go(i, url) {
+      render(i);
+      window.history.pushState({ slug: SERIES[i].slug }, '', url);
+    }
+
+    function init() {
+      heroImg = document.querySelector('.hero__img');
+      heroTitle = document.querySelector('.hero__title');
+      intro = document.querySelector('.series-intro');
+      prevLink = document.querySelector('[data-serie-nav="older"]');
+      nextLink = document.querySelector('[data-serie-nav="newer"]');
+      titleEl = document.querySelector('title');
+      // Sans couverture ni titre, on n'est pas sur une vue de série : on laisse
+      // les liens se comporter en liens ordinaires.
+      if (!heroImg || !heroTitle || SERIES.length < 2) return;
+
+      [[prevLink, 1], [nextLink, -1]].forEach(function (pair) {
+        var el = pair[0];
+        if (!el) return;
+        el.addEventListener('click', function (e) {
+          if (!isPlainClick(e)) return;
+          e.preventDefault();
+          go(currentSerie + pair[1], el.href);
+        });
+      });
+
+      // Bouton Précédent/Suivant du navigateur : on retrouve la série par son
+      // URL. `replaceState` initial pour que le premier retour ait un état.
+      window.history.replaceState({ slug: SERIES[currentSerie].slug }, '', window.location.href);
+      window.addEventListener('popstate', function () {
+        var i = indexOfPath(window.location.pathname);
+        // Aucune série à cette adresse : c'est la racine du site, qui affiche
+        // la plus récente.
+        render(i < 0 ? 0 : i);
+      });
+    }
+
+    return { init: init };
+  })();
+
+  // ─── Invite au défilement ───────────────────────────────────────────────────
+  // Sous le titre de la couverture. Mène au texte d'intro, ou à la grille quand
+  // la série n'en a pas.
+  function wireScrollDown() {
+    var btn = document.querySelector('[data-scroll-down]');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var target = document.querySelector('.series-intro:not([hidden])') ||
+                   document.querySelector('.gallery-grid');
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
   // ─── Header ─────────────────────────────────────────────────────────────────
-  // La marque est un vrai lien vers l'accueil (plusieurs pages désormais, avec
-  // les catégories). Si on est déjà sur l'accueil, on remonte en haut en douceur
-  // plutôt que de recharger la page — progressive enhancement au-dessus du lien.
+  // La marque est un vrai lien vers l'accueil. Si on y est déjà, on remonte en
+  // haut en douceur plutôt que de recharger — progressive enhancement au-dessus
+  // du lien.
   function wireHeader() {
     var brand = document.querySelector('.site-header__brand');
     if (brand) {
@@ -302,9 +493,15 @@
   }
 
   // ─── Amorçage ────────────────────────────────────────────────────────────────
+  // `renderGrid()` n'est PAS appelée ici : la grille est déjà dans le HTML. La
+  // rejouer détruirait un DOM identique et annulerait au passage les
+  // téléchargements d'images déjà lancés par le navigateur.
   function boot() {
     lightbox.init();
-    renderGrid();
+    wireGrid();
+    watchImages(document);
+    serieNav.init();
+    wireScrollDown();
     wireHeader();
   }
 

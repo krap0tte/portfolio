@@ -1,0 +1,69 @@
+@use 'breakpoints' as *;
+
+/* ─── Grille ───────────────────────────────────────────────────────────────────
+   Masonry en colonnes CSS : chaque miniature garde son ratio naturel.
+   2 → 6 colonnes selon la largeur. Attention, cette grille a ses propres
+   paliers (1024/1280/1600/2000) et ne franchit jamais le 768px du reste du
+   site : entre 768 et 1024, elle est encore à 2 colonnes quand les grilles de
+   cartes sont déjà à 3 ou 4. */
+.gallery-grid {
+  padding: 0 clamp(1rem, 3vw, 2.5rem) clamp(1rem, 3vw, 2.5rem);
+}
+
+.gallery-grid__container {
+  columns: 2;
+  column-gap: 1rem;
+}
+
+@include from($bp-lg)  { .gallery-grid__container { columns: 3; } }
+@include from($bp-xl)  { .gallery-grid__container { columns: 4; } }
+@include from($bp-2xl) { .gallery-grid__container { columns: 5; } }
+@include from($bp-3xl) { .gallery-grid__container { columns: 6; } }
+
+/* ─── Carte ────────────────────────────────────────────────────────────────── */
+.gallery-card {
+  display: block;
+  break-inside: avoid;
+  margin-bottom: 1rem;
+  transition: opacity 0.2s ease;
+}
+
+.gallery-card__img-wrap {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-surface);
+}
+
+.gallery-card__img-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--shimmer-color) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: card-shimmer 1.5s ease-in-out infinite;
+  transition: opacity 0.3s;
+}
+
+.gallery-card__img-wrap.is-loaded::after { opacity: 0; }
+
+.gallery-card__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.gallery-card__img.is-loaded { opacity: 1; }
+.gallery-card__img.is-loaded:hover { opacity: 0.88; }
+
+@keyframes card-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

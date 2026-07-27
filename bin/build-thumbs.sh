@@ -3,7 +3,7 @@
 # affichée en plein écran (grille masonry, cartes). La pleine résolution reste
 # réservée à la lightbox et aux couvertures.
 #
-# Pour chaque photo static/assets/images/photos/<axe>/<slug>/<nom>.webp :
+# Pour chaque photo static/assets/images/photos/<slug>/<nom>.webp :
 #   <slug>/thumbs/<nom>.webp      →  1200 px sur le grand côté (densité 1x)
 #   <slug>/thumbs/<nom>-2x.webp   →  2400 px                   (densité 2x)
 #
@@ -68,9 +68,9 @@ made=0
 removed=0
 
 shopt -s nullglob
-for dir in "$PHOTOS_DIR"/*/*/; do
+for dir in "$PHOTOS_DIR"/*/; do
   [ -d "$dir" ] || continue
-  rel="${dir#"$PHOTOS_DIR"/}"; rel="${rel%/}"   # « axe/slug »
+  rel="${dir#"$PHOTOS_DIR"/}"; rel="${rel%/}"   # « slug »
   thumbs="$dir$THUMB_DIR_NAME"
 
   photos=("$dir"*.webp)

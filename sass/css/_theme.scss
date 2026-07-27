@@ -1,0 +1,10 @@
+/* ─── Thème ────────────────────────────────────────────────────────────────────
+   Thème clair fixe, pas de bascule. Custom properties et non variables Sass :
+   elles sont résolues au runtime (héritage, lightbox, JS le cas échéant). */
+:root {
+  --bg:            #ffffff;
+  --bg-surface:    #f0f0ee;
+  --text:          #1a1a18;
+  --text-muted:    #6e6e6b;
+  --shimmer-color: rgba(0, 0, 0, 0.06);
+}

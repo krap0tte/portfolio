@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }} — krapotte{% endblock title %}
+{% block description %}{{ page.title }}{% endblock description %}
+
+{# Une série à son URL propre. Même vue que l'accueil, au détail près de la
+   série affichée — d'où le partial partagé. #}
+{% block body %}
+{% set_global serie = page %}
+{% include "partials/serie.html" %}
+{% endblock body %}

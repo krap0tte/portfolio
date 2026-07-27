@@ -1,0 +1,27 @@
+// ─── Points de rupture ───────────────────────────────────────────────────────
+// Seul fichier de ce dossier à ne produire aucun CSS : il n'expose que des
+// variables et des mixins. Les valeurs sont dupliquées dans les attributs
+// `sizes=` (index.html) et `GRID_SIZES` (gallery.js) — modifier une colonne ici
+// sans toucher le `sizes` correspondant fait télécharger la mauvaise variante.
+//
+// `below()` existe pour un seul appel, mais c'est ce qui garantit que le
+// max-width reste le complément exact du min-width : écrite à la main, la borne
+// 767px est un second constante à maintenir en phase avec 768px.
+
+$bp-md: 768px; // point de rupture principal du site (nav lightbox, colonnes)
+$bp-lg: 1024px;
+$bp-xl: 1280px;
+$bp-2xl: 1600px;
+$bp-3xl: 2000px;
+
+@mixin from($bp) {
+  @media (min-width: $bp) {
+    @content;
+  }
+}
+
+@mixin below($bp) {
+  @media (max-width: $bp - 1px) {
+    @content;
+  }
+}

@@ -7,42 +7,13 @@
   <meta name="description" content="{% block description %}Galerie de photographie{% endblock description %}" />
   <link rel="stylesheet" href="{{ get_url(path="css/style.css") }}" />
 </head>
-<body class="{% block body_class %}{% endblock body_class %}">
-  <header class="site-header">
-    <a class="site-header__brand" href="{{ config.base_url | safe }}/">krapotte</a>
-  </header>
+<body>
+  {# Le corps entier (header compris) vient de partials/serie.html : la
+     navigation entre séries vit dans le header, elle dépend donc de la série
+     courante et ne peut pas être figée ici. base.html ne garde que l'enveloppe
+     du document et le chargement des scripts. #}
+  {% block body %}{% endblock body %}
 
-  <main class="site-main">
-    {% block main %}
-    {% block intro %}{% endblock intro %}
-
-    <section class="gallery-grid">
-      <div class="gallery-grid__container"></div>
-    </section>
-
-    <div class="lightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Visionneuse photo">
-      <div class="lightbox__stage">
-        <div class="lightbox__loader" aria-hidden="true"></div>
-        <img class="lightbox__img" alt="" />
-      </div>
-
-      <div class="lightbox__controls">
-        <p class="lightbox__nav-row">
-          <button class="lightbox__link" type="button" data-lb="prev" aria-label="Photo précédente">Précédent</button>
-          <span aria-hidden="true"> / </span>
-          <button class="lightbox__link" type="button" data-lb="next" aria-label="Photo suivante">Suivant</button>
-        </p>
-        <button class="lightbox__link" type="button" data-lb="grid" aria-label="Retour à la grille">Grille</button>
-      </div>
-    </div>
-    {% endblock main %}
-  </main>
-
-  {% block scripts %}
-  <script>
-    window.PHOTOS = [{% block photos %}{% endblock photos %}];
-  </script>
   <script src="{{ get_url(path="js/gallery.js") }}"></script>
-  {% endblock scripts %}
 </body>
 </html>

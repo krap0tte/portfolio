@@ -1,0 +1,19 @@
+// ─── Feuille de style du site ────────────────────────────────────────────────
+// Compilée par Zola (compilateur Sass intégré, aucune dépendance Node) vers
+// public/css/style.css. L'emplacement `sass/css/` n'est pas cosmétique : Zola
+// calque l'arborescence de `sass/` sur la racine de `public/`, donc c'est lui
+// qui préserve l'URL /css/style.css — et avec elle les `url('../assets/fonts/')`
+// des @font-face, résolues depuis l'emplacement de la feuille compilée.
+//
+// L'ordre des @use est l'ordre d'émission du CSS, donc l'ordre de cascade :
+// du plus général (reset, thème) au plus spécifique (composants). Ne pas
+// réordonner sans vérifier les surcharges.
+
+@use 'fonts';
+@use 'theme';
+@use 'reset';
+@use 'header';
+@use 'hero';
+@use 'series';
+@use 'gallery';
+@use 'lightbox';

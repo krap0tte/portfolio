@@ -1,0 +1,177 @@
+{# Vue d'une série — SEULE vue du site. Incluse telle quelle par `index.html`
+   (qui lui passe la série la plus récente) et par `page.html` (qui lui passe la
+   page courante). Un seul gabarit, donc `/` et `/<slug>/` rendent exactement le
+   même HTML pour une même série : c'est ce qui permet au JS d'échanger l'un
+   pour l'autre sans rechargement, et au site de rester fonctionnel sans JS.
+
+   Attend dans le contexte : `serie` (la page Zola de la série courante). #}
+
+{% set data = load_data(path="data/photos.toml") %}
+{% set all_series = get_section(path="_index.md") %}
+
+{# Ordre chronologique décroissant, de la plus récente à la plus ancienne.
+   `latest` = nom de fichier le plus récent de la série : le modèle ne porte
+   aucune date, l'ordre vient des noms de fichiers, qui sont datés. #}
+{% set ordered = data.series | sort(attribute="latest") | reverse %}
+
+{# Position de la série courante, puis ses deux voisines. Deux passes sur
+   `loop.index0` plutôt qu'un accès indexé : Tera n'offre pas d'indexation
+   commode et deux boucles restent lisibles. `older` = plus ancienne (lien de
+   gauche), `newer` = plus récente (lien de droite). Une borne laisse son slug
+   vide, donc le `filter` plus bas ne rend aucun lien — c'est ainsi que les
+   liens disparaissent aux extrémités. #}
+{% set_global cur = -1 %}
+{% for e in ordered %}{% if e.slug == serie.slug %}{% set_global cur = loop.index0 %}{% endif %}{% endfor %}
+{% set_global older_slug = "" %}
+{% set_global newer_slug = "" %}
+{% for e in ordered %}
+  {%- if loop.index0 == cur + 1 %}{% set_global older_slug = e.slug %}{% endif -%}
+  {%- if cur > 0 and loop.index0 == cur - 1 %}{% set_global newer_slug = e.slug %}{% endif -%}
+{% endfor %}
+
+{# Résolution slug → page. Boucle sur le résultat du filtre plutôt que sur
+   `| first` : un slug vide (borne de la chronologie) ou sans page appariée
+   laisse l'URL vide au lieu de déréférencer. Idiome employé partout ici. #}
+{% set_global older_url = "" %}
+{% set_global newer_url = "" %}
+{% for p in all_series.pages | filter(attribute="slug", value=older_slug) %}{% set_global older_url = p.permalink %}{% endfor %}
+{% for p in all_series.pages | filter(attribute="slug", value=newer_slug) %}{% set_global newer_url = p.permalink %}{% endfor %}
+
+{# Les deux liens sont TOUJOURS dans le DOM, `hidden` faisant la différence :
+   le JS n'a plus qu'à basculer un attribut au lieu de créer et détruire des
+   nœuds à chaque changement de série. Le rendu serveur pose déjà le `hidden`
+   correct, donc le cas sans JS est juste. #}
+<header class="site-header">
+  <a class="site-header__nav site-header__nav--prev" data-serie-nav="older"
+     href="{{ older_url | safe }}"{% if older_url == "" %} hidden{% endif %}>Précédente série</a>
+
+  <a class="site-header__brand" href="{{ config.base_url | safe }}/">krapotte</a>
+
+  <a class="site-header__nav site-header__nav--next" data-serie-nav="newer"
+     href="{{ newer_url | safe }}"{% if newer_url == "" %} hidden{% endif %}>Série suivante</a>
+</header>
+
+<main class="site-main">
+  <section class="hero">
+    {% set h = "assets/images/photos/" ~ serie.slug ~ "/" ~ serie.extra.hero ~ ".webp" %}
+    <img class="hero__img" src="{{ get_url(path=h) }}" alt="" />
+    {# Titre et invite au défilement empilés dans un même bloc au bas de la
+       couverture : c'est lui qui porte le positionnement, pas le titre seul. #}
+    <div class="hero__bottom">
+      <h1 class="hero__title">{{ serie.title }}</h1>
+      {# Bouton et non lien d'ancre : il n'y a rien à mettre en signet, et le
+         défilement doux est piloté en JS. #}
+      <button class="hero__scroll" type="button" data-scroll-down aria-label="Faire défiler vers la description">
+        <span class="hero__scroll-arrow" aria-hidden="true"></span>
+      </button>
+    </div>
+  </section>
+
+  {# Toujours présente, `hidden` quand la série n'a pas de texte — même principe
+     que les liens de navigation. La rendre conditionnellement la faisait
+     manquer au DOM dès que la série servie au chargement n'avait pas d'intro,
+     et le JS ne pouvait plus jamais en afficher une en basculant de série. #}
+  <section class="series-intro"{% if not serie.content %} hidden{% endif %}>{{ serie.content | safe }}</section>
+
+  {# Grille rendue AU BUILD, plus en JS. Le scanner de préchargement du
+     navigateur voit ces `<img>` avant même d'analyser le CSS et le JS et lance
+     les téléchargements aussitôt — ce qu'il ne peut pas faire pour des images
+     créées en JavaScript. `loading="lazy"` et `srcset` redeviennent natifs, et
+     la page reste complète sans JS.
+     `data-grid-sizes` porte la valeur de `sizes` une seule fois : `gallery.js`
+     la relit pour les cartes qu'il génère lors d'une bascule de série. Sans
+     ça, la même liste de paliers vivrait en double, ici et dans le JS. #}
+  {% set grid_sizes = "(min-width: 2000px) 16vw, (min-width: 1600px) 19vw, (min-width: 1280px) 24vw, (min-width: 1024px) 32vw, 46vw" %}
+  <section class="gallery-grid">
+    <div class="gallery-grid__container" data-grid-sizes="{{ grid_sizes }}">
+      {%- for e in data.series | filter(attribute="slug", value=serie.slug) %}
+        {%- for name in e.photos | reverse %}
+          {%- set base = "assets/images/photos/" ~ serie.slug ~ "/" %}
+      {# La carte est un vrai lien vers la pleine résolution : si le JS échoue,
+         le clic ouvre quand même la photo. Son clic est intercepté par
+         délégation sur le conteneur pour ouvrir la lightbox.
+         ATTENTION : `renderGrid()` dans static/js/gallery.js produit le même
+         balisage pour les bascules de série. Toute modification ici doit y être
+         reportée — c'est le prix du rendu serveur avec échange client. #}
+      <a class="gallery-card" href="{{ get_url(path=base ~ name ~ ".webp") }}">
+        <div class="gallery-card__img-wrap">
+          <img class="gallery-card__img" alt="" loading="lazy" decoding="async"
+               srcset="{{ get_url(path=base ~ "thumbs/" ~ name ~ ".webp") }} 1200w, {{ get_url(path=base ~ "thumbs/" ~ name ~ "-2x.webp") }} 2400w"
+               sizes="{{ grid_sizes }}"
+               src="{{ get_url(path=base ~ "thumbs/" ~ name ~ ".webp") }}" />
+        </div>
+      </a>
+        {%- endfor %}
+      {%- endfor %}
+    </div>
+  </section>
+
+  <div class="lightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Visionneuse photo">
+    <div class="lightbox__stage">
+      <div class="lightbox__loader" aria-hidden="true"></div>
+      <img class="lightbox__img" alt="" />
+    </div>
+
+    <div class="lightbox__controls">
+      <p class="lightbox__nav-row">
+        <button class="lightbox__link" type="button" data-lb="prev" aria-label="Photo précédente">Précédent</button>
+        <span aria-hidden="true"> / </span>
+        <button class="lightbox__link" type="button" data-lb="next" aria-label="Photo suivante">Suivant</button>
+      </p>
+      <button class="lightbox__link" type="button" data-lb="grid" aria-label="Retour à la grille">Grille</button>
+    </div>
+  </div>
+</main>
+
+{# Toutes les séries, dans l'ordre chronologique décroissant, embarquées pour
+   que le JS puisse basculer de l'une à l'autre sans aller chercher le serveur.
+   `json_encode` fait tout l'échappement ; le `replace` qui suit neutralise un
+   éventuel `</script>` dans un texte d'intro, qui refermerait la balise.
+   Le slug courant est porté à part : c'est le point d'entrée du JS.
+
+   Les séparateurs viennent d'un drapeau global et non de `loop.last` : dans la
+   boucle interne, `loop` désigne le `filter` (toujours d'un seul élément), donc
+   `loop.last` y est toujours vrai et aucune virgule n'était émise entre deux
+   séries — JSON invalide, et tout le JS muet à partir de la deuxième série. Le
+   drapeau reste juste même quand une série est sautée faute de page appariée.
+
+   Les textes d'intro ne sont PAS ici : c'est du HTML, et l'y mettre imposait
+   d'échapper `</script>` à la main — ce que Tera rendait fragile (le backslash
+   d'échappement ressortait littéralement dans la page). Ils vivent plus bas
+   dans des `<template>`, où le navigateur fait le travail. #}
+<script id="series-data" type="application/json">
+[
+{%- set_global sep = "" %}
+{%- for e in ordered %}
+  {%- for p in all_series.pages | filter(attribute="slug", value=e.slug) %}
+  {{ sep | safe }}{% set_global sep = "," %}
+  {
+    "slug": {{ p.slug | json_encode | safe }},
+    "title": {{ p.title | json_encode | safe }},
+    "url": {{ p.permalink | json_encode | safe }},
+    "hero": {{ get_url(path="assets/images/photos/" ~ p.slug ~ "/" ~ p.extra.hero ~ ".webp") | json_encode | safe }},
+    "photos": [
+      {%- for name in e.photos | reverse %}
+      { "full": {{ get_url(path="assets/images/photos/" ~ p.slug ~ "/" ~ name ~ ".webp") | json_encode | safe }},
+        "thumb": {{ get_url(path="assets/images/photos/" ~ p.slug ~ "/thumbs/" ~ name ~ ".webp") | json_encode | safe }},
+        "thumb2x": {{ get_url(path="assets/images/photos/" ~ p.slug ~ "/thumbs/" ~ name ~ "-2x.webp") | json_encode | safe }} }{% if not loop.last %},{% endif %}
+      {%- endfor %}
+    ]
+  }
+  {%- endfor %}
+{%- endfor %}
+]
+</script>
+<script id="series-current" type="application/json">{{ serie.slug | json_encode | safe }}</script>
+
+{# Textes d'intro de toutes les séries. Du HTML dans du HTML : aucun
+   échappement à faire, et `<template>` garantit que rien n'est rendu ni chargé
+   tant que le JS n'y touche pas. Une série sans intro n'a pas de template — le
+   JS masque alors la section. #}
+{%- for e in ordered %}
+  {%- for p in all_series.pages | filter(attribute="slug", value=e.slug) %}
+    {%- if p.content %}
+<template data-serie-intro="{{ p.slug }}">{{ p.content | safe }}</template>
+    {%- endif %}
+  {%- endfor %}
+{%- endfor %}

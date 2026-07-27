@@ -1,0 +1,49 @@
+/* ─── Header ───────────────────────────────────────────────────────────────────
+   Trois emplacements : navigation vers la série plus ancienne à gauche, marque
+   au centre, série plus récente à droite.
+
+   Le header est **toujours** posé par-dessus la couverture, hors du flux :
+   toute page du site s'ouvre sur une image plein écran. Ces règles ont transité
+   par un sélecteur `.has-hero .site-header`, avec la classe posée sur `<body>`,
+   du temps où des pages sans couverture existaient (index de catégories). La
+   classe étant devenue toujours vraie, elle ne discriminait plus rien : le
+   crochet a été retiré. Le rétablir si une page sans couverture réapparaît.
+
+   Grille à trois colonnes et non un `space-between` : les deux liens
+   disparaissent aux extrémités de la chronologie, et un `space-between`
+   décentrerait alors la marque. Avec des colonnes explicites, elle ne bouge
+   jamais. Ne pas déclarer de `display` sur `.site-header__nav` — l'attribut
+   `hidden` doit rester efficace. */
+.site-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.site-header__brand {
+  grid-column: 2;
+  font-family: 'Climate Crisis', sans-serif;
+  font-size: clamp(1rem, 3vw, 1.5rem);
+  letter-spacing: 0.02em;
+  color: #ffffff;
+}
+
+.site-header__nav {
+  font-size: clamp(0.62rem, 1.6vw, 0.75rem);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #ffffff;
+  transition: opacity 0.15s;
+}
+
+.site-header__nav:hover { opacity: 0.65; }
+
+.site-header__nav--prev { grid-column: 1; justify-self: start; }
+.site-header__nav--next { grid-column: 3; justify-self: end; }

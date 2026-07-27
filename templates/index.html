@@ -1,61 +1,26 @@
 {% extends "base.html" %}
 {% block title %}krapotte{% endblock title %}
 {% block description %}{{ config.description }}{% endblock description %}
-{% block body_class %}has-hero{% endblock body_class %}
 
-{% block main %}
+{# L'accueil affiche la série la plus récente — même vue, même HTML qu'à son
+   URL propre. `latest` (nom de fichier le plus récent) porte la chronologie,
+   le modèle n'ayant aucune date. La boucle `filter` sert d'accès sans
+   déréférencer si rien ne correspond.
+
+   Le `break` ne se déclenche QUE si une série a été trouvée. Sans ce test, un
+   dossier de photos plus récent que tous les autres mais pas encore apparié à
+   son `content/<slug>.md` — l'état transitoire du flux documenté, qui demande
+   de créer le .md avant de déposer les images — arrêtait la boucle sur lui et
+   rendait un accueil totalement vide, sans que le build échoue. On saute
+   désormais à la série suivante, comme partout ailleurs. #}
+{% block body %}
 {% set data = load_data(path="data/photos.toml") %}
-
-<section class="hero">
-  <img class="hero__img" src="{{ get_url(path=config.extra.hero) }}" alt="" />
-  <p class="hero__text">{{ config.description }}</p>
-</section>
-
-{% set series_section = get_section(path="series/_index.md") %}
-{% if series_section.pages %}
-<section class="home-section">
-  <h2 class="home-section__title home-section__title--lead">Séries</h2>
-  <div class="card-grid card-grid--lead">
-    {# Toutes les séries, de la plus récente à la plus ancienne. `latest` = nom
-       de fichier le plus récent de la série (data/photos.toml) : le modèle ne
-       porte pas de date, l'ordre chronologique vient des noms. #}
-    {% for entry in data.series | sort(attribute="latest") | reverse %}
-    {# Boucle sur le résultat du filtre plutôt que sur `| first` : un dossier de
-       photos sans fichier de contenu apparié (renommage en cours, par exemple)
-       est ignoré au lieu de casser le build. Symétrique du filtre appliqué aux
-       catégories plus bas. bin/add-photo.sh signale les deux cas. #}
-    {% for serie in series_section.pages | filter(attribute="slug", value=entry.slug) %}
-    <a class="cover-card" href="{{ serie.permalink | safe }}">
-      {% set c = "assets/images/photos/series/" ~ serie.slug ~ "/thumbs/" ~ serie.extra.cover %}
-      <img class="cover-card__img" src="{{ get_url(path=c ~ ".webp") }}" srcset="{{ get_url(path=c ~ ".webp") }} 1200w, {{ get_url(path=c ~ "-2x.webp") }} 2400w" sizes="(min-width: 768px) 22vw, 90vw" alt="" loading="lazy" />
-      <span class="cover-card__title">{{ serie.title }}</span>
-    </a>
-    {% endfor %}
-    {% endfor %}
-  </div>
-</section>
-{% endif %}
-
-{% set categories_section = get_section(path="categories/_index.md") %}
-{% if categories_section.pages %}
-<section class="home-section">
-  <h2 class="home-section__title">Catégories</h2>
-  <div class="card-grid card-grid--small">
-    {# Parcours des fichiers de contenu (triés par titre), mais on saute ceux
-       qui n'ont pas encore de photos : leur couverture n'existerait pas. Les
-       séries, elles, sont parcourues depuis data.series et donc déjà filtrées. #}
-    {% for cat in categories_section.pages %}
-    {% if data.categories | filter(attribute="slug", value=cat.slug) %}
-    <a class="cover-card" href="{{ cat.permalink | safe }}">
-      {% set c = "assets/images/photos/categories/" ~ cat.slug ~ "/thumbs/" ~ cat.extra.cover %}
-      <img class="cover-card__img" src="{{ get_url(path=c ~ ".webp") }}" srcset="{{ get_url(path=c ~ ".webp") }} 1200w, {{ get_url(path=c ~ "-2x.webp") }} 2400w" sizes="(min-width: 1280px) 15vw, (min-width: 768px) 22vw, 45vw" alt="" loading="lazy" />
-      <span class="cover-card__title">{{ cat.title }}</span>
-    </a>
-    {% endif %}
-    {% endfor %}
-  </div>
-</section>
-{% endif %}
-{% endblock main %}
-
-{% block scripts %}{% endblock scripts %}
+{% set_global serie = false %}
+{% for e in data.series | sort(attribute="latest") | reverse %}
+  {%- for p in section.pages | filter(attribute="slug", value=e.slug) %}
+    {%- set_global serie = p %}
+  {%- endfor %}
+  {%- if serie %}{% break %}{% endif %}
+{% endfor %}
+{% if serie %}{% include "partials/serie.html" %}{% endif %}
+{% endblock body %}

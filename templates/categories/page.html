@@ -1,8 +1,0 @@
-{% extends "base.html" %}
-{% block title %}{{ page.title }} — krapotte{% endblock title %}
-{% block description %}{{ page.title }}{% endblock description %}
-{% block intro %}<h1 class="category-title">{{ page.title }}</h1>{% endblock intro %}
-{# Même précaution que pour les séries : un classement sans photo (le .md est
-   créé avant les images) rend une grille vide au lieu de casser le build. #}
-{% block photos %}{% set data = load_data(path="data/photos.toml") %}{% set matches = data.categories | filter(attribute="slug", value=page.slug) %}{% for cat in matches %}{% for name in cat.photos | reverse %}{ "full": "{{ get_url(path="assets/images/photos/categories/" ~ page.slug ~ "/" ~ name ~ ".webp") }}", "thumb": "{{ get_url(path="assets/images/photos/categories/" ~ page.slug ~ "/thumbs/" ~ name ~ ".webp") }}", "thumb2x": "{{ get_url(path="assets/images/photos/categories/" ~ page.slug ~ "/thumbs/" ~ name ~ "-2x.webp") }}" }{% if not loop.last %},{% endif %}
-{% endfor %}{% endfor %}{% endblock photos %}

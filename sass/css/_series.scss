@@ -1,0 +1,27 @@
+/* ─── Séries ─────────────────────────────────────────────────────────────────
+   Page de série : le texte éditorial, entre la couverture et la grille (le
+   titre, lui, est en surimpression sur la couverture — `.hero__title`). */
+/* Mesure en `ch` et non en `rem` : la justure est une contrainte de nombre de
+   signes par ligne, pas de pixels. Le `42rem` d'avant était calibré pour du
+   16px (~75 signes, la bonne plage) ; le corps ayant doublé, il n'en laissait
+   plus que ~39 et hachait les paragraphes. En `ch`, la largeur suit le corps.
+   Le corps est fluide et non fixé à 2rem : sur téléphone, `max-width` ne borne
+   plus rien (c'est la fenêtre qui borne), donc un 32px figé tombait à 23 signes
+   par ligne sur six lignes — l'intro se lisait comme un titre. Le plafond de
+   2rem est atteint vers 1280px de large, où il donne ~70 signes.
+   `line-height` à 1.4 : compromis tenable sur toute la plage, là où le 1.6 du
+   body éloigne trop les lignes à 32px. */
+.series-intro {
+  padding: clamp(2rem, 5vw, 3.5rem) clamp(1rem, 3vw, 2.5rem);
+  max-width: 64ch;
+  margin: 0 auto;
+  text-align: center;
+  font-size: clamp(1.13rem, 2.5vw, 2rem);
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* `em` et non `rem` : l'écart entre paragraphes doit suivre le corps du texte.
+   En `rem` il restait figé à 12px pendant que le texte doublait, ce qui serrait
+   les paragraphes à mesure qu'on grossissait l'intro. */
+.series-intro p + p { margin-top: 0.75em; }

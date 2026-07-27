@@ -1,55 +1,5 @@
 # Régénéré par bin/add-photo.sh — ne pas éditer à la main.
 
-all = [
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_01" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_02" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_03" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_04" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_05" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_06" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_07" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_08" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_09" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_10" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_11" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_12" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_13" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_14" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_15" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_16" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_17" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_18" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_19" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_20" },
-  { kind = "series", slug = "lotus-and-her-friends", file = "2025-03-01_LE_MANS_LOTUS_21" },
-  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_01" },
-  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_02" },
-  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_03" },
-  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_04" },
-  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_05" },
-  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_06" },
-  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_07" },
-  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_08" },
-  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_09" },
-  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_10" }
-]
-
-[[categories]]
-slug = "automobile"
-latest = "2026-07-14_RASS_COUTURE_BOUSSEY_10"
-photos = [
-  "2026-07-14_RASS_COUTURE_BOUSSEY_01",
-  "2026-07-14_RASS_COUTURE_BOUSSEY_02",
-  "2026-07-14_RASS_COUTURE_BOUSSEY_03",
-  "2026-07-14_RASS_COUTURE_BOUSSEY_04",
-  "2026-07-14_RASS_COUTURE_BOUSSEY_05",
-  "2026-07-14_RASS_COUTURE_BOUSSEY_06",
-  "2026-07-14_RASS_COUTURE_BOUSSEY_07",
-  "2026-07-14_RASS_COUTURE_BOUSSEY_08",
-  "2026-07-14_RASS_COUTURE_BOUSSEY_09",
-  "2026-07-14_RASS_COUTURE_BOUSSEY_10"
-]
-
 [[series]]
 slug = "lotus-and-her-friends"
 latest = "2025-03-01_LE_MANS_LOTUS_21"

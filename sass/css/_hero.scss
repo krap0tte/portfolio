@@ -1,0 +1,104 @@
+/* ─── Couverture pleine fenêtre ────────────────────────────────────────────────
+   Partagée par l'accueil (couverture du site, seule) et les pages de série
+   (couverture de la série + son titre) : même dispositif, la photo occupe tout
+   l'écran, header compris — d'où le header en `absolute` par-dessus (voir
+   `_header.scss`) et non dans le flux. `svh` évite le saut de hauteur
+   dû à la barre d'adresse mobile, `vh` reste en repli pour ceux qui l'ignorent. */
+.hero {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+}
+
+.hero__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--bg-surface);
+}
+
+/* Voile : marque et titre sont posés sur une photo quelconque, il leur faut un
+   fond garanti. Assombri en haut (derrière le header) et en bas (le titre). */
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0) 25%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0) 35%);
+  pointer-events: none;
+}
+
+/* Bloc bas de couverture : titre puis invite au défilement. C'est lui qui porte
+   le positionnement, le titre ne s'occupant plus que de typographie. */
+.hero__bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.75rem, 2vw, 1.25rem);
+}
+
+/* Titre de série — seul titre d'affichage du site. Pas de `font-family` : il
+   hérite du Jost du body, comme tout le reste. Il a été en Playfair Display un
+   temps, revenu à Jost sur arbitrage de l'utilisateur ; les réglages qui
+   restent ici ne dépendent pas de la fonte.
+
+   `font-weight` reste déclaré même à 300, valeur que le titre hériterait déjà
+   du body : un `<h1>` porte le gras de la feuille de style du navigateur, qu'il
+   faut neutraliser explicitement. Pas d'interlettrage : les 0.02em d'une
+   version antérieure servaient un titre à 24px, `normal` est le réglage juste
+   à ce corps-ci.
+
+   Le plafond du corps est borné par la HAUTEUR autant que par la largeur.
+   `6vw` seul dépendait de la seule largeur : sur une fenêtre courte (mobile en
+   paysage) le titre passait sur deux lignes et dépassait par le haut le voile
+   plus haut, qui ne couvre que 35 % de la couverture — titre blanc sur photo
+   nue. `min(6vw, 9svh)` fait décroître le corps avec la hauteur utile et le
+   ramène à une ligne. Repli `9vh` d'abord, même raison que le `100vh`/`100svh`. */
+.hero__title {
+  max-width: 60vw;
+  text-align: center;
+  color: #ffffff;
+  font-size: clamp(2rem, min(6vw, 9vh), 4.5rem);
+  font-size: clamp(2rem, min(6vw, 9svh), 4.5rem);
+  font-weight: 300;
+  line-height: 1.1;
+}
+
+/* Invite au défilement : un chevron dessiné en CSS (deux bordures tournées à
+   45°) plutôt qu'une icône — pas de fichier à charger pour deux traits. Le
+   balancement signale qu'il y a du contenu plus bas ; il est coupé pour qui
+   demande moins d'animation. */
+.hero__scroll {
+  padding: 0.5rem;
+  line-height: 0;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+
+.hero__scroll:hover { opacity: 1; }
+
+.hero__scroll-arrow {
+  display: block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-right: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  transform: rotate(45deg);
+  animation: hero-scroll-bob 1.8s ease-in-out infinite;
+}
+
+@keyframes hero-scroll-bob {
+  0%, 100% { transform: rotate(45deg) translate(0, 0); }
+  50%      { transform: rotate(45deg) translate(0.2rem, 0.2rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero__scroll-arrow { animation: none; }
+}
