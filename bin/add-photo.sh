@@ -13,14 +13,14 @@
 # et une photo de couverture (front matter `[extra] cover`), vérifiée ici.
 #
 #   1. Toute image NON-webp déposée dans un sous-dossier est convertie en WebP
-#      (cwebp -q 82 -m 6, EXIF retiré, réduite à 4000 px sur le plus grand côté),
-#      puis la source est SUPPRIMÉE.
-#   2. Chaque WebP présent est vérifié : s'il dépasse 4000 px il est ré-encodé
-#      réduit (un WebP compressé ne peut être redimensionné sans ré-encodage).
+#      (cwebp -q 82 -m 6, EXIF retiré), puis la source est SUPPRIMÉE. La photo
+#      est conservée à sa résolution d'origine : c'est elle que sert la lightbox.
+#   2. Les miniatures sont (re)générées — délégué à bin/build-thumbs.sh, que le
+#      déploiement lance aussi : elles sont dérivées et non versionnées.
 #   3. data/photos.toml est intégralement régénéré depuis les sous-dossiers
 #      présents ; on signale s'il était déjà à jour ou s'il a été mis à jour.
 #
-# Idempotent : relancé sans nouveau fichier ni WebP hors-format, il ne change rien.
+# Idempotent : relancé sans nouveau fichier, il ne change rien.
 # Usage : bin/add-photo.sh   (aucun argument — dépose tes images dans le sous-dossier
 #                              de la catégorie ou de la série concernée)
 
@@ -31,19 +31,9 @@ PHOTOS_DIR="$ROOT/static/assets/images/photos"
 CONTENT_DIR="$ROOT/content"
 DATA_FILE="$ROOT/data/photos.toml"
 KINDS=(categories series)
-MAX=4000  # côté le plus long, en pixels.
 
 command -v cwebp    >/dev/null || { echo "cwebp introuvable (ex. : apt install webp)"; exit 1; }
-command -v webpinfo >/dev/null || { echo "webpinfo introuvable (ex. : apt install webp)"; exit 1; }
 mkdir -p "${KINDS[@]/#/$PHOTOS_DIR/}" "$(dirname "$DATA_FILE")"
-
-# « W H » à passer à cwebp -resize si (w,h) dépasse MAX (retour 1 sinon).
-# Plus grand côté ramené à MAX (0 = calculé, ratio préservé) ; jamais d'agrandissement.
-resize_args() {
-  local w=$1 h=$2
-  { [ "$w" -gt "$MAX" ] || [ "$h" -gt "$MAX" ]; } || return 1
-  if [ "$w" -ge "$h" ]; then echo "$MAX 0"; else echo "0 $MAX"; fi
-}
 
 # ─── 0. Inventaire des dossiers présents, sous forme « axe<TAB>slug ». ────────
 #        Tout dossier de premier niveau hors des deux axes est une erreur
@@ -101,13 +91,44 @@ for pair in "${pairs[@]}"; do
   [ "$kind" = series ] && check_photo_field "$md" hero "$kind" "$slug"
 done
 
+# Sens inverse : un fichier de contenu sans dossier de photos. Son `cover` et son
+# `hero` ne peuvent désigner aucune image, la page s'affiche donc amputée — et
+# rien ne le signalait tant que le contrôle ne se faisait que dans un sens.
+shopt -s nullglob
+for kind in "${KINDS[@]}"; do
+  for md in "$CONTENT_DIR/$kind"/*.md; do
+    slug="$(basename "${md%.md}")"
+    [ "$slug" = "_index" ] && continue
+    [ -d "$PHOTOS_DIR/$kind/$slug" ] || \
+      missing+=("$kind/$slug (dossier de photos absent : photos/$kind/$slug/)")
+  done
+done
+shopt -u nullglob
+
 # La couverture d'accueil vit dans config.toml et pointe sous static/ (elle peut
 # venir de n'importe quel classement), pas dans un dossier de photos.
 site_hero="$(sed -n 's/^hero *= *"\(.*\)"$/\1/p' "$ROOT/config.toml" | head -1)"
+HERO_FILE=""
+hero_srcs=()
 if [ -z "$site_hero" ]; then
   missing+=("config.toml (attendu : hero = \"…\" sous [extra])")
-elif [ ! -f "$ROOT/static/$site_hero" ]; then
-  missing+=("config.toml (couverture d'accueil introuvable : static/$site_hero)")
+else
+  HERO_FILE="$ROOT/static/$site_hero"
+  # Sources convertibles déposées à côté du hero (même nom, autre extension).
+  # Le glob porte sur le DOSSIER : un motif sans métacaractère (`"$base".jpg`)
+  # échappe entièrement à l'expansion de chemins, donc à `nullglob` comme à
+  # `nocaseglob`, et serait passé littéralement.
+  hero_base="$(basename "${HERO_FILE%.*}")"
+  shopt -s nullglob nocaseglob
+  for f in "$(dirname "$HERO_FILE")"/*.{jpg,jpeg,png,tif,tiff}; do
+    [ "$(basename "${f%.*}")" = "$hero_base" ] && hero_srcs+=("$f")
+  done
+  shopt -u nullglob nocaseglob
+  # Le WebP peut manquer si une source attend à côté : c'est l'étape 1 qui la
+  # convertira, ne pas échouer ici.
+  if [ ! -f "$HERO_FILE" ] && [ "${#hero_srcs[@]}" -eq 0 ]; then
+    missing+=("config.toml (couverture d'accueil introuvable : static/$site_hero)")
+  fi
 fi
 
 if [ "${#missing[@]}" -gt 0 ]; then
@@ -117,52 +138,41 @@ if [ "${#missing[@]}" -gt 0 ]; then
   exit 1
 fi
 
-# ─── 1. Sources non-webp : convertir (EXIF retiré, ≤ MAX) puis supprimer ──────
+# Convertit <src> en WebP <out> (EXIF retiré, résolution d'origine conservée)
+# puis supprime la source. En cas d'échec, la source est conservée. Mutualisé
+# entre les dossiers de photos et le hero de l'accueil (qui vit hors de photos/
+# mais suit la même règle).
+convert_source() {  # <src> <out> <étiquette>
+  local src=$1 out=$2 label=$3
+  if cwebp -q 82 -m 6 -metadata none "$src" -o "$out" >/dev/null 2>&1 && [ -s "$out" ]; then
+    rm -f "$src"
+    echo "converti : $label — source supprimée"
+  else
+    echo "ÉCHEC    : $(basename "$src") — source conservée"
+  fi
+}
+
+# ─── 1. Sources non-webp : convertir (EXIF retiré) puis supprimer ────────────
 shopt -s nullglob nocaseglob
 for pair in "${pairs[@]}"; do
   dir="$PHOTOS_DIR/${pair%%$'\t'*}/${pair#*$'\t'}/"
   for src in "$dir"*.{jpg,jpeg,png,tif,tiff}; do
     name="$(basename "${src%.*}")"
-    out="$dir$name.webp"
-
-    dims="$(cwebp -q 1 -m 0 "$src" -o /dev/null 2>&1 \
-            | sed -n 's/.*Dimension: \([0-9]*\) x \([0-9]*\).*/\1 \2/p')" || dims=""
-    w="${dims% *}"; h="${dims#* }"
-
-    args=(-q 82 -m 6 -metadata none)
-    note=""
-    if [ -n "$w" ] && ra="$(resize_args "$w" "$h")"; then
-      args+=(-resize $ra); note=" (réduit de ${w}x${h} → ${MAX}px)"
-    fi
-
-    if cwebp "${args[@]}" "$src" -o "$out" >/dev/null 2>&1 && [ -s "$out" ]; then
-      rm -f "$src"
-      echo "converti : ${pair/$'\t'//}/$name.webp$note — source supprimée"
-    else
-      echo "ÉCHEC    : $(basename "$src") — source conservée"
-    fi
+    convert_source "$src" "$dir$name.webp" "${pair/$'\t'//}/$name.webp"
   done
 done
 shopt -u nullglob nocaseglob
 
-# ─── 2. WebP présents : réduire ceux qui dépassent MAX (ré-encodage requis) ───
-for pair in "${pairs[@]}"; do
-  dir="$PHOTOS_DIR/${pair%%$'\t'*}/${pair#*$'\t'}/"
-  for wf in "$dir"*.webp; do
-    [ -e "$wf" ] || continue
-    w="$(webpinfo "$wf" 2>/dev/null | sed -n 's/.*Width: *\([0-9]*\).*/\1/p'  | head -1)"
-    h="$(webpinfo "$wf" 2>/dev/null | sed -n 's/.*Height: *\([0-9]*\).*/\1/p' | head -1)"
-    { [ -n "$w" ] && ra="$(resize_args "$w" "$h")"; } || continue
-    tmp="$(mktemp "$dir.resize.XXXXXX")"
-    if cwebp -q 82 -m 6 -metadata none -resize $ra "$wf" -o "$tmp" >/dev/null 2>&1 && [ -s "$tmp" ]; then
-      mv "$tmp" "$wf"
-      echo "réduit   : ${pair/$'\t'//}/$(basename "$wf") (de ${w}x${h} → ${MAX}px)"
-    else
-      rm -f "$tmp"
-      echo "ÉCHEC    : $(basename "$wf") — inchangé"
-    fi
-  done
+# Le hero de l'accueil suit la même règle : une source déposée à côté de lui
+# (même nom, autre extension — relevée plus haut) le remplace.
+for src in "${hero_srcs[@]}"; do
+  convert_source "$src" "$HERO_FILE" "$site_hero"
 done
+
+# ─── 2. Miniatures — délégué à bin/build-thumbs.sh, que le déploiement lance
+#        aussi de son côté (les miniatures sont dérivées et non versionnées).
+#        Une seule implémentation, deux appelants. ──────────────────────────────
+"$ROOT/bin/build-thumbs.sh"
 
 # ─── 3. Régénérer data/photos.toml depuis les WebP présents ──────────────────
 IFS=$'\n' pairs=($(sort <<<"${pairs[*]}")); unset IFS

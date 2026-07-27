@@ -41,7 +41,7 @@ static/assets/images/photos/series/<slug>/       ↔  content/series/<slug>.md
 
 **Deux usages d'image, deux champs indépendants** (`[extra]`, valeur = nom de fichier sans extension, dans le dossier du classement) — ils ont été délibérément **découplés** parce que leurs contraintes de cadrage s'opposent :
 - `cover` — **vignette de carte**, recadrée en `aspect-ratio: 3/2` sur l'accueil et `/series/`. Un portrait y passe très bien. Obligatoire pour les catégories **et** les séries, toutes deux présentées en cartes.
-- `hero` — **couverture pleine fenêtre** (`100svh`), donc cadrage **paysage** attendu : un portrait s'y réduit à une bande horizontale sur desktop. Obligatoire pour les séries uniquement — les catégories n'ont pas de page à couverture. L'accueil a son équivalent dans `config.extra.hero`, rangé **hors de `photos/`** (`static/assets/images/hero.webp`) : la couverture du site n'appartient à aucun classement, elle n'a donc rien à faire dans un dossier de classement, et `bin/add-photo.sh` l'ignore complètement — ni conversion, ni redimensionnement, ni entrée dans `data/photos.toml`. Contrepartie : si elle est remplacée, c'est à la main (WebP, dimensions). D'où aussi sa forme de **chemin sous `static/`** et non de nom de fichier.
+- `hero` — **couverture pleine fenêtre** (`100svh`), donc cadrage **paysage** attendu : un portrait s'y réduit à une bande horizontale sur desktop. Obligatoire pour les séries uniquement — les catégories n'ont pas de page à couverture. L'accueil a son équivalent dans `config.extra.hero`, rangé **hors de `photos/`** (`static/assets/images/hero.webp`) : la couverture du site n'appartient à aucun classement, elle n'a donc rien à faire dans un dossier de classement et n'entre pas dans `data/photos.toml`. `bin/add-photo.sh` la convertit néanmoins comme le reste (déposer un `hero.jpg` à côté suffit à la remplacer) mais ne lui génère **pas** de miniature — elle est toujours en plein écran. D'où aussi sa forme de **chemin sous `static/`** et non de nom de fichier.
 
 Ne pas re-fusionner les deux : sur le jeu de photos actuel, presque la moitié sont en portrait, et c'est précisément ce conflit qui a motivé la séparation.
 
@@ -51,7 +51,38 @@ Ce qui distingue catégorie et série, c'est le **statut éditorial**, pas la st
 
 **Ni `/categories/` ni `/series/` n'existent** : l'accueil liste les deux intégralement, sans limite de nombre, ce qui rend les pages d'index redondantes. Les deux `_index.md` subsistent uniquement en `render = false` — la section ne produit aucune page mais reste interrogeable via `get_section()` pour alimenter l'accueil, et ses pages enfants continuent d'être rendues. C'est le mécanisme Zola à connaître pour « une section qu'on veut énumérer sans l'afficher ».
 
-Créer une catégorie ou une série = ajouter son fichier de contenu **avant** de déposer des photos dans le sous-dossier correspondant — `bin/add-photo.sh` refuse de synchroniser un dossier de photos sans fichier apparié, ou dont la couverture déclarée n'existe pas.
+Créer une catégorie ou une série = ajouter son fichier de contenu **avant** de déposer des photos dans le sous-dossier correspondant.
+
+**L'appariement est vérifié dans les deux sens** par `bin/add-photo.sh` : un dossier de photos sans `.md`, **et** un `.md` sans dossier de photos (le second manquait, d'où un renommage à moitié fait resté silencieux). Corollaire important côté templates : puisque le flux documenté crée le `.md` avant les images, **un classement sans photo est un état légitime et le build doit le tolérer**. Partout où l'on rapproche `data/photos.toml` et les pages de contenu, on boucle donc sur le résultat du `filter` plutôt que sur `| first` — une correspondance absente est sautée, pas déréférencée. Cela vaut dans les deux sens : `categories/page.html` et `series/page.html` (grille vide), et `index.html` (carte non affichée). Sans cela, `zola build` échoue sur un `Variable ... not found in context` peu parlant.
+
+### Résolutions servies — plein écran vs miniature
+
+**Règle : tout ce qui n'occupe pas l'écran entier est servi en miniature.** Trois variantes par photo, produites par `bin/add-photo.sh` et rangées **à côté** de la pleine résolution (convention héritée du pipeline d'origine, `bin/build-webp.mjs`, supprimé au passage au vanilla) :
+
+| Fichier | Côté long | Versionné | Sert à |
+|---|---|---|---|
+| `<slug>/<nom>.webp` | résolution d'origine | oui | lightbox et couvertures (`.hero__img`) — plein écran |
+| `<slug>/thumbs/<nom>.webp` | 1200 px | **non** | grille masonry et cartes, densité 1x |
+| `<slug>/thumbs/<nom>-2x.webp` | 2400 px | **non** | mêmes usages, densité 2x (via `srcset`) |
+
+Les miniatures sont **dérivées, donc ni versionnées ni écrites à la main** : `.gitignore` sur `/static/assets/images/photos/*/*/thumbs/`, et `bin/build-thumbs.sh` les (re)construit — en local comme au déploiement. Conséquence à connaître : **après un clone frais, `zola serve` affiche des images cassées tant que `bin/build-thumbs.sh` n'a pas tourné.** C'est le prix assumé de ne pas versionner 8,5 Mo de dérivées.
+
+Le sous-dossier `thumbs/` n'est pas cosmétique : un glob `*.webp` ne descend pas dans les sous-dossiers, donc les parcours de dossiers de `bin/add-photo.sh` ignorent les miniatures **sans avoir à les filtrer**. Une version antérieure les posait à côté des photos (`<nom>-thumb.webp`) et devait les écarter partout via un prédicat `is_thumb()` — supprimé avec le déplacement.
+
+**La pleine résolution n'est pas plafonnée** : un plafond à 4000 px a existé puis a été retiré (arbitrage utilisateur du 2026-07-27 — sur le corpus réel, toutes les photos font déjà 4000 px sur le grand côté, l'étape ne faisait donc jamais rien). Conséquence assumée : le poids de la variante pleine résolution dépend entièrement de ce qui est déposé. Ce sont les miniatures qui portent l'optimisation, pas un plafonnement de la source.
+
+Consommation : les templates injectent `{full, thumb, thumb2x}` dans `window.PHOTOS`, `gallery.js` pose `srcset` + `sizes` sur les images de grille, les cartes portent leur `srcset` directement dans `index.html`. Le hero n'a **pas** de miniature — il est plein écran par définition.
+
+**Piège d'entretien** : les valeurs de `sizes` (`GRID_SIZES` dans `gallery.js`, attributs `sizes=` dans `index.html`) décrivent la largeur réellement occupée par l'image à chaque palier. Elles doublent donc les points de rupture du CSS — modifier le nombre de colonnes d'une grille sans toucher au `sizes` correspondant fait télécharger la mauvaise variante, sans que rien ne casse visiblement.
+
+### Deux scripts — `bin/add-photo.sh` et `bin/build-thumbs.sh`
+
+Séparés parce qu'ils ont deux appelants et deux natures :
+
+- **`bin/build-thumbs.sh`** — pur calcul dérivé : lit les photos, écrit `thumbs/`, supprime les miniatures orphelines. **Ne mute aucun contenu** (ne supprime pas de source, ne touche pas à `data/photos.toml`). C'est ce qui le rend lançable au déploiement : un déploiement n'a pas à réécrire un fichier versionné ni à effacer des sources.
+- **`bin/add-photo.sh`** — outil auteur : garde-fous, conversion des sources déposées (qui les **supprime**), régénération de `data/photos.toml`. Il appelle `build-thumbs.sh` à l'étape 2, pour que l'auteur garde un seul geste.
+
+Une seule implémentation des miniatures, deux appelants. Ne pas dupliquer la logique dans le workflow.
 
 ### Ajouter des photos — `bin/add-photo.sh`
 
@@ -63,12 +94,16 @@ bin/add-photo.sh   # aucun argument : scanne les sous-dossiers et synchronise
 
 Ce qu'il fait, en quatre temps :
 
-0. Garde-fous : tout dossier de premier niveau de `photos/` hors des deux axes est une erreur (typiquement un reliquat de l'ancienne arborescence à un seul niveau) ; chaque dossier `<axe>/<slug>/` doit avoir son `content/<axe>/<slug>.md` ; chacun (catégorie **comme** série) doit y déclarer un `cover` existant, les séries en plus un `hero` existant ; et `config.toml` un `hero` existant sous `static/`. Échoue sinon avec la liste de ce qui est mal apparié (`check_photo_field()` factorise le contrôle des champs pointant une photo). Les templates n'ont donc **pas** de repli pour une image manquante — c'est le script qui garantit l'invariant, et c'est là qu'il faut étendre ce genre de contrôle.
-1. **Sources non-webp** (JPG/PNG/TIFF déposés) → converties en WebP (`cwebp -q 82 -m 6`), **EXIF retiré** (`-metadata none`), **réduites à 4000 px** sur le plus grand côté si besoin (ratio préservé, jamais d'agrandissement) ; **la source est ensuite supprimée** (le dépôt ne garde que le WebP).
-2. **WebP présents** → chacun est vérifié ; s'il dépasse 4000 px il est **ré-encodé réduit sur place** (un WebP compressé ne se redimensionne pas sans ré-encodage ; en-deçà il n'est pas touché).
+0. Garde-fous : tout dossier de premier niveau de `photos/` hors des deux axes est une erreur (typiquement un reliquat de l'ancienne arborescence à un seul niveau) ; chaque dossier `<axe>/<slug>/` doit avoir son `content/<axe>/<slug>.md` ; chacun (catégorie **comme** série) doit y déclarer un `cover` existant, les séries en plus un `hero` existant ; réciproquement, chaque `content/<axe>/<slug>.md` doit avoir son dossier de photos ; et `config.toml` un `hero` existant sous `static/`. Échoue sinon avec la liste de ce qui est mal apparié (`check_photo_field()` factorise le contrôle des champs pointant une photo). Les templates n'ont donc **pas** de repli pour une image manquante — c'est le script qui garantit l'invariant, et c'est là qu'il faut étendre ce genre de contrôle.
+1. **Sources non-webp** (JPG/PNG/TIFF déposés) → converties en WebP (`cwebp -q 82 -m 6`), **EXIF retiré** (`-metadata none`), **résolution d'origine conservée** ; **la source est ensuite supprimée** (le dépôt ne garde que le WebP).
+2. **Miniatures** → délégué à `bin/build-thumbs.sh` (voir plus haut) : régénérées si absentes ou plus anciennes que leur photo, supprimées si leur photo disparaît. Seul endroit où l'on redimensionne encore (`resize_args()`).
 3. **`data/photos.toml`** est régénéré intégralement depuis les sous-dossiers présents (les deux axes confondus dans `all`, puis un bloc `[[categories]]` / `[[series]]` par dossier), et le script indique s'il était **déjà à jour** ou s'il a été **mis à jour**.
 
+Le **hero de l'accueil** (`config.extra.hero`, hors de `photos/`) suit les mêmes règles de conversion et de réduction — une source déposée à côté de lui (même nom, autre extension) le remplace — mais n'a pas de miniature. Il n'entre jamais dans `data/photos.toml`.
+
 Idempotent : relancé sans nouveau fichier ni WebP hors-format, il ne change rien. Dépend de `cwebp` **et** `webpinfo` (paquet `webp`).
+
+**Piège bash rencontré ici** : un motif sans métacaractère (`"$base".jpg`) n'est **pas** soumis à l'expansion de chemins — donc ni `nullglob` ni `nocaseglob` ne s'y appliquent, et le mot est passé littéralement même si le fichier n'existe pas. Les sources du hero sont donc cherchées par un glob sur le **dossier** (`"$dir"/*.jpg`), puis filtrées sur le nom de base.
 
 ### Templates Tera — `templates/`
 
@@ -83,7 +118,7 @@ Conséquence du `scripts` vide sur l'accueil : `wireHeader()` n'y tourne pas, do
 
 Un seul fichier, encapsulé dans une IIFE (`'use strict'`), chargé via `<script src>` classique (pas `type="module"`, pour rester ouvrable en `file://`). Trois responsabilités :
 
-- **`renderGrid()`** — génère les `<a class="gallery-card">` à partir de `PHOTOS` (fourni par le template, `window.PHOTOS`) et les injecte dans `.gallery-grid__container`. Chaque card est un lien vers l'image pleine résolution (progressive enhancement : si le JS échoue, le lien ouvre quand même l'image), dont le clic est intercepté (`preventDefault`) pour ouvrir la lightbox à l'index. Les listeners `load`/`error` sont posés **avant** d'assigner `src` (couvre le cas d'une image déjà en cache).
+- **`renderGrid()`** — génère les `<a class="gallery-card">` à partir de `PHOTOS` (fourni par le template, `window.PHOTOS`) et les injecte dans `.gallery-grid__container`. Sert la miniature (`srcset` 1200w/2400w + `GRID_SIZES`), jamais la pleine résolution — celle-ci est réservée à la lightbox. Chaque card est un lien vers l'image pleine résolution (progressive enhancement : si le JS échoue, le lien ouvre quand même l'image), dont le clic est intercepté (`preventDefault`) pour ouvrir la lightbox à l'index. Les listeners `load`/`error` sont posés **avant** d'assigner `src` (couvre le cas d'une image déjà en cache).
 - **`lightbox`** (IIFE fermée) — visionneuse : navigation par index sur `PHOTOS` (modulo la longueur totale — global sur l'accueil, local sur une page de catégorie), swipe tactile, clavier, focus trap, dimensionnement DPR, loader. `navTimeout` (nav clic/clavier) et `swipeTimeout` (nav swipe) sont annulés ensemble via `clearTimeouts()` dès qu'une nouvelle navigation démarre — sinon un swipe suivi d'un clic sur une flèche fait cohabiter deux mises à jour de `current`. `isOpen()` est dérivé de la classe DOM `is-open`, pas un champ à synchroniser. Écouteurs touch en `{ passive: true }`. La coquille HTML de la lightbox est statique dans `templates/base.html` ; le JS ne fait que la câbler (`init()` requête les éléments, `bind()` pose les écouteurs).
 - **`wireHeader()`** — la marque du header est un vrai lien vers l'accueil (plusieurs pages désormais). Si on est déjà sur l'accueil, le clic est intercepté (`brand.pathname === window.location.pathname`) pour un `scrollTo({ top: 0, behavior: 'smooth' })` plutôt qu'un rechargement. C'est le seul élément de header restant depuis le retrait de la nav.
 
@@ -111,7 +146,9 @@ Fontes **auto-hébergées** dans `static/assets/fonts/` (WOFF2, Jost + Climate C
 
 ### Déploiement — `.github/workflows/deploy.yml`
 
-Le workflow installe le binaire Zola (téléchargement direct depuis les releases GitHub, pas d'action tierce du marketplace), lance `zola build`, puis publie `public/` via `actions/upload-pages-artifact` + `actions/deploy-pages`. `base_url` dans `config.toml` porte déjà le sous-chemin GitHub Pages, donc aucun `--base-href` à injecter au build. Pas de `npm ci`, pas de Node.
+Le workflow installe le binaire Zola (téléchargement direct depuis les releases GitHub, pas d'action tierce du marketplace), **génère les miniatures** (`apt install webp` puis `bin/build-thumbs.sh`, précédés d'un `actions/cache` clé sur le hash des photos — tant qu'aucune photo ne change, l'étape ne fait rien), lance `zola build`, puis publie `public/` via `actions/upload-pages-artifact` + `actions/deploy-pages`.
+
+**L'ordre compte** : `build-thumbs.sh` doit précéder `zola build`, qui copie `static/` tel quel dans `public/`. Sans cache, la génération coûte ~35 s pour 31 photos, en croissance linéaire — c'est la contrepartie de ne plus versionner les dérivées. `base_url` dans `config.toml` porte déjà le sous-chemin GitHub Pages, donc aucun `--base-href` à injecter au build. Pas de `npm ci`, pas de Node.
 
 ## Mémoire
 

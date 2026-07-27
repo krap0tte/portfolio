@@ -5,12 +5,17 @@
 
   // ─── Photos — source unique de vérité ──────────────────────────────────────
   // Fournie par le template Zola (templates/base.html, bloc `photos`), déjà
-  // triée (plus récentes en premier) et déjà sous la forme {full, thumb}.
+  // triée (plus récentes en premier) et déjà sous la forme {full, thumb, thumb2x}.
   // Ne pas éditer à la main : dérivée de data/photos.toml, régénéré par
   // bin/add-photo.sh.
   var PHOTOS = window.PHOTOS || [];
 
   var TOTAL = PHOTOS.length;
+
+  // Largeur occupée par une miniature de la grille, par palier — doit suivre le
+  // nombre de colonnes de `.gallery-grid__container` dans style.css (2 → 6).
+  var GRID_SIZES = '(min-width: 2000px) 16vw, (min-width: 1600px) 19vw, ' +
+                   '(min-width: 1280px) 24vw, (min-width: 1024px) 32vw, 46vw';
 
   // ─── Piège de focus Tab/Shift+Tab (dialog modale) ──────────────────────────
   function trapTabFocus(focusable, e) {
@@ -255,6 +260,11 @@
       };
       img.addEventListener('load', markLoaded);
       img.addEventListener('error', markLoaded);
+      // La grille n'est jamais en plein écran : on sert la miniature, et son
+      // doublon 2x aux écrans denses. La pleine résolution reste pour la
+      // lightbox (`p.full`), qui elle occupe tout l'écran.
+      img.srcset = p.thumb + ' 1200w, ' + p.thumb2x + ' 2400w';
+      img.sizes = GRID_SIZES;
       img.src = p.thumb;
 
       wrap.appendChild(img);

@@ -20,11 +20,17 @@
        de fichier le plus récent de la série (data/photos.toml) : le modèle ne
        porte pas de date, l'ordre chronologique vient des noms. #}
     {% for entry in data.series | sort(attribute="latest") | reverse %}
-    {% set serie = series_section.pages | filter(attribute="slug", value=entry.slug) | first %}
+    {# Boucle sur le résultat du filtre plutôt que sur `| first` : un dossier de
+       photos sans fichier de contenu apparié (renommage en cours, par exemple)
+       est ignoré au lieu de casser le build. Symétrique du filtre appliqué aux
+       catégories plus bas. bin/add-photo.sh signale les deux cas. #}
+    {% for serie in series_section.pages | filter(attribute="slug", value=entry.slug) %}
     <a class="cover-card" href="{{ serie.permalink | safe }}">
-      <img class="cover-card__img" src="{{ get_url(path="assets/images/photos/series/" ~ serie.slug ~ "/" ~ serie.extra.cover ~ ".webp") }}" alt="" loading="lazy" />
+      {% set c = "assets/images/photos/series/" ~ serie.slug ~ "/thumbs/" ~ serie.extra.cover %}
+      <img class="cover-card__img" src="{{ get_url(path=c ~ ".webp") }}" srcset="{{ get_url(path=c ~ ".webp") }} 1200w, {{ get_url(path=c ~ "-2x.webp") }} 2400w" sizes="(min-width: 768px) 22vw, 90vw" alt="" loading="lazy" />
       <span class="cover-card__title">{{ serie.title }}</span>
     </a>
+    {% endfor %}
     {% endfor %}
   </div>
 </section>
@@ -35,11 +41,17 @@
 <section class="home-section">
   <h2 class="home-section__title">Catégories</h2>
   <div class="card-grid card-grid--small">
+    {# Parcours des fichiers de contenu (triés par titre), mais on saute ceux
+       qui n'ont pas encore de photos : leur couverture n'existerait pas. Les
+       séries, elles, sont parcourues depuis data.series et donc déjà filtrées. #}
     {% for cat in categories_section.pages %}
+    {% if data.categories | filter(attribute="slug", value=cat.slug) %}
     <a class="cover-card" href="{{ cat.permalink | safe }}">
-      <img class="cover-card__img" src="{{ get_url(path="assets/images/photos/categories/" ~ cat.slug ~ "/" ~ cat.extra.cover ~ ".webp") }}" alt="" loading="lazy" />
+      {% set c = "assets/images/photos/categories/" ~ cat.slug ~ "/thumbs/" ~ cat.extra.cover %}
+      <img class="cover-card__img" src="{{ get_url(path=c ~ ".webp") }}" srcset="{{ get_url(path=c ~ ".webp") }} 1200w, {{ get_url(path=c ~ "-2x.webp") }} 2400w" sizes="(min-width: 1280px) 15vw, (min-width: 768px) 22vw, 45vw" alt="" loading="lazy" />
       <span class="cover-card__title">{{ cat.title }}</span>
     </a>
+    {% endif %}
     {% endfor %}
   </div>
 </section>
