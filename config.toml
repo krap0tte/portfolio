@@ -1,3 +1,10 @@
 base_url = "https://krap0tte.github.io/portfolio"
 title = "krapotte"
 description = "Galerie de photographie"
+
+[extra]
+# Couverture pleine fenêtre de l'accueil — chemin sous static/, résolu par
+# get_url(). Cadrage paysage attendu (elle occupe tout l'écran). Rangée hors de
+# photos/ : elle n'appartient à aucun classement et n'est donc pas gérée par
+# bin/add-photo.sh (ni convertie, ni redimensionnée, ni listée).
+hero = "assets/images/hero.webp"

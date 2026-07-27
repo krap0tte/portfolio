@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title }} — krapotte{% endblock title %}
+{% block description %}{{ page.title }}{% endblock description %}
+{% block body_class %}has-hero{% endblock body_class %}
+{% block intro %}
+<section class="hero">
+  <img class="hero__img" src="{{ get_url(path="assets/images/photos/series/" ~ page.slug ~ "/" ~ page.extra.hero ~ ".webp") }}" alt="" />
+  <h1 class="hero__title">{{ page.title }}</h1>
+</section>
+{% if page.content %}
+<section class="series-intro">{{ page.content | safe }}</section>
+{% endif %}
+{% endblock intro %}
+{% block photos %}{% set data = load_data(path="data/photos.toml") %}{% set serie = data.series | filter(attribute="slug", value=page.slug) | first %}{% for name in serie.photos | reverse %}{ "full": "{{ get_url(path="assets/images/photos/series/" ~ page.slug ~ "/" ~ name ~ ".webp") }}", "thumb": "{{ get_url(path="assets/images/photos/series/" ~ page.slug ~ "/" ~ name ~ ".webp") }}" }{% if not loop.last %},{% endif %}
+{% endfor %}{% endblock photos %}

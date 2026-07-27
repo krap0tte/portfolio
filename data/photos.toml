@@ -1,41 +1,42 @@
 # Régénéré par bin/add-photo.sh — ne pas éditer à la main.
 
 all = [
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_01" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_02" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_03" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_04" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_05" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_06" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_07" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_08" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_09" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_10" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_11" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_12" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_13" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_14" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_15" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_16" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_17" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_18" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_19" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_20" },
-  { slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_21" },
-  { slug = "divers-automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_01" },
-  { slug = "divers-automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_02" },
-  { slug = "divers-automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_03" },
-  { slug = "divers-automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_04" },
-  { slug = "divers-automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_05" },
-  { slug = "divers-automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_06" },
-  { slug = "divers-automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_07" },
-  { slug = "divers-automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_08" },
-  { slug = "divers-automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_09" },
-  { slug = "divers-automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_10" }
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_01" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_02" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_03" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_04" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_05" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_06" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_07" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_08" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_09" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_10" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_11" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_12" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_13" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_14" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_15" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_16" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_17" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_18" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_19" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_20" },
+  { kind = "series", slug = "le-mans-lotus-2025", file = "2025-03-01_LE_MANS_LOTUS_21" },
+  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_01" },
+  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_02" },
+  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_03" },
+  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_04" },
+  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_05" },
+  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_06" },
+  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_07" },
+  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_08" },
+  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_09" },
+  { kind = "categories", slug = "automobile", file = "2026-07-14_RASS_COUTURE_BOUSSEY_10" }
 ]
 
 [[categories]]
-slug = "divers-automobile"
+slug = "automobile"
+latest = "2026-07-14_RASS_COUTURE_BOUSSEY_10"
 photos = [
   "2026-07-14_RASS_COUTURE_BOUSSEY_01",
   "2026-07-14_RASS_COUTURE_BOUSSEY_02",
@@ -49,8 +50,9 @@ photos = [
   "2026-07-14_RASS_COUTURE_BOUSSEY_10"
 ]
 
-[[categories]]
+[[series]]
 slug = "le-mans-lotus-2025"
+latest = "2025-03-01_LE_MANS_LOTUS_21"
 photos = [
   "2025-03-01_LE_MANS_LOTUS_01",
   "2025-03-01_LE_MANS_LOTUS_02",

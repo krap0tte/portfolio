@@ -7,19 +7,15 @@
   <meta name="description" content="{% block description %}Galerie de photographie{% endblock description %}" />
   <link rel="stylesheet" href="{{ get_url(path="css/style.css") }}" />
 </head>
-<body>
+<body class="{% block body_class %}{% endblock body_class %}">
   <header class="site-header">
     <a class="site-header__brand" href="{{ config.base_url | safe }}/">krapotte</a>
-    {% set categories_section = get_section(path="categories/_index.md") %}
-    {% if categories_section.pages %}
-    <nav class="site-header__nav">
-      {% for cat in categories_section.pages %}<a class="site-header__nav-link" href="{{ cat.permalink | safe }}">{{ cat.title }}</a>{% endfor %}
-    </nav>
-    {% endif %}
   </header>
 
   <main class="site-main">
     {% block main %}
+    {% block intro %}{% endblock intro %}
+
     <section class="gallery-grid">
       <div class="gallery-grid__container"></div>
     </section>

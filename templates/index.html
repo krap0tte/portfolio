@@ -1,5 +1,49 @@
 {% extends "base.html" %}
 {% block title %}krapotte{% endblock title %}
-{% block description %}Galerie de photographie{% endblock description %}
-{% block photos %}{% set data = load_data(path="data/photos.toml") %}{% for p in data.all | reverse %}{ "full": "{{ get_url(path="assets/images/photos/" ~ p.slug ~ "/" ~ p.file ~ ".webp") }}", "thumb": "{{ get_url(path="assets/images/photos/" ~ p.slug ~ "/" ~ p.file ~ ".webp") }}" }{% if not loop.last %},{% endif %}
-{% endfor %}{% endblock photos %}
+{% block description %}{{ config.description }}{% endblock description %}
+{% block body_class %}has-hero{% endblock body_class %}
+
+{% block main %}
+{% set data = load_data(path="data/photos.toml") %}
+
+<section class="hero">
+  <img class="hero__img" src="{{ get_url(path=config.extra.hero) }}" alt="" />
+  <p class="hero__text">{{ config.description }}</p>
+</section>
+
+{% set series_section = get_section(path="series/_index.md") %}
+{% if series_section.pages %}
+<section class="home-section">
+  <h2 class="home-section__title home-section__title--lead">Séries</h2>
+  <div class="card-grid card-grid--lead">
+    {# Toutes les séries, de la plus récente à la plus ancienne. `latest` = nom
+       de fichier le plus récent de la série (data/photos.toml) : le modèle ne
+       porte pas de date, l'ordre chronologique vient des noms. #}
+    {% for entry in data.series | sort(attribute="latest") | reverse %}
+    {% set serie = series_section.pages | filter(attribute="slug", value=entry.slug) | first %}
+    <a class="cover-card" href="{{ serie.permalink | safe }}">
+      <img class="cover-card__img" src="{{ get_url(path="assets/images/photos/series/" ~ serie.slug ~ "/" ~ serie.extra.cover ~ ".webp") }}" alt="" loading="lazy" />
+      <span class="cover-card__title">{{ serie.title }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% set categories_section = get_section(path="categories/_index.md") %}
+{% if categories_section.pages %}
+<section class="home-section">
+  <h2 class="home-section__title">Catégories</h2>
+  <div class="card-grid card-grid--small">
+    {% for cat in categories_section.pages %}
+    <a class="cover-card" href="{{ cat.permalink | safe }}">
+      <img class="cover-card__img" src="{{ get_url(path="assets/images/photos/categories/" ~ cat.slug ~ "/" ~ cat.extra.cover ~ ".webp") }}" alt="" loading="lazy" />
+      <span class="cover-card__title">{{ cat.title }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock main %}
+
+{% block scripts %}{% endblock scripts %}

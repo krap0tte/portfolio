@@ -116,44 +116,192 @@ button {
   color: var(--text);
 }
 
-.site-header__nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.75rem 1rem;
+/* ─── Couverture pleine fenêtre ────────────────────────────────────────────────
+   Partagée par l'accueil (couverture du site + présentation) et les pages de
+   série (couverture de la série + son titre) : même dispositif, la photo occupe
+   tout l'écran, header compris — d'où le header en `absolute` par-dessus (voir
+   `.has-hero .site-header`) et non dans le flux. `svh` évite le saut de hauteur
+   dû à la barre d'adresse mobile, `vh` reste en repli pour ceux qui l'ignorent. */
+.hero {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
 }
 
-.site-header__nav-link {
-  font-size: 0.75rem;
+.hero__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: var(--bg-surface);
+}
+
+/* Voile : marque et texte sont posés sur une photo quelconque, il leur faut un
+   fond garanti. Assombri en haut (derrière le header) et en bas (le texte). */
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0) 25%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0) 35%);
+  pointer-events: none;
+}
+
+/* Un seul emplacement en bas de couverture : présentation du site sur
+   l'accueil, titre de la série sur une page de série. */
+.hero__text,
+.hero__title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  margin: 0 auto;
+  max-width: 42rem;
+  text-align: center;
+  color: #ffffff;
+}
+
+.hero__title {
+  font-size: clamp(1.125rem, 2.5vw, 1.5rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+/* Le header se superpose à la couverture sur les pages qui en ont une.
+   Ailleurs il reste dans le flux, sur fond clair, en texte sombre. */
+.has-hero .site-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+}
+
+.has-hero .site-header__brand { color: #ffffff; }
+
+/* ─── Accueil ──────────────────────────────────────────────────────────────────
+   90 % de la largeur d'affichage, sans plafond : les gouttières viennent de la
+   largeur elle-même, plus d'un padding horizontal. */
+.home-section {
+  width: 90%;
+  margin: 0 auto;
+  padding-top: clamp(2rem, 5vw, 3.5rem);
+}
+
+.home-section:last-child { padding-bottom: clamp(2rem, 5vw, 3.5rem); }
+
+/* 0.8625rem = 0.75rem + 15 %. Même échelle pour les titres de section, les
+   titres de carte et le « Voir plus » — ils forment un seul niveau de lecture. */
+.home-section__title {
+  font-size: 0.8625rem;
+  font-weight: 400;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-muted);
-  transition: color 0.15s;
+  margin-bottom: clamp(0.75rem, 2vw, 1.25rem);
 }
 
-.site-header__nav-link:hover { color: var(--text); }
-
-/* ─── Liste de catégories ──────────────────────────────────────────────────── */
-.categories-list {
-  padding: clamp(1rem, 3vw, 2.5rem);
-  display: flex;
-  justify-content: center;
-}
-
-.categories-list__items {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+/* Titre de la section vedette (Séries) : centré, 1.078rem = 0.8625rem + 25 %. */
+.home-section__title--lead {
   text-align: center;
+  font-size: 1.078rem;
 }
 
-.categories-list__link {
-  font-size: 1rem;
-  color: var(--text);
-  transition: color 0.15s;
+/* ─── Cartes de couverture ─────────────────────────────────────────────────────
+   Séries et catégories partagent la même carte (couverture recadrée au même
+   format, titre par-dessus) : ce sont deux axes de même rang, ils se
+   présentent pareil. Seule la densité de la grille les distingue.
+   Recadrage volontaire, à l'inverse de la grille masonry qui préserve les
+   ratios naturels : un index doit se lire comme une liste régulière, pas
+   comme une seconde galerie. */
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
 }
 
-.categories-list__link:hover { color: var(--text-muted); }
+@media (min-width: 768px) { .card-grid { grid-template-columns: repeat(3, 1fr); } }
+
+/* Séries de l'accueil : plus dense que les 3 colonnes par défaut. */
+@media (min-width: 768px) { .card-grid--lead { grid-template-columns: repeat(4, 1fr); } }
+
+.card-grid--small { grid-template-columns: repeat(2, 1fr); }
+
+@media (min-width: 768px)  { .card-grid--small { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 1280px) { .card-grid--small { grid-template-columns: repeat(6, 1fr); } }
+
+.cover-card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+}
+
+.cover-card__img {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  background: var(--bg-surface);
+  transition: transform 0.3s;
+}
+
+.cover-card:hover .cover-card__img { transform: scale(1.03); }
+
+/* Voile dégradé : le titre est posé sur une photo quelconque, il lui faut un
+   fond garanti pour rester lisible. */
+.cover-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0) 55%);
+  pointer-events: none;
+}
+
+.cover-card__title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  padding: 0.75rem;
+  font-size: 0.8625rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+/* Cartes catégories : titre centré, 0.948rem = 0.79rem + 20 %. */
+.card-grid--small .cover-card__title {
+  padding: 0.5rem;
+  text-align: center;
+  font-size: 0.948rem;
+}
+
+/* ─── Catégories ──────────────────────────────────────────────────────────────
+   Une page de catégorie n'a pas de couverture, contrairement à une série : le
+   libellé est simplement rappelé au-dessus de la grille. Même échelle que le
+   titre d'une série, en texte sombre puisqu'il n'est pas posé sur une photo. */
+.category-title {
+  padding: 0 clamp(1rem, 3vw, 2.5rem) clamp(1rem, 3vw, 2.5rem);
+  text-align: center;
+  font-size: clamp(1.125rem, 2.5vw, 1.5rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+/* ─── Séries ─────────────────────────────────────────────────────────────────
+   Page de série : le texte éditorial, entre la couverture et la grille (le
+   titre, lui, est en surimpression sur la couverture — `.hero__title`). */
+.series-intro {
+  padding: clamp(2rem, 5vw, 3.5rem) clamp(1rem, 3vw, 2.5rem);
+  max-width: 42rem;
+  margin: 0 auto;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.series-intro p + p { margin-top: 0.75rem; }
 
 /* ─── Grille ───────────────────────────────────────────────────────────────────
    Masonry en colonnes CSS : chaque miniature garde son ratio naturel.
