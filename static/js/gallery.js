@@ -90,6 +90,7 @@
     }
 
     function open(index) {
+      if (!root) return;
       lastFocused = document.activeElement;
       current = index;
       update();
@@ -219,7 +220,12 @@
     }
 
     function init() {
+      // Même garde que `renderGrid()` : une page peut légitimement n'avoir pas
+      // de coquille lightbox. Sans ce test, l'accès à `root.querySelector`
+      // faisait échouer TOUT le script — grille et header compris — au lieu de
+      // ce seul module.
       root = document.querySelector('.lightbox');
+      if (!root) return;
       stage = root.querySelector('.lightbox__stage');
       img = root.querySelector('.lightbox__img');
       loader = root.querySelector('.lightbox__loader');

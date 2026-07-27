@@ -60,83 +60,11 @@ for kind in "${KINDS[@]}"; do
 done
 [ "${#pairs[@]}" -gt 0 ] || { echo "aucune catégorie ni série dans $PHOTOS_DIR"; exit 1; }
 
-# ─── 0 bis. Chaque dossier doit avoir son fichier content/<axe>/<slug>.md et
-#            les photos que celui-ci désigne. Deux usages distincts, donc deux
-#            champs indépendants : `cover` = vignette de carte (recadrée en 3/2),
-#            `hero` = couverture pleine fenêtre (cadrage paysage attendu). Les
-#            catégories n'ont que des cartes, les séries ont aussi une page à
-#            couverture, d'où `hero` réservé aux séries. ────────────────────────
-missing=()
-
-# Vérifie qu'un champ de front matter désigne bien un WebP présent dans le
-# dossier du classement. Alimente `missing`.
-check_photo_field() {  # <fichier md> <champ> <axe> <slug>
-  local val
-  val="$(sed -n "s/^$2 *= *\"\(.*\)\"\$/\1/p" "$1" | head -1)"
-  if [ -z "$val" ]; then
-    missing+=("$3/$4 (attendu : $2 = \"…\" sous [extra] dans content/$3/$4.md)")
-  elif [ ! -f "$PHOTOS_DIR/$3/$4/$val.webp" ]; then
-    missing+=("$3/$4 ($2 introuvable : photos/$3/$4/$val.webp)")
-  fi
-}
-
-for pair in "${pairs[@]}"; do
-  kind="${pair%%$'\t'*}"; slug="${pair#*$'\t'}"
-  md="$CONTENT_DIR/$kind/$slug.md"
-  if [ ! -f "$md" ]; then
-    missing+=("$kind/$slug (attendu : content/$kind/$slug.md)")
-    continue
-  fi
-  check_photo_field "$md" cover "$kind" "$slug"
-  [ "$kind" = series ] && check_photo_field "$md" hero "$kind" "$slug"
-done
-
-# Sens inverse : un fichier de contenu sans dossier de photos. Son `cover` et son
-# `hero` ne peuvent désigner aucune image, la page s'affiche donc amputée — et
-# rien ne le signalait tant que le contrôle ne se faisait que dans un sens.
-shopt -s nullglob
-for kind in "${KINDS[@]}"; do
-  for md in "$CONTENT_DIR/$kind"/*.md; do
-    slug="$(basename "${md%.md}")"
-    [ "$slug" = "_index" ] && continue
-    [ -d "$PHOTOS_DIR/$kind/$slug" ] || \
-      missing+=("$kind/$slug (dossier de photos absent : photos/$kind/$slug/)")
-  done
-done
-shopt -u nullglob
-
 # La couverture d'accueil vit dans config.toml et pointe sous static/ (elle peut
 # venir de n'importe quel classement), pas dans un dossier de photos.
 site_hero="$(sed -n 's/^hero *= *"\(.*\)"$/\1/p' "$ROOT/config.toml" | head -1)"
 HERO_FILE=""
-hero_srcs=()
-if [ -z "$site_hero" ]; then
-  missing+=("config.toml (attendu : hero = \"…\" sous [extra])")
-else
-  HERO_FILE="$ROOT/static/$site_hero"
-  # Sources convertibles déposées à côté du hero (même nom, autre extension).
-  # Le glob porte sur le DOSSIER : un motif sans métacaractère (`"$base".jpg`)
-  # échappe entièrement à l'expansion de chemins, donc à `nullglob` comme à
-  # `nocaseglob`, et serait passé littéralement.
-  hero_base="$(basename "${HERO_FILE%.*}")"
-  shopt -s nullglob nocaseglob
-  for f in "$(dirname "$HERO_FILE")"/*.{jpg,jpeg,png,tif,tiff}; do
-    [ "$(basename "${f%.*}")" = "$hero_base" ] && hero_srcs+=("$f")
-  done
-  shopt -u nullglob nocaseglob
-  # Le WebP peut manquer si une source attend à côté : c'est l'étape 1 qui la
-  # convertira, ne pas échouer ici.
-  if [ ! -f "$HERO_FILE" ] && [ "${#hero_srcs[@]}" -eq 0 ]; then
-    missing+=("config.toml (couverture d'accueil introuvable : static/$site_hero)")
-  fi
-fi
-
-if [ "${#missing[@]}" -gt 0 ]; then
-  echo "Contenu mal apparié :"
-  for m in "${missing[@]}"; do echo "  - $m"; done
-  echo "Créer/corriger le(s) fichier(s) de contenu avant de synchroniser les photos."
-  exit 1
-fi
+if [ -n "$site_hero" ]; then HERO_FILE="$ROOT/static/$site_hero"; fi
 
 # Convertit <src> en WebP <out> (EXIF retiré, résolution d'origine conservée)
 # puis supprime la source. En cas d'échec, la source est conservée. Mutualisé
@@ -148,43 +76,113 @@ convert_source() {  # <src> <out> <étiquette>
     rm -f "$src"
     echo "converti : $label — source supprimée"
   else
-    echo "ÉCHEC    : $(basename "$src") — source conservée"
+    echo "ÉCHEC    : ${src##*/} — source conservée"
   fi
 }
 
-# ─── 1. Sources non-webp : convertir (EXIF retiré) puis supprimer ────────────
+# ─── 1. Sources non-webp : convertir (EXIF retiré) puis supprimer ─────────────
+#        DOIT précéder les contrôles de l'étape 2 : ceux-ci exigent des `.webp`
+#        et c'est cette étape qui les produit. Dans l'ordre inverse, le flux
+#        documenté (créer le .md, déposer des JPG, lancer le script) échouait
+#        systématiquement sur une couverture « introuvable » que la conversion
+#        allait créer juste après — impasse dont on ne sortait qu'à la main.
 shopt -s nullglob nocaseglob
 for pair in "${pairs[@]}"; do
   dir="$PHOTOS_DIR/${pair%%$'\t'*}/${pair#*$'\t'}/"
   for src in "$dir"*.{jpg,jpeg,png,tif,tiff}; do
-    name="$(basename "${src%.*}")"
+    name="${src##*/}"; name="${name%.*}"
     convert_source "$src" "$dir$name.webp" "${pair/$'\t'//}/$name.webp"
   done
 done
+# Le hero suit la même règle : une source déposée à côté de lui (même nom, autre
+# extension) le remplace. Le glob porte sur le DOSSIER — un motif sans
+# métacaractère (`"$base".jpg`) échappe entièrement à l'expansion de chemins,
+# donc à `nullglob` comme à `nocaseglob`, et serait passé littéralement.
+if [ -n "$HERO_FILE" ]; then
+  hero_base="${HERO_FILE##*/}"; hero_base="${hero_base%.*}"
+  for src in "${HERO_FILE%/*}"/*.{jpg,jpeg,png,tif,tiff}; do
+    name="${src##*/}"; name="${name%.*}"
+    if [ "$name" = "$hero_base" ]; then convert_source "$src" "$HERO_FILE" "$site_hero"; fi
+  done
+fi
 shopt -u nullglob nocaseglob
 
-# Le hero de l'accueil suit la même règle : une source déposée à côté de lui
-# (même nom, autre extension — relevée plus haut) le remplace.
-for src in "${hero_srcs[@]}"; do
-  convert_source "$src" "$HERO_FILE" "$site_hero"
+# ─── 2. Appariement contenu ↔ photos, vérifié DANS LES DEUX SENS. Chaque
+#        classement a son fichier content/<axe>/<slug>.md et les images que
+#        celui-ci désigne : `cover` = vignette de carte (recadrée en 3/2),
+#        `hero` = couverture pleine fenêtre. Les catégories n'ont que des
+#        cartes, les séries ont aussi une page à couverture. ──────────────────
+missing=()
+
+# Vérifie qu'un champ de front matter désigne bien un WebP présent dans le
+# dossier du classement. Alimente `missing`.
+check_photo_field() {  # <fichier md> <champ> <axe> <slug>
+  local md=$1 field=$2 kind=$3 slug=$4 val
+  val="$(sed -n "s/^$field *= *\"\(.*\)\"\$/\1/p" "$md" | head -1)"
+  if [ -z "$val" ]; then
+    missing+=("$kind/$slug (attendu : $field = \"…\" sous [extra] dans content/$kind/$slug.md)")
+  elif [ ! -f "$PHOTOS_DIR/$kind/$slug/$val.webp" ]; then
+    missing+=("$kind/$slug ($field introuvable : photos/$kind/$slug/$val.webp)")
+  fi
+}
+
+# Sens 1 : un dossier de photos sans fichier de contenu apparié.
+for pair in "${pairs[@]}"; do
+  kind="${pair%%$'\t'*}"; slug="${pair#*$'\t'}"
+  md="$CONTENT_DIR/$kind/$slug.md"
+  if [ ! -f "$md" ]; then
+    missing+=("$kind/$slug (attendu : content/$kind/$slug.md)")
+    continue
+  fi
+  check_photo_field "$md" cover "$kind" "$slug"
+  if [ "$kind" = series ]; then check_photo_field "$md" hero "$kind" "$slug"; fi
 done
 
-# ─── 2. Miniatures — délégué à bin/build-thumbs.sh, que le déploiement lance
+# Sens 2 : un fichier de contenu sans dossier de photos. Son `cover` et son
+# `hero` ne désignent alors aucune image et la page s'affiche amputée — c'est
+# ce sens-là qui manquait, d'où un renommage à moitié fait resté silencieux.
+shopt -s nullglob
+for kind in "${KINDS[@]}"; do
+  for md in "$CONTENT_DIR/$kind"/*.md; do
+    slug="${md##*/}"; slug="${slug%.md}"
+    if [ "$slug" = "_index" ]; then continue; fi
+    if [ ! -d "$PHOTOS_DIR/$kind/$slug" ]; then
+      missing+=("$kind/$slug (dossier de photos absent : photos/$kind/$slug/)")
+    fi
+  done
+done
+shopt -u nullglob
+
+if [ -z "$site_hero" ]; then
+  missing+=("config.toml (attendu : hero = \"…\" sous [extra])")
+elif [ ! -f "$HERO_FILE" ]; then
+  missing+=("config.toml (couverture d'accueil introuvable : static/$site_hero)")
+fi
+
+if [ "${#missing[@]}" -gt 0 ]; then
+  echo "Contenu mal apparié :"
+  for m in "${missing[@]}"; do echo "  - $m"; done
+  echo "Créer/corriger le(s) fichier(s) de contenu avant de synchroniser les photos."
+  exit 1
+fi
+
+# ─── 3. Miniatures — délégué à bin/build-thumbs.sh, que le déploiement lance
 #        aussi de son côté (les miniatures sont dérivées et non versionnées).
 #        Une seule implémentation, deux appelants. ──────────────────────────────
 "$ROOT/bin/build-thumbs.sh"
 
-# ─── 3. Régénérer data/photos.toml depuis les WebP présents ──────────────────
+# ─── 4. Régénérer data/photos.toml depuis les WebP présents ──────────────────
 IFS=$'\n' pairs=($(sort <<<"${pairs[*]}")); unset IFS
 
-# Noms de fichiers (sans extension) du dossier <axe>/<slug>, triés, dans `names`.
-photos_of() {
+# Noms (sans extension) des photos du dossier <axe>/<slug>, triés, un par ligne.
+# Écrit sur la sortie standard plutôt que dans une globale : l'appelant décide
+# où atterrit le résultat (`mapfile`), la fonction n'a pas d'effet de bord.
+# Le sous-dossier thumbs/ est hors d'atteinte : un glob ne descend pas.
+photos_of() {  # <axe> <slug>
   shopt -s nullglob
-  local files=("$PHOTOS_DIR/$1/$2"/*.webp) f
+  local f
+  for f in "$PHOTOS_DIR/$1/$2"/*.webp; do f="${f##*/}"; echo "${f%.webp}"; done | sort
   shopt -u nullglob
-  names=()
-  for f in "${files[@]}"; do names+=("$(basename "${f%.webp}")"); done
-  [ "${#names[@]}" -eq 0 ] || { IFS=$'\n' names=($(sort <<<"${names[*]}")); unset IFS; }
 }
 
 tmp="$(mktemp)"
@@ -198,7 +196,7 @@ tmp="$(mktemp)"
   entries=()
   for pair in "${pairs[@]}"; do
     kind="${pair%%$'\t'*}"; slug="${pair#*$'\t'}"
-    photos_of "$kind" "$slug"
+    mapfile -t names < <(photos_of "$kind" "$slug")
     for name in "${names[@]}"; do entries+=("$name"$'\t'"$kind"$'\t'"$slug"); done
   done
   IFS=$'\n' entries=($(sort <<<"${entries[*]}")); unset IFS
@@ -218,7 +216,7 @@ tmp="$(mktemp)"
 
   for pair in "${pairs[@]}"; do
     kind="${pair%%$'\t'*}"; slug="${pair#*$'\t'}"
-    photos_of "$kind" "$slug"
+    mapfile -t names < <(photos_of "$kind" "$slug")
 
     echo "[[$kind]]"
     echo "slug = \"$slug\""

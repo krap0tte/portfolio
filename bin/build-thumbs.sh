@@ -81,19 +81,27 @@ for dir in "$PHOTOS_DIR"/*/*/; do
   fi
 
   mkdir -p "$thumbs"
+  # Ensemble des miniatures attendues, construit EN MÊME TEMPS qu'on les génère.
+  # Remonter d'un nom de miniature vers sa photo (en retirant « -2x ») serait
+  # ambigu : une photo nommée « X-2x.webp » a pour miniature 1x « X-2x.webp »,
+  # que l'inversion attribuerait à une photo « X.webp » inexistante — sa
+  # miniature était donc regénérée puis supprimée à chaque exécution.
+  unset -v expected; declare -A expected
   for photo in "${photos[@]}"; do
-    name="$(basename "${photo%.webp}")"
+    name="${photo##*/}"; name="${name%.webp}"
     make_thumb "$photo" "$thumbs/$name.webp"    "$THUMB"    "$rel/$name"
     make_thumb "$photo" "$thumbs/$name-2x.webp" "$THUMB_2X" "$rel/$name-2x"
+    expected["$name.webp"]=1
+    expected["$name-2x.webp"]=1
   done
 
   # Miniatures orphelines : leur photo a été supprimée ou renommée.
   for orphan in "$thumbs"/*.webp; do
-    name="$(basename "${orphan%.webp}")"
-    [ -f "$dir${name%-2x}.webp" ] && continue
+    name="${orphan##*/}"
+    if [ -n "${expected[$name]+set}" ]; then continue; fi
     rm -f "$orphan"
     removed=$((removed + 1))
-    echo "supprimé : $rel/$THUMB_DIR_NAME/$name.webp (miniature orpheline)"
+    echo "supprimé : $rel/$THUMB_DIR_NAME/$name (miniature orpheline)"
   done
 done
 shopt -u nullglob
